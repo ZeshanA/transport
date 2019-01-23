@@ -8,7 +8,7 @@
 
 <p align="center">An intelligent delay detection system that saves bus passengers time.</p>
 
-## 🛠 Features
+## 🛠 Planned Features
 - ⏱ More **accurate arrival time predictions** based on time-series analysis of historical data
 - 🚦 **Intelligent delay detection** to alert users in time for them to change their plans
 - 🗺 Suggestions for faster, **alternative routes** if available
