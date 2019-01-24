@@ -3,6 +3,13 @@
   <br/>
   <span align="center">
     Transport
+    <br/>
+    <img src="https://circleci.com/gh/ZeshanA/transport/tree/master.svg?style=shield"/>
+    <img src="https://img.shields.io/github/license/zeshana/transport.svg"/>
+    <img src="https://img.shields.io/github/languages/top/zeshana/transport.svg?colorB=blue"/>
+    <img src="https://img.shields.io/github/issues-closed-raw/zeshana/transport.svg"/>
+    <img src="https://img.shields.io/github/last-commit/zeshana/transport.svg"/>
+    <img src="https://img.shields.io/twitter/follow/espadrine.svg?label=Follow&style=social"/>
   </span>
 </h1>
 
