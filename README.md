@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/github/languages/top/zeshana/transport.svg?colorB=blue"/>
     <img src="https://img.shields.io/github/issues-closed-raw/zeshana/transport.svg"/>
     <img src="https://img.shields.io/github/last-commit/zeshana/transport.svg"/>
-    <img src="https://img.shields.io/twitter/follow/espadrine.svg?label=Follow&style=social"/>
+    <a href="http://twitter.com/zshnamjd"><img src="https://img.shields.io/twitter/follow/espadrine.svg?label=Follow&style=social"/></a>
   </span>
 </h1>
 
