@@ -1,0 +1,27 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11.4
+
+    working_directory: /app
+
+    # environment variables
+    environment:
+      TEST_RESULT: /tmp/test-results
+
+    steps:
+      - checkout
+      - run: mkdir -p $TEST_RESULTS
+      - restore_cache:
+          keys:
+            - v1-pkg-cache
+
+      - run:
+          name: Run Unit Tests
+          command: |
+            cd backend
+            go test
