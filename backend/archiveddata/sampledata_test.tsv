@@ -1,0 +1,3 @@
+latitude	longitude	time_received	vehicle_id	distance_along_trip	inferred_direction_id	inferred_phase	inferred_route_id	inferred_trip_id	next_scheduled_stop_distance	next_scheduled_stop_id
+40.820351	-73.851514	2014-08-02 10:30:00	275	12337.92990815825	0	LAYOVER_DURING	MTA NYCT_BX36	MTA NYCT_WF_C4-Saturday-033000_BX36_102	0	MTA_102978
+40.612174	-74.035670	2014-08-02 10:34:11	453	56.41863532032585	0	LAYOVER_DURING	MTA NYCT_B37	MTA NYCT_JG_C4-Saturday-039500_B35_7	346.4537918200367	MTA_301722
