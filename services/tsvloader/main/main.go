@@ -68,7 +68,7 @@ func loadMTAData(path string) ([]ArrivalEntry, error) {
 func sayHello(w http.ResponseWriter, r *http.Request) {
 	message := r.URL.Path
 	message = strings.TrimPrefix(message, "/")
-	message = "Hello " + message
+	message = "Hey there #2, " + message
 	w.Write([]byte(message))
 }
 func main() {
