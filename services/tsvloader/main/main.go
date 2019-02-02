@@ -1,4 +1,4 @@
-package historicaldata
+package main
 
 import (
 	"encoding/csv"
@@ -61,4 +61,8 @@ func loadMTAData(path string) ([]ArrivalEntry, error) {
 	}
 
 	return entries, nil
+}
+
+func main() {
+	fmt.Printf("Hello, world!")
 }

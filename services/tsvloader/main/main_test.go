@@ -1,4 +1,4 @@
-package historicaldata
+package main
 
 import (
 	"reflect"
