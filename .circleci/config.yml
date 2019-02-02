@@ -18,7 +18,6 @@ jobs:
       - run:
           name: Run Unit Tests
           command: |
-            GO111MODULE=true
-            cd backend
-            go get
-            go test ./...
+            cd .circleci
+            chmod +x testAndDeploy.sh
+            ./testAndDeploy.sh
