@@ -5,7 +5,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11.4
+      - image: circleci/golang:1.11.5-stretch
 
     working_directory: /go/src/transport
 
@@ -19,6 +19,10 @@ jobs:
       - run:
           name: Run Unit Tests
           command: |
-            cd .circleci
-            chmod +x testAndDeploy.sh
-            ./testAndDeploy.sh
+            chmod +x .circleci/circleScripts.sh
+            ./.circleci/circleScripts.sh test
+
+      - run:
+          name: Deploy Changed Services to Azure
+          command: |
+            ./.circleci/circleScripts.sh deploy

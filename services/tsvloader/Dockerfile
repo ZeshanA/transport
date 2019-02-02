@@ -4,6 +4,9 @@ FROM golang:alpine
 # Enable Go modules
 ENV GO111MODULE=on
 
+# Disable CGO to prevent `go build` asking for gcc
+ENV CGO_ENABLED=0
+
 # Install git to allow `go get`
 RUN apk add --update --no-cache git
 
