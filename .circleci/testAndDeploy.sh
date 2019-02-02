@@ -34,7 +34,7 @@ IMAGE_REPO_USERNAME="zshnamjd"
 CHANGED_FILES=$(git diff --name-only ${COMMIT_RANGE} | tr "\n" " ")
 echo "Changed files: $CHANGED_FILES"
 
-if [[ ${CIRCLE_BRANCH} != "master" ]]; then
+if [[ ${CIRCLE_BRANCH} != "nycData" ]]; then
     echo "Branch ${CIRCLE_BRANCH} does not need to be deployed"
 else
     echo "Deploying changed services to production"
