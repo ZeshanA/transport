@@ -7,13 +7,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gocarina/gocsv"
 )
 
-const historicalDataPath = "../data/sample.tsv"
 const timeFormat = "2006-01-02 15:04:05"
 
 // ArrivalEntry stores a single parsed bus entry from the MTA data
@@ -42,6 +40,40 @@ func (t *Timestamp) UnmarshalCSV(csv string) (err error) {
 	return err
 }
 
+func main() {
+	fmt.Println("Starting HTTP server...")
+	http.HandleFunc("/fetch", fetchArchivesEndpoint)
+	if err := http.ListenAndServe(":80", nil); err != nil {
+		panic(err)
+	}
+}
+
+func fetchArchivesEndpoint(w http.ResponseWriter, _ *http.Request) {
+	fmt.Printf("Fetch archives request received...")
+	_, err := w.Write([]byte("The server will now fetch data from the MTA, thank you!"))
+	if err != nil {
+		fmt.Printf("Error in fetchArchivesEndpoint handler: %v", err)
+	}
+	fetchAndStoreArchives()
+}
+
+func fetchAndStoreArchives() {
+	fmt.Println("Fetching archives!")
+}
+
+func getURLsForDateRange(start, end time.Time) (urls []string) {
+	const URLFormat = "http://s3.amazonaws.com/MTABusTime/AppQuest3/MTA-Bus-Time_.%s.txt.xz"
+	var URLs []string
+
+	for d := start; !end.Equal(d); d = d.AddDate(0, 0, 1) {
+		if d.IsZero() {
+			break
+		}
+		URLs = append(URLs, fmt.Sprintf(URLFormat, d.Format("2006-01-02")))
+	}
+	return URLs
+}
+
 func loadMTAData(path string) ([]ArrivalEntry, error) {
 	cleanedPath := filepath.Clean(path)
 	arrivalsFile, err := os.OpenFile(cleanedPath, os.O_RDONLY, os.ModePerm)
@@ -63,17 +95,4 @@ func loadMTAData(path string) ([]ArrivalEntry, error) {
 	}
 
 	return entries, nil
-}
-
-func sayHello(w http.ResponseWriter, r *http.Request) {
-	message := r.URL.Path
-	message = strings.TrimPrefix(message, "/")
-	message = "Hey there #2, " + message
-	w.Write([]byte(message))
-}
-func main() {
-	http.HandleFunc("/", sayHello)
-	if err := http.ListenAndServe(":80", nil); err != nil {
-		panic(err)
-	}
 }
