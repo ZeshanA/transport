@@ -17,8 +17,7 @@ CHANGED_FILES=$(git diff --name-only ${CIRCLE_SHA1}..${LAST_SUCCESSFUL_COMMIT} |
 echo "Changed files: $CHANGED_FILES"
 
 # Only deploy master branch
-# TODO: Change this from 'nycData' to 'master'
-if [[ ${CIRCLE_BRANCH} != "nycData" ]]; then
+if [[ ${CIRCLE_BRANCH} != "master" ]]; then
     echo "Branch ${CIRCLE_BRANCH} does not need to be deployed"
 else
     # Install azure-cli
