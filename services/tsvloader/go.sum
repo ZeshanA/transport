@@ -1,3 +1,4 @@
 github.com/ZeshanA/transport v0.0.0-20190124104033-e3f3c4c435a2 h1:2ycqIN/5m3fbbFhlvvwDjXAXfRECLysDEDb5XivsAUQ=
 github.com/gocarina/gocsv v0.0.0-20190131101517-2a8c07cdf701 h1:3GYEASiqWM1mIxHN11ai0c0vRGl1ZFk/VCw/4srmoxE=
 github.com/gocarina/gocsv v0.0.0-20190131101517-2a8c07cdf701/go.mod h1:/oj50ZdPq/cUjA02lMZhijk5kR31SEydKyqah1OgBuo=
+github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
