@@ -6,13 +6,19 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
+	"transport/lib/network"
 
 	"github.com/gocarina/gocsv"
 )
 
+// Constants
 const timeFormat = "2006-01-02 15:04:05"
+
+var mtaArchiveStartDate = time.Date(2014, 8, 1, 0, 0, 0, 0, time.UTC)
+var mtaArchiveEndDate = time.Date(2014, 11, 1, 0, 0, 0, 0, time.UTC)
 
 // ArrivalEntry stores a single parsed bus entry from the MTA data
 type ArrivalEntry struct {
@@ -48,8 +54,10 @@ func main() {
 	}
 }
 
+// Returns a message telling the sender their request has been received
+// and then fetches and stores all archives
 func fetchArchivesEndpoint(w http.ResponseWriter, _ *http.Request) {
-	fmt.Printf("Fetch archives request received...")
+	fmt.Println("Fetch archives request received...")
 	_, err := w.Write([]byte("The server will now fetch data from the MTA, thank you!"))
 	if err != nil {
 		fmt.Printf("Error in fetchArchivesEndpoint handler: %v", err)
@@ -57,10 +65,35 @@ func fetchArchivesEndpoint(w http.ResponseWriter, _ *http.Request) {
 	fetchAndStoreArchives()
 }
 
+// Gets URLs for the mtaArchive date range and concurrently
+// fetches and stores the data from each URL
 func fetchAndStoreArchives() {
-	fmt.Println("Fetching archives!")
+	// Get URLs
+	URLs := getURLsForDateRange(mtaArchiveStartDate, mtaArchiveEndDate)
+	// For each URL
+	for _, URL := range URLs {
+		go fetchAndStore(URL)
+	}
 }
 
+// Fetches and stores the data for a single URL
+func fetchAndStore(URL string) {
+	pathToFile := path.Base(URL)
+
+	// Download the file
+	if err := network.DownloadFile(URL, pathToFile); err != nil {
+		fmt.Printf("Failed to fetch URL %s due to the following error: %v\n", URL, err)
+		return
+	}
+
+	// Unzip
+	fmt.Println("Succesfully fetched %s", pathToFile)
+	// Pass unzipped file path to loadMTAData
+	// Shove each struct from loadMTAData array into Postgres
+}
+
+// Returns an array of URLs with the date of each day between `start` and `end` (inclusive
+// of start and exclusive of end) interpolated into the URL
 func getURLsForDateRange(start, end time.Time) (urls []string) {
 	const URLFormat = "http://s3.amazonaws.com/MTABusTime/AppQuest3/MTA-Bus-Time_.%s.txt.xz"
 	var URLs []string
@@ -74,6 +107,8 @@ func getURLsForDateRange(start, end time.Time) (urls []string) {
 	return URLs
 }
 
+// Takes the MTA data in TSV format and returns an array
+// of marshalled ArrivalEntry structs
 func loadMTAData(path string) ([]ArrivalEntry, error) {
 	cleanedPath := filepath.Clean(path)
 	arrivalsFile, err := os.OpenFile(cleanedPath, os.O_RDONLY, os.ModePerm)
