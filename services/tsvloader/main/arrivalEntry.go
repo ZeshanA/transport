@@ -24,12 +24,13 @@ type ArrivalEntry struct {
 }
 
 // Timestamp is a wrapper around time.Time to allow for a custom UnmarshalCSV method
-type Timestamp time.Time
+type Timestamp struct {
+	time.Time
+}
 
 // UnmarshalCSV method on ArrivalEntry to specify how
 // to unmarshal incoming date strings.
 func (t *Timestamp) UnmarshalCSV(csv string) (err error) {
-	parsedTime, err := time.Parse(timeFormat, csv)
-	*t = Timestamp(parsedTime)
+	t.Time, err = time.Parse(timeFormat, csv)
 	return err
 }
