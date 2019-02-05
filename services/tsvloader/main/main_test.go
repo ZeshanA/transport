@@ -11,7 +11,7 @@ import (
 var expectedStructs = []ArrivalEntry{{
 	Latitude:         40.820351,
 	Longitude:        -73.851514,
-	Timestamp:        Timestamp(time.Date(2014, time.August, 2, 10, 30, 0, 0, time.UTC)),
+	Timestamp:        Timestamp{time.Date(2014, time.August, 2, 10, 30, 0, 0, time.UTC)},
 	VehicleID:        275,
 	DistanceAlong:    12337.92990815825,
 	DirectionID:      0,
@@ -23,7 +23,7 @@ var expectedStructs = []ArrivalEntry{{
 }, {
 	Latitude:         40.612174,
 	Longitude:        -74.035670,
-	Timestamp:        Timestamp(time.Date(2014, time.August, 2, 10, 34, 11, 0, time.UTC)),
+	Timestamp:        Timestamp{time.Date(2014, time.August, 2, 10, 34, 11, 0, time.UTC)},
 	VehicleID:        453,
 	DistanceAlong:    56.41863532032585,
 	DirectionID:      0,
