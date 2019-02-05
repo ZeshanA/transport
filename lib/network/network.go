@@ -5,18 +5,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"transport/lib/iohelper"
 )
 
-// closeSafely calls an io.ReadCloser's .Close() method
-// with error checking, to allow for safe, clean use with `defer`
-func closeSafely(item io.ReadCloser, resourcePath string) {
-	if err := item.Close(); err != nil {
-		fmt.Printf("Error when closing the following resource: %s\n", resourcePath)
-	}
-}
-
 // DownloadFile will download a URL to a local file. Avoids loading
-// the whole file into memory by writing as it receives data
+// the whole file into memory by writing as it receives data.
+// From: https://golangcode.com/download-a-file-from-a-url/
 func DownloadFile(URL string, filepath string) error {
 
 	fmt.Printf("Fetching URL %s and saving at %s\n", URL, filepath)
@@ -26,14 +20,14 @@ func DownloadFile(URL string, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer closeSafely(resp.Body, URL)
+	defer iohelper.CloseSafely(resp.Body, URL)
 
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	defer closeSafely(out, filepath)
+	defer iohelper.CloseSafely(out, filepath)
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)

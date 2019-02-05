@@ -8,10 +8,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
+	"transport/lib/csvhelper"
 	"transport/lib/network"
 
 	"github.com/gocarina/gocsv"
+	"github.com/mholt/archiver"
 )
 
 // Constants
@@ -78,18 +81,16 @@ func fetchAndStoreArchives() {
 
 // Fetches and stores the data for a single URL
 func fetchAndStore(URL string) {
-	pathToFile := path.Base(URL)
+	filename := fetchSingleDay(URL)
+	decompressedFilename := decompressFile(filename)
+	removeNullRows(decompressedFilename)
+	arrivalEntries := unmarshalFile(decompressedFilename)
 
-	// Download the file
-	if err := network.DownloadFile(URL, pathToFile); err != nil {
-		fmt.Printf("Failed to fetch URL %s due to the following error: %v\n", URL, err)
-		return
+	// Put each struct from loadMTAData array into Postgres
+	for _, entry := range arrivalEntries {
+		// TODO: Replace the printing below with insertion into a DB
+		fmt.Printf("%v\n", entry)
 	}
-
-	// Unzip
-	fmt.Println("Succesfully fetched %s", pathToFile)
-	// Pass unzipped file path to loadMTAData
-	// Shove each struct from loadMTAData array into Postgres
 }
 
 // Returns an array of URLs with the date of each day between `start` and `end` (inclusive
@@ -107,27 +108,91 @@ func getURLsForDateRange(start, end time.Time) (urls []string) {
 	return URLs
 }
 
+func fetchSingleDay(URL string) (filename string) {
+	nameOfFile := path.Base(URL)
+
+	// Download the file
+	if err := network.DownloadFile(URL, nameOfFile); err != nil {
+		panic(fmt.Sprintf("failed to fetch URL %s due to the following error: %v\n", URL, err))
+	}
+
+	fmt.Printf("Succesfully fetched %s...\n", nameOfFile)
+
+	return nameOfFile
+}
+
+func decompressFile(filename string) (decompressedFilename string) {
+	// Decompress the .xz file into "filename.xz_uncompressed"
+	newFilename := filename + "_uncompressed"
+	err := archiver.DecompressFile(filename, newFilename)
+	if err != nil {
+		panic(fmt.Sprintf("failed to unzip file '%s' due to the following error: %v\n", newFilename, err))
+	}
+
+	fmt.Printf("Successfully decompressed %s...\n", filename)
+
+	return newFilename
+}
+
+func removeNullRows(filename string) (nullRowCount int) {
+	nullCount, err := csvhelper.RemoveNullRows(filename, "\t")
+	if err != nil {
+		panic(fmt.Sprintf(
+			"failed to remove null rows from '%s' due to the following error: %v\n",
+			filename,
+			err,
+		))
+	}
+	fmt.Printf("Successfully removed %d null rows from %s...\n", nullCount, filename)
+	return nullCount
+}
+
+func unmarshalFile(filename string) []ArrivalEntry {
+	// Pass decompressed file path to loadMTAData
+	arrivalEntries, err := loadMTAData(filename)
+	if err != nil {
+		filenameWithoutExtension := strings.TrimSuffix(filename, filepath.Ext(filename))
+		panic(fmt.Sprintf("failed to parse ArrivalEntry structs from %s due to: %v\n", filenameWithoutExtension, err))
+	}
+
+	fmt.Printf("Succesfully unmarshalled %s into %d ArrivalEntry structs...\n", filename, len(arrivalEntries))
+	return arrivalEntries
+}
+
 // Takes the MTA data in TSV format and returns an array
 // of marshalled ArrivalEntry structs
 func loadMTAData(path string) ([]ArrivalEntry, error) {
+
+	// Clean the path passed in
 	cleanedPath := filepath.Clean(path)
+
+	fmt.Printf("Loading in rows from %s...\n", cleanedPath)
+
+	// Open up the .tsv file
 	arrivalsFile, err := os.OpenFile(cleanedPath, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("Error whilst reading MTA data file: \n +%v", err)
 	}
 	defer arrivalsFile.Close()
 
+	// Our structs will be added to the 'entries' slice as the file is being unmarshalled
 	var entries []ArrivalEntry
 
+	// Tell gocsv we're using tabs (TSVs) instead of commas (CSVs)
 	gocsv.SetCSVReader(func(in io.Reader) gocsv.CSVReader {
 		r := csv.NewReader(in)
 		r.Comma = '\t'
 		return r
 	})
 
+	fmt.Printf("Unmarshalling rows from %s...\n", cleanedPath)
+
+	// Unmarshal the .tsv file into an array of ArrivalEntry structs
 	if err := gocsv.UnmarshalFile(arrivalsFile, &entries); err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("Succesfully unmarshalled %d rows from %s...\n", len(entries), cleanedPath)
 
 	return entries, nil
 }
