@@ -35,11 +35,7 @@ var expectedStructs = []ArrivalEntry{{
 }}
 
 func TestLoadMTAData(t *testing.T) {
-	parsedData, err := loadMTAData("./sampledata_test.tsv")
-
-	if err != nil {
-		t.Errorf("Error whilst loading MTA data: %+v", err)
-	}
+	parsedData := unmarshalMTADataFile("./sampledata_test.tsv")
 
 	for i, expectedEntry := range expectedStructs {
 		if !reflect.DeepEqual(parsedData[i], expectedEntry) {
