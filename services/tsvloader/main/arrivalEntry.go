@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"database/sql/driver"
+	"time"
+)
 
 // Constants
 const timeFormat = "2006-01-02 15:04:05"
@@ -23,7 +26,14 @@ type ArrivalEntry struct {
 	NextStopID       string    `csv:"next_scheduled_stop_id"`
 }
 
-// Timestamp is a wrapper around time.Time to allow for a custom UnmarshalCSV method
+// TableName defines the name of the table in the DB that
+// ArrivalEntry structs will be added to
+func (ArrivalEntry) TableName() string {
+	return "arrival"
+}
+
+// Timestamp is a wrapper around time.Time to allow for a custom
+// UnmarshalCSV method
 type Timestamp struct {
 	time.Time
 }
@@ -33,4 +43,17 @@ type Timestamp struct {
 func (t *Timestamp) UnmarshalCSV(csv string) (err error) {
 	t.Time, err = time.Parse(timeFormat, csv)
 	return err
+}
+
+// Value describes how to marshal a Timestamp when inserting into a DB
+func (t Timestamp) Value() (driver.Value, error) {
+	return t.Time, nil
+}
+
+// Scan defines how values fetched from the DB can b
+// unmarshalled into a Timestamp struct
+// TODO: Implement Scanner interface for timestamps or else
+//  structs from DB can't be unmarshalled
+func (t *Timestamp) Scan(value interface{}) error {
+	return nil
 }

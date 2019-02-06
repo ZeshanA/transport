@@ -42,10 +42,5 @@ func fetchAndStore(URL string) {
 	decompressedFilename := decompressFile(filename)
 	removeNullRows(decompressedFilename)
 	arrivalEntries := unmarshalMTADataFile(decompressedFilename)
-
-	// Put each struct from unmarshalMTADataFile array into Postgres
-	for _, entry := range arrivalEntries {
-		// TODO: Replace the printing below with insertion into a DB
-		fmt.Printf("%v\n", entry)
-	}
+	store(arrivalEntries)
 }
