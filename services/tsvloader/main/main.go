@@ -7,10 +7,21 @@ import (
 
 func main() {
 	fmt.Println("Starting HTTP server...")
+
 	// When /fetch is loaded, trigger fetching and storing of archives
 	http.HandleFunc("/fetch", fetchArchivesEndpoint)
+	http.HandleFunc("/health", healthEndpoint)
+
 	if err := http.ListenAndServe(":80", nil); err != nil {
 		panic(err)
+	}
+}
+
+func healthEndpoint(w http.ResponseWriter, _ *http.Request) {
+	fmt.Println("Received health request...")
+	_, err := w.Write([]byte("Healthy!"))
+	if err != nil {
+		fmt.Printf("Error ocurred in health endpoint: %s\n", err)
 	}
 }
 
