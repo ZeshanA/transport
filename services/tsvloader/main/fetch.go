@@ -48,7 +48,7 @@ func fetchSingleDay(URL string) (filename string) {
 // e.g. decompressFile("main/abc.xz") => "main/abc.xz_uncompressed"
 func decompressFile(path string) (decompressedPath string) {
 	newPath := path + "_uncompressed"
-	fmt.Printf("Decompressing %s into %s...\n", path, decompressedPath)
+	fmt.Printf("Decompressing %s into %s...\n", path, newPath)
 	err := archiver.DecompressFile(path, newPath)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unzip file '%s' due to the following error: %v\n", newPath, err))

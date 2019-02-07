@@ -22,7 +22,7 @@ func fetchArchivesEndpoint(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		fmt.Printf("Error in fetchArchivesEndpoint handler: %v", err)
 	}
-	fetchAndStoreArchives()
+	go fetchAndStoreArchives()
 }
 
 // Gets URLs for the mtaArchive date range and concurrently
