@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"time"
 	"transport/lib/csvhelper"
 	"transport/lib/network"
@@ -49,6 +48,7 @@ func fetchSingleDay(URL string) (filename string) {
 // e.g. decompressFile("main/abc.xz") => "main/abc.xz_uncompressed"
 func decompressFile(path string) (decompressedPath string) {
 	newPath := path + "_uncompressed"
+	fmt.Printf("Decompressing %s into %s...\n", path, decompressedPath)
 	err := archiver.DecompressFile(path, newPath)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unzip file '%s' due to the following error: %v\n", newPath, err))
@@ -57,10 +57,10 @@ func decompressFile(path string) (decompressedPath string) {
 	return newPath
 }
 
-// Removes all rows in the TSV file at 'path' that have null values in any column
-// Returns the number of null rows that were removed
-func removeNullRows(path string) (nullRowCount int) {
-	nullCount, err := csvhelper.RemoveNullRows(path, "\t")
+// removeNullRows removes all rows in the TSV file at 'path' that have null values in any column.
+// Returns a pointer to a []byte containing only the valid rows.
+func removeNullRows(path string) (validRows *[]byte) {
+	cleanedRows, err := csvhelper.RemoveNullRows(path, "\t")
 	if err != nil {
 		panic(fmt.Sprintf(
 			"failed to remove null rows from '%s' due to the following error: %v\n",
@@ -68,27 +68,14 @@ func removeNullRows(path string) (nullRowCount int) {
 			err,
 		))
 	}
-	fmt.Printf("Successfully removed %d null rows from %s...\n", nullCount, path)
-	return nullCount
+	fmt.Printf("Successfully removed null rows from %s...\n", path)
+	return cleanedRows
 }
 
-// Takes the MTA data in TSV format and returns an array
+// Takes the MTA data in TSV format (as a []byte) and returns an array
 // of marshalled ArrivalEntry structs
-func unmarshalMTADataFile(path string) []ArrivalEntry {
-
-	// Clean the path passed in
-	cleanedPath := filepath.Clean(path)
-
-	fmt.Printf("Loading in rows from %s...\n", cleanedPath)
-
-	// Open up the .tsv file
-	arrivalsFile, err := os.OpenFile(cleanedPath, os.O_RDONLY, os.ModePerm)
-	if err != nil {
-		panic(fmt.Errorf("Error whilst reading MTA data file: \n +%v", err))
-	}
-	defer arrivalsFile.Close()
-
-	// Our structs will be added to the 'entries' slice as the file is being unmarshalled
+func unmarshalMTADataBytes(bytes *[]byte) []ArrivalEntry {
+	// Our structs will be added to the 'entries' slice as the bytes are being unmarshalled
 	var entries []ArrivalEntry
 
 	// Tell gocsv we're using tabs (TSVs) instead of commas (CSVs)
@@ -98,14 +85,14 @@ func unmarshalMTADataFile(path string) []ArrivalEntry {
 		return r
 	})
 
-	fmt.Printf("Unmarshalling rows from %s...\n", cleanedPath)
+	fmt.Println("Unmarshalling rows...")
 
 	// Unmarshal the .tsv file into an array of ArrivalEntry structs
-	if err := gocsv.UnmarshalFile(arrivalsFile, &entries); err != nil {
+	if err := gocsv.UnmarshalBytes(*bytes, &entries); err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Succesfully unmarshalled %d rows from %s...\n", len(entries), cleanedPath)
+	fmt.Printf("Succesfully unmarshalled %d rows...\n", len(entries))
 
 	return entries
 }
