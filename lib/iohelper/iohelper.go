@@ -22,7 +22,7 @@ func CloseSafely(item io.ReadCloser, resourcePath string) {
 func GetEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" && flag.Lookup("test.v") == nil {
-		log.Fatalf("%s not set\n", value)
+		log.Fatalf("%s not set\n", key)
 	}
 	return value
 }
