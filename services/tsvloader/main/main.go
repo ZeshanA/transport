@@ -32,7 +32,7 @@ func fetchAndStoreArchives() {
 	URLs := getURLsForDateRange(mtaArchiveStartDate, mtaArchiveEndDate)
 	// For each URL
 	for _, URL := range URLs {
-		go fetchAndStore(URL)
+		fetchAndStore(URL)
 	}
 }
 
@@ -42,5 +42,6 @@ func fetchAndStore(URL string) {
 	decompressedFilename := decompressFile(filename)
 	removeNullRows(decompressedFilename)
 	arrivalEntries := unmarshalMTADataFile(decompressedFilename)
+	removeDataFiles(filename, decompressedFilename)
 	store(arrivalEntries)
 }

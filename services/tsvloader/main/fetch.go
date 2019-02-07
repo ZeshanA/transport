@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -107,4 +108,16 @@ func unmarshalMTADataFile(path string) []ArrivalEntry {
 	fmt.Printf("Succesfully unmarshalled %d rows from %s...\n", len(entries), cleanedPath)
 
 	return entries
+}
+
+// removeDataFiles deletes the files at every path passed in.
+// Not recursive (only works for files or *empty* directories).
+// Fatal error if any of the deletions fail.
+func removeDataFiles(paths ...string) {
+	for _, filename := range paths {
+		err := os.Remove(filename)
+		if err != nil {
+			log.Fatalf("failed to delete file %s due to: %v\n", err)
+		}
+	}
 }

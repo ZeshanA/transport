@@ -14,25 +14,25 @@ func RemoveNullRows(path string, columnSeparator string) (nullRowCount int, e er
 	// Load file into memory
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return 0, fmt.Errorf("csv.RemoveNullRows: opening file '%s' failed due to: %v", path, err)
+		return 0, fmt.Errorf("csv.RemoveNullRows: opening file '%s' failed due to: %v\n", path, err)
 	}
 
 	// Remove any in-memory rows containing null values
 	nullRows, validRows := getValidRows(&data, columnSeparator)
 
 	// Empty the file so we can overwrite all rows with the cleaned data in memory
-	fmt.Printf("Emptying file '%s'...", path)
+	fmt.Printf("Emptying file '%s'...\n", path)
 	err = os.Truncate(path, 0)
 	if err != nil {
-		return 0, fmt.Errorf("csv.RemoveNullRows: emptying file '%s' failed due to: %v", path, err)
+		return 0, fmt.Errorf("csv.RemoveNullRows: emptying file '%s' failed due to: %v\n", path, err)
 	}
-	fmt.Printf("Succesfully emptied file '%s'...", path)
+	fmt.Printf("Succesfully emptied file '%s'...\n", path)
 
 	// Write just the valid, non-null rows back to the file
-	fmt.Printf("Writing %d valid rows to file '%s'...", len(validRows), path)
+	fmt.Printf("Writing %d valid rows to file '%s'...\n", len(validRows), path)
 	err = ioutil.WriteFile(path, []byte(strings.Join(validRows, "\n")), 0666)
 	if err != nil {
-		return 0, fmt.Errorf("csv.RemoveNullRows: writing valid rows to file '%s' failed due to: %v", path, err)
+		return 0, fmt.Errorf("csv.RemoveNullRows: writing valid rows to file '%s' failed due to: %v\n", path, err)
 	}
 
 	return nullRows, nil
