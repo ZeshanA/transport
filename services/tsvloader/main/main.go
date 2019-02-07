@@ -40,8 +40,8 @@ func fetchAndStoreArchives() {
 func fetchAndStore(URL string) {
 	filename := fetchSingleDay(URL)
 	decompressedFilename := decompressFile(filename)
-	removeNullRows(decompressedFilename)
-	arrivalEntries := unmarshalMTADataFile(decompressedFilename)
+	validRows := removeNullRows(decompressedFilename)
+	arrivalEntries := unmarshalMTADataBytes(validRows)
 	removeDataFiles(filename, decompressedFilename)
 	store(arrivalEntries)
 }
