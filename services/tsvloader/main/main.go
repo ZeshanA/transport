@@ -23,7 +23,7 @@ func fetchAndStoreArchives(hostID int, hostCount int) {
 	// Number of URLs each host needs to process
 	taskCount := len(URLs) / hostCount
 	// The index of the first URL this host should process (based on its ID)
-	firstTaskIndex := (hostID - 1) * taskCount
+	firstTaskIndex := hostID * taskCount
 
 	// Process 'taskCount' URLs starting from firstTaskIndex
 	for i := firstTaskIndex; i < firstTaskIndex+taskCount; i++ {
