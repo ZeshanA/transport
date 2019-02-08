@@ -3,6 +3,7 @@ package csvhelper
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strings"
 )
 
@@ -34,7 +35,7 @@ func getValidRows(data *[]byte, columnSeparator string) (nullRowCount int, valid
 	var validRows []string
 
 	for i, row := range rows {
-		fmt.Printf("Removing null rows: processed %d rows of %d...\n", i+1, len(rows))
+		printRowProgress(i, len(rows))
 		validRow := true
 		columns := strings.Split(row, columnSeparator)
 		for _, col := range columns {
@@ -50,4 +51,12 @@ func getValidRows(data *[]byte, columnSeparator string) (nullRowCount int, valid
 	}
 	fmt.Printf("Succesfully removed %d null rows...\n", nullRows)
 	return nullRows, validRows
+}
+
+// printRowProgress prints a progress message every time another ~10%
+// of rows are processed
+func printRowProgress(row int, totalRows int) {
+	if row%int(math.Floor(float64(totalRows/10))) == 0 {
+		fmt.Printf("Removing nulls: processed %f percent of rows\n", float64(row)/float64(totalRows)*100)
+	}
 }
