@@ -1,49 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"log"
+	"os"
+	"strconv"
 )
 
 func main() {
-	fmt.Println("Starting HTTP server...")
-
-	// When /fetch is loaded, trigger fetching and storing of archives
-	http.HandleFunc("/fetch", fetchArchivesEndpoint)
-	http.HandleFunc("/health", healthEndpoint)
-
-	if err := http.ListenAndServe(":80", nil); err != nil {
-		panic(err)
-	}
-}
-
-func healthEndpoint(w http.ResponseWriter, _ *http.Request) {
-	fmt.Println("Received health request...")
-	_, err := w.Write([]byte("Healthy!"))
+	hostID, err := strconv.Atoi(os.Args[1])
+	hostCount, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		fmt.Printf("Error ocurred in health endpoint: %s\n", err)
+		log.Fatalf("Failed to convert args to integers: %v\n", os.Args)
 	}
-}
-
-// Returns a message telling the sender their request has been received
-// and then fetches and stores all archives
-func fetchArchivesEndpoint(w http.ResponseWriter, _ *http.Request) {
-	fmt.Println("Fetch archives request received...")
-	_, err := w.Write([]byte("The server will now fetch data from the MTA, thank you!"))
-	if err != nil {
-		fmt.Printf("Error in fetchArchivesEndpoint handler: %v", err)
-	}
-	go fetchAndStoreArchives()
+	fetchAndStoreArchives(hostID, hostCount)
 }
 
 // Gets URLs for the mtaArchive date range and concurrently
 // fetches and stores the data from each URL
-func fetchAndStoreArchives() {
+func fetchAndStoreArchives(hostID int, hostCount int) {
 	// Get URLs
 	URLs := getURLsForDateRange(mtaArchiveStartDate, mtaArchiveEndDate)
-	// For each URL
-	for _, URL := range URLs {
-		fetchAndStore(URL)
+	// Number of URLs each host needs to process
+	taskCount := len(URLs) / hostCount
+	// The index of the first URL this host should process (based on its ID)
+	firstTaskIndex := (hostID - 1) * taskCount
+
+	// Process 'taskCount' URLs starting from firstTaskIndex
+	for i := firstTaskIndex; i < firstTaskIndex+taskCount; i++ {
+		fetchAndStore(URLs[i])
 	}
 }
 
