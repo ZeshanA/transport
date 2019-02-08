@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"transport/lib/iohelper"
+	"transport/lib/progress"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -37,7 +38,7 @@ func store(entries []ArrivalEntry) {
 
 	// Put each struct from unmarshalMTADataFile array into Postgres
 	for i, entry := range entries {
-		fmt.Printf("Inserting entry %d into the database\n", i)
+		progress.PrintAtIntervals(i, len(entries), "Inserting into DB:")
 		db.NewRecord(entry)
 		db.Create(&entry)
 	}
