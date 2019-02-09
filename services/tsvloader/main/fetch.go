@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 	"transport/lib/csvhelper"
 	"transport/lib/network"
@@ -31,29 +32,36 @@ func getURLsForDateRange(start, end time.Time) (urls []string) {
 }
 
 // Downloads the file from 'URL' and returns the filename it was saved as
-func fetchSingleDay(URL string) (filename string) {
+func fetchSingleDay(URL string, directory string) (pathToFile string) {
 	nameOfFile := path.Base(URL)
+	storagePath := filepath.Join(directory, nameOfFile)
 
 	// Download the file
-	if err := network.DownloadFile(URL, nameOfFile); err != nil {
+	if err := network.DownloadFile(URL, storagePath); err != nil {
 		panic(fmt.Sprintf("failed to fetch URL %s due to the following error: %v\n", URL, err))
 	}
 
 	fmt.Printf("Succesfully fetched %s...\n", nameOfFile)
 
-	return nameOfFile
+	return storagePath
 }
 
 // Decompresses the file at 'path' and stores the result at '${path}_uncompressed'
 // e.g. decompressFile("main/abc.xz") => "main/abc.xz_uncompressed"
-func decompressFile(path string) (decompressedPath string) {
-	newPath := path + "_uncompressed"
-	fmt.Printf("Decompressing %s into %s...\n", path, newPath)
-	err := archiver.DecompressFile(path, newPath)
+func decompressFile(compressedPath string) (decompressedPath string) {
+	// Construct paths for decompressed files
+	newPath := compressedPath + "_uncompressed"
+
+	fmt.Printf("Decompressing %s into %s...\n", compressedPath, newPath)
+
+	// Decompress file and write it to newPath
+	err := archiver.DecompressFile(compressedPath, newPath)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unzip file '%s' due to the following error: %v\n", newPath, err))
 	}
-	fmt.Printf("Successfully decompressed %s...\n", path)
+
+	fmt.Printf("Successfully decompressed %s...\n", compressedPath)
+
 	return newPath
 }
 
