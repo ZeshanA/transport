@@ -89,6 +89,7 @@ func unmarshalMTADataBytes(bytes *[]byte) []ArrivalEntry {
 
 	// Unmarshal the .tsv file into an array of ArrivalEntry structs
 	if err := gocsv.UnmarshalBytes(*bytes, &entries); err != nil {
+		fmt.Printf("Following error whilst unmarshalling: %s\n", err)
 		fmt.Printf("Error occurred whilst unmarshalling the following: %s\n", string(*bytes))
 		panic(err)
 	}
