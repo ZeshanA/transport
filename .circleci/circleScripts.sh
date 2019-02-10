@@ -7,7 +7,7 @@ cd .circleci
 set -e
 
 # List the directory names of your services here:
-SERVICES="tsvloader"
+SERVICES=""
 
 # Run test or deploy script based on command arg
 if [[ $1 == "test" ]]; then
