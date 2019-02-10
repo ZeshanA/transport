@@ -39,8 +39,8 @@ log             = events.log
 environment = "TRANSPORT_DB_USERNAME={REDACTED} TRANSPORT_DB_PASSWORD={REDACTED}"
 
 # This specifies what commandline arguments should be passed to the executable.
-arguments       = $(Process) 23
+arguments       = $(Process) 92 /data/tsvloader
 
 # This specifies that the specification, as parsed up to this point, should be
 # submitted 5 times.  (If the number is omitted, the number '1' is assumed.)
-queue 23
+queue 92
