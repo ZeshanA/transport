@@ -114,7 +114,7 @@ func removeDataFiles(paths ...string) {
 	for _, filename := range paths {
 		err := os.Remove(filename)
 		if err != nil {
-			log.Fatalf("failed to delete file %s due to: %v\n", err)
+			log.Fatalf("failed to delete file %s due to: %v\n", filename, err)
 		}
 	}
 }

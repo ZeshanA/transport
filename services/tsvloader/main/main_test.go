@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"reflect"
 	"testing"
 	"time"
@@ -35,7 +37,11 @@ var expectedStructs = []ArrivalEntry{{
 }}
 
 func TestLoadMTAData(t *testing.T) {
-	parsedData := unmarshalMTADataFile("./sampledata_test.tsv")
+	data, err := ioutil.ReadFile("./sampledata_test.tsv")
+	if err != nil {
+		log.Fatalf("Error whilst loading file for test: %v\n", err)
+	}
+	parsedData := unmarshalMTADataBytes(&data)
 
 	for i, expectedEntry := range expectedStructs {
 		if !reflect.DeepEqual(parsedData[i], expectedEntry) {
