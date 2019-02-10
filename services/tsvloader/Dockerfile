@@ -50,6 +50,9 @@ RUN go get
 # If debugging, install Delve debugger
 RUN if [ "${DEBUG}" = "true" ] ; then go get github.com/derekparker/delve/cmd/dlv && apk add --no-cache libc6-compat ; fi
 
+# Visit each package and run `go test`
+RUN for dir in ./*/; do cd ${dir} && go test && cd ../; done
+
 # Build the Go executable inside our container
 RUN go build -gcflags "${COMPILE_FLAGS}" -o executable ./...
 
