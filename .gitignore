@@ -13,3 +13,6 @@
 
 # JetBrains IDEs
 /**/.idea/**/*
+
+# macOS-specific
+.DS_STORE
