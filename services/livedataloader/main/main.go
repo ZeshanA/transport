@@ -91,8 +91,12 @@ func initialiseServer() {
 	log.Fatal(http.ListenAndServe(":8001", nil))
 }
 
-func liveDataRequestHandler(w http.ResponseWriter, _ *http.Request) {
-	_, err := w.Write([]byte(vehicleData))
+func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
+	// Construct response based on currently cached data and the query params in request
+	response := createVehicleDataResponse(vehicleData, req.URL.Query())
+
+	// Write response
+	_, err := w.Write([]byte(response))
 	if err != nil {
 		log.Printf("error occurred in liveDataRequestHandler: %s\n", err)
 	}
