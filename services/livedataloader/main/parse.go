@@ -8,34 +8,34 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// The NestParent type represents an item under "MonitoredVehicleJourney" that
+// The nestParent type represents an item under "MonitoredVehicleJourney" that
 // points to another object, instead of a raw value. If one of the fields
 // we're filtering by is nested, we need to append the names of its parent
-// before looking it up in the MonitoredVehicleJourney. Creating the NestParent type
+// before looking it up in the MonitoredVehicleJourney. Creating the nestParent type
 // avoids us having to use strings for the parent names in the `nestedFields` lookup table.
-type NestParent string
+type nestParent string
 
 const (
-	MonitoredCall           NestParent = "MonitoredCall"
-	FramedVehicleJourneyRef NestParent = "FramedVehicleJourneyRef"
-	VehicleLocation         NestParent = "VehicleLocation"
+	monitoredCall           nestParent = "MonitoredCall"
+	framedVehicleJourneyRef nestParent = "FramedVehicleJourneyRef"
+	vehicleLocation         nestParent = "VehicleLocation"
 )
 
 // nestedFields is a lookup table for fields that we might need to filter by,
 // which aren't stored directly under MonitoredVehicleJourney, but are nested
-// inside an additional object within MonitoredVehicleJourney. The NestParent value
+// inside an additional object within MonitoredVehicleJourney. The nestParent value
 // is the name of this parent object that we must prepend when looking up the field.
-var nestedFields = map[string]NestParent{
-	"ArrivalProximityText":   MonitoredCall,
-	"DistanceFromStop":       MonitoredCall,
-	"NumberOfStopsAway":      MonitoredCall,
-	"StopPointRef":           MonitoredCall,
-	"VisitNumber":            MonitoredCall,
-	"StopPointName":          MonitoredCall,
-	"DataFrameRef":           FramedVehicleJourneyRef,
-	"DatedVehicleJourneyRef": FramedVehicleJourneyRef,
-	"Longitude":              VehicleLocation,
-	"Latitude":               VehicleLocation,
+var nestedFields = map[string]nestParent{
+	"ArrivalProximityText":   monitoredCall,
+	"DistanceFromStop":       monitoredCall,
+	"NumberOfStopsAway":      monitoredCall,
+	"StopPointRef":           monitoredCall,
+	"VisitNumber":            monitoredCall,
+	"StopPointName":          monitoredCall,
+	"DataFrameRef":           framedVehicleJourneyRef,
+	"DatedVehicleJourneyRef": framedVehicleJourneyRef,
+	"Longitude":              vehicleLocation,
+	"Latitude":               vehicleLocation,
 }
 
 // The JSON path in the response where the VehicleActivity array (containing MonitoredVehicleJourney
