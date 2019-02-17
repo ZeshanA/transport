@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/url"
 	"strings"
 
@@ -45,14 +46,19 @@ const vehicleActivityPath = "Siri.ServiceDelivery.VehicleMonitoringDelivery.0.Ve
 // items that satisfied the filters passed in (e.g. LineRef="MTA NYCT_B59")
 func createVehicleDataResponse(JSONData *string, filters url.Values) *string {
 
+	log.Println("Creating response...")
+
 	// Extract the array of MonitoredVehicleJourney items from the response
 	liveVehicleData := gjson.Get(*JSONData, vehicleActivityPath)
 
 	// If there are no filters, return a string of the entire array
 	if len(filters) == 0 {
+		log.Printf("No filters specified, returning all objects...")
 		liveVehicleData := liveVehicleData.String()
 		return &liveVehicleData
 	}
+
+	log.Println("Filters found...")
 
 	// Return a JSON array (in string format) containing all matching MonitoredVehicleJourneys
 	return getJSONArrayOfMatches(&liveVehicleData, filters)
@@ -63,19 +69,23 @@ func createVehicleDataResponse(JSONData *string, filters url.Values) *string {
 // containing the MonitoredVehicleJourney items that satisfied all the filters.
 func getJSONArrayOfMatches(liveVehicleData *gjson.Result, filters url.Values) *string {
 	var matches []gjson.Result
+
+	log.Println("Applying filters...")
+
 	liveVehicleData.ForEach(func(key, value gjson.Result) bool {
 		if satisfiesFilters(value, filters) {
 			matches = append(matches, value)
 		}
 		return true
 	})
-	formattedMatches := createJSONArray(&matches)
-	return formattedMatches
+
+	return createJSONArray(&matches)
 }
 
 // Takes a pointer to an array of gjson.Result items and returns a pointer to a JSON
 // array (in string format) containing said items (e.g. [ "{}", "{}" ] -> "[ {}, {} ]")
 func createJSONArray(elements *[]gjson.Result) *string {
+	log.Println("Creating JSON array from filtered result...")
 	elementStrings := resultsToStrings(elements)
 	commaSeparatedStrings := strings.Join(*elementStrings, ",\n")
 	JSONArray := "[" + commaSeparatedStrings + "]"

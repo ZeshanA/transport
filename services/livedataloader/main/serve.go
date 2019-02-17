@@ -22,11 +22,15 @@ func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
 	// and the query params from the request
 	response := *createVehicleDataResponse(&vehicleData, req.URL.Query())
 
+	log.Printf("Response created succesfully, writing to output...")
+
 	// Write response
 	_, err := w.Write([]byte(response))
 	if err != nil {
-		log.Printf("error occurred in liveDataRequestHandler: %s\n", err)
+		log.Printf("error occurred whilst writing response in liveDataRequestHandler: %s\n", err)
 	}
+
+	log.Printf("Response completed succesfully!")
 }
 
 func healthEndpoint(w http.ResponseWriter, _ *http.Request) {
