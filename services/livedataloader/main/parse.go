@@ -42,42 +42,79 @@ var nestedFields = map[string]nestParent{
 // objects) can be found
 const vehicleActivityPath = "Siri.ServiceDelivery.VehicleMonitoringDelivery.0.VehicleActivity"
 
-func createVehicleDataResponse(JSONData string, filters url.Values) string {
-	result := gjson.Get(JSONData, vehicleActivityPath)
+// Returns a JSON array (as a string) that contains only the MonitoredVehicleJourney
+// items that satisfied the filters passed in (e.g. LineRef="MTA NYCT_B59")
+func createVehicleDataResponse(JSONData *string, filters url.Values) *string {
+
+	// Extract the array of MonitoredVehicleJourney items from the response
+	liveVehicleData := gjson.Get(*JSONData, vehicleActivityPath)
+
+	// If there are no filters, return a string of the entire array
 	if len(filters) == 0 {
-		return result.String()
+		liveVehicleData := liveVehicleData.String()
+		return &liveVehicleData
 	}
-	var matching []gjson.Result
-	result.ForEach(func(key, value gjson.Result) bool {
+
+	// Return a JSON array (in string format) containing all matching MonitoredVehicleJourneys
+	return getJSONArrayOfMatches(&liveVehicleData, filters)
+}
+
+// Takes a pointer to a gjson.Result containing an array of MonitoredVehicleJourneys,
+// and a map containing filters. Returns a pointer to a JSON array (in string format)
+// containing the MonitoredVehicleJourney items that satisfied all the filters.
+func getJSONArrayOfMatches(liveVehicleData *gjson.Result, filters url.Values) *string {
+	var matches []gjson.Result
+	liveVehicleData.ForEach(func(key, value gjson.Result) bool {
 		if satisfiesFilters(value, filters) {
 			fmt.Printf("Satisfied!")
-			matching = append(matching, value)
+			matches = append(matches, value)
 		}
 		return true
 	})
-	return createJSONArray(matching)
+	formattedMatches := createJSONArray(&matches)
+	return formattedMatches
 }
 
-func createJSONArray(elements []gjson.Result) string {
-	elementStrings := make([]string, len(elements))
-	for i, element := range elements {
+// Takes a pointer to an array of gjson.Result items and returns a pointer to a JSON
+// array (in string format) containing said items (e.g. [ "{}", "{}" ] -> "[ {}, {} ]")
+func createJSONArray(elements *[]gjson.Result) *string {
+	elementStrings := resultsToStrings(elements)
+	commaSeparatedStrings := strings.Join(*elementStrings, ",\n")
+	JSONArray := "[" + commaSeparatedStrings + "]"
+	return &JSONArray
+}
+
+// Takes a pointer to an array of gjson.Result items, and returns an array containing
+// each Result item converted to a string
+func resultsToStrings(elements *[]gjson.Result) *[]string {
+	elementStrings := make([]string, len(*elements))
+	for i, element := range *elements {
 		elementStrings[i] = element.String()
 	}
-	commaSeparatedStrings := strings.Join(elementStrings, ",\n")
-	return "[" + commaSeparatedStrings + "]"
+	return &elementStrings
 }
 
-func satisfiesFilters(value gjson.Result, filters url.Values) bool {
+// Returns true iff the values of the fields in `item` match the values
+// given in the `filters` map
+func satisfiesFilters(item gjson.Result, filters url.Values) bool {
 
+	// Loop over each filter
 	for filter, expectedVal := range filters {
+
+		// Most fields are nested directly under the MonitoredVehicleJourney object
 		prefix := "MonitoredVehicleJourney."
+
+		// Some fields have an extra layer of nesting, so append the additional parent
+		// objects to the path we use to look up the field in the JSON data
 		if parent, hasParent := nestedFields[filter]; hasParent {
 			prefix += string(parent) + "."
 		}
 
-		if value.Get(prefix+filter).String() != expectedVal[0] {
+		// Look up the field mentioned in the filter (using the right prefix) and verify
+		if item.Get(prefix+filter).String() != expectedVal[0] {
 			return false
 		}
+
 	}
 	return true
 }

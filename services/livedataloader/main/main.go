@@ -92,8 +92,8 @@ func initialiseServer() {
 }
 
 func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
-	// Construct response based on currently cached data and the query params in request
-	response := createVehicleDataResponse(vehicleData, req.URL.Query())
+	// Construct response based on currently cached data and the query params from the request
+	response := *createVehicleDataResponse(&vehicleData, req.URL.Query())
 
 	// Write response
 	_, err := w.Write([]byte(response))
