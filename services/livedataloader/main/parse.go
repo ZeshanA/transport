@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -66,7 +65,6 @@ func getJSONArrayOfMatches(liveVehicleData *gjson.Result, filters url.Values) *s
 	var matches []gjson.Result
 	liveVehicleData.ForEach(func(key, value gjson.Result) bool {
 		if satisfiesFilters(value, filters) {
-			fmt.Printf("Satisfied!")
 			matches = append(matches, value)
 		}
 		return true

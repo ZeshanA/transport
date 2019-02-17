@@ -6,12 +6,13 @@ import (
 	"transport/lib/iohelper"
 )
 
+// Currently cached data from MTA
 var vehicleData string
 
 func main() {
-	initialDataFetched := make(chan bool)
-	go initialiseDataFetching(vehicleMonitoringURL, iohelper.GetEnv("MTA_API_KEY"), initialDataFetched)
-	<-initialDataFetched
+	// Fetch initial data and set up polling
+	initialiseDataFetching(iohelper.GetEnv("MTA_API_KEY"), &vehicleData)
+	// Start serving!
 	initialiseServer()
 }
 
@@ -27,13 +28,6 @@ func initialiseServer() {
 	log.Fatal(http.ListenAndServe(":8001", nil))
 }
 
-func healthEndpoint(w http.ResponseWriter, _ *http.Request) {
-	_, err := w.Write([]byte("Healthy!"))
-	if err != nil {
-		log.Printf("error occurred in healthEndpoint: %s\n", err)
-	}
-}
-
 func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
 	// Construct response based on currently cached data and the query params from the request
 	response := *createVehicleDataResponse(&vehicleData, req.URL.Query())
@@ -42,5 +36,12 @@ func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
 	_, err := w.Write([]byte(response))
 	if err != nil {
 		log.Printf("error occurred in liveDataRequestHandler: %s\n", err)
+	}
+}
+
+func healthEndpoint(w http.ResponseWriter, _ *http.Request) {
+	_, err := w.Write([]byte("Healthy!"))
+	if err != nil {
+		log.Printf("error occurred in healthEndpoint: %s\n", err)
 	}
 }
