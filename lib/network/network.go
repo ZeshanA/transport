@@ -1,8 +1,8 @@
 package network
 
 import (
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"transport/lib/iohelper"
@@ -13,7 +13,7 @@ import (
 // From: https://golangcode.com/download-a-file-from-a-url/
 func DownloadFile(URL string, filepath string) error {
 
-	fmt.Printf("Fetching URL %s and saving at %s\n", URL, filepath)
+	log.Printf("Fetching URL %s and saving at %s\n", URL, filepath)
 
 	// Fetch the data
 	resp, err := http.Get(URL)

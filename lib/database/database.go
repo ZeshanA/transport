@@ -45,7 +45,7 @@ func OpenDBConnection() *sql.DB {
 	db.SetMaxOpenConns(10)
 	db.SetConnMaxLifetime(0)
 
-	fmt.Println("DB connection opened successfully!")
+	log.Println("DB connection opened successfully!")
 
 	return db
 }

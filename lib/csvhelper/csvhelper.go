@@ -3,6 +3,7 @@ package csvhelper
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strings"
 	"transport/lib/progress"
 )
@@ -12,7 +13,7 @@ import (
 func RemoveNullRows(path string, columnSeparator string) (rows *[]byte, e error) {
 
 	// Load file into memory
-	fmt.Printf("Loading %s into memory to remove null rows...\n", path)
+	log.Printf("Loading %s into memory to remove null rows...\n", path)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("csv.RemoveNullRows: opening file '%s' failed due to: %v\n", path, err)
@@ -49,6 +50,6 @@ func getValidRows(data *[]byte, columnSeparator string) (nullRowCount int, valid
 			validRows = append(validRows, row)
 		}
 	}
-	fmt.Printf("Succesfully removed %d null rows...\n", nullRows)
+	log.Printf("Succesfully removed %d null rows...\n", nullRows)
 	return nullRows, validRows
 }

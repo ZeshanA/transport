@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -31,9 +30,9 @@ func fetchAndStoreArchives(hostID int, hostCount int, storageDirectory string) {
 	// The index of the first URL this host should process (based on its ID)
 	firstTaskIndex := hostID * taskCount
 
-	fmt.Printf("Host ID: %d	Host Count: %d\n", hostID, hostCount)
-	fmt.Printf("First Task Index: %d\n", firstTaskIndex)
-	fmt.Printf("Last Task Index: %d\n", firstTaskIndex+taskCount-1)
+	log.Printf("Host ID: %d	Host Count: %d\n", hostID, hostCount)
+	log.Printf("First Task Index: %d\n", firstTaskIndex)
+	log.Printf("Last Task Index: %d\n", firstTaskIndex+taskCount-1)
 
 	// Process 'taskCount' URLs starting from firstTaskIndex
 	for i := firstTaskIndex; i < firstTaskIndex+taskCount; i++ {
