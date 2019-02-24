@@ -20,8 +20,8 @@ const (
 type DBTable string
 
 const (
-	// ArrivalsTable contains historical movements + live vehicle movements
-	ArrivalsTable DBTable = "arrivals"
+	// VehicleJourneyTable contains historical movements + live vehicle movements
+	VehicleJourneyTable DBTable = "vehicle_journey"
 )
 
 // OpenDBConnection connects you to the MTAData DB in Azure, using

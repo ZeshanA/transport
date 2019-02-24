@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql/driver"
 	"time"
 )
 
@@ -43,11 +42,6 @@ type Timestamp struct {
 func (t *Timestamp) UnmarshalCSV(csv string) (err error) {
 	t.Time, err = time.Parse(timeFormat, csv)
 	return err
-}
-
-// Value describes how to marshal a Timestamp when inserting into a DB
-func (t Timestamp) Value() (driver.Value, error) {
-	return t.Time, nil
 }
 
 // Scan defines how values fetched from the DB can b
