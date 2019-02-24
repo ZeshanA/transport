@@ -1,13 +1,16 @@
 package main
 
 import (
-	"errors"
+	"database/sql"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 	"transport/lib/database"
+	"transport/lib/stringhelper"
+
+	"github.com/lib/pq"
 
 	"github.com/tidwall/gjson"
 )
@@ -15,30 +18,70 @@ import (
 const timeFormat = "2006-01-02 15:04:05"
 
 func store(liveVehicleData *string, dataIncoming chan bool) {
-	database.OpenDBConnection()
+	db := database.OpenDBConnection()
 	for {
 		<-dataIncoming
-		parseAndStore(liveVehicleData)
-		log.Println("DONE SENDING ALL TO DB")
+		parseAndStore(liveVehicleData, db)
+		log.Println("Finished sending vehicle entries to DB")
 	}
 }
 
-func parseAndStore(liveVehicleData *string) {
+func parseAndStore(liveVehicleData *string, db *sql.DB) {
 	// Extract vehicle activity from JSON string
 	vehicleActivity := gjson.Get(*liveVehicleData, VehicleActivityPath)
+
+	arr := vehicleActivity.Array()
+	fmt.Printf("This many items: %d\n", len(arr))
+
+	txn, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stmt, err := txn.Prepare(pq.CopyIn(
+		"arrivals",
+		"latitude", "longitude", "timestamp", "vehicle_id",
+		"distance_along", "direction_id", "phase", "route_id",
+		"trip_id", "next_stop_distance", "next_stop_id",
+	))
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Construct a DB row from each vehicle activity entry and insert the row into the DB
 	vehicleActivity.ForEach(func(_, activityEntry gjson.Result) bool {
 		fieldValues, err := getFieldValues(&activityEntry)
 		if err != nil {
+			fmt.Printf("Error whilst parsing field values: %v\n", fieldValues)
 			return true
 		}
 		fmt.Printf("%v\n", fieldValues)
 		// Insert fields into DB
+		_, err = stmt.Exec(stringhelper.SliceToInterface(fieldValues)...)
+		if err != nil {
+			log.Printf("error occurred whilst executing insert statement for %v:\n%v\n", fieldValues, err)
+			return true
+		}
 		return true
 	})
+
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Printf("error whilst flushing statements: %v\n", err)
+	}
+	err = stmt.Close()
+	if err != nil {
+		log.Printf("error whilst closing insertion statement: %v\n", err)
+	}
+	err = txn.Commit()
+	if err != nil {
+		log.Printf("error whilst committing insertion transaction to db: %v\n", err)
+	}
+
 }
 
+// Returns a slice representing a DB row that the given activityEntry corresponds to
 func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	// Some fields are nested directly under journey, others are nested more deeply
 	journey := activityEntry.Get("MonitoredVehicleJourney")
@@ -49,7 +92,7 @@ func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	fields := make([]string, fieldCount)
 
 	// Store fields in slice
-	fields[0], fields[1] = location.Get("Latitude").String(), location.Get("Longitude").String()
+	fields[0], fields[1] = numericNull(location.Get("Latitude").String()), numericNull(location.Get("Longitude").String())
 	timestamp, err := parseTime(activityEntry.Get("RecordedAtTime").String())
 	if err != nil {
 		return nil, err
@@ -59,9 +102,9 @@ func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	fields[3] = strconv.Itoa(vehicleID)
+	fields[3] = numericNull(strconv.Itoa(vehicleID))
 	fields[4] = "0"
-	fields[5] = journey.Get("DirectionRef").String()
+	fields[5] = numericNull(journey.Get("DirectionRef").String())
 	phase, err := parseProgressRate(journey.Get("ProgressRate").String())
 	if err != nil {
 		return nil, err
@@ -69,9 +112,16 @@ func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	fields[6] = phase
 	fields[7] = journey.Get("LineRef").String()
 	fields[8] = journey.Get("BlockRef").String()
-	fields[9] = call.Get("DistanceFromStop").String()
-	fields[10] = call.Get("StopPointRef").String()
+	fields[9] = numericNull(call.Get("DistanceFromStop").String())
+	fields[10] = numericNull(call.Get("StopPointRef").String())
 	return &fields, nil
+}
+
+func numericNull(val string) string {
+	if val == "" {
+		return "0"
+	}
+	return val
 }
 
 func intFromID(stringID string) (numericID int, parseError error) {
@@ -99,14 +149,14 @@ func parseProgressRate(progressRate string) (string, error) {
 	case "prevTrip":
 		return "PREV_TRIP", nil
 	default:
-		return "", errors.New(fmt.Sprintf("invalid progress rate: %s\n", progressRate))
+		return "", fmt.Errorf("invalid progress rate: %s", progressRate)
 	}
 }
 
 func parseTime(timeString string) (string, error) {
 	parsed, err := time.Parse(time.RFC3339, timeString)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("invalid timestamp: %s\n", timeString))
+		return "", fmt.Errorf("invalid timestamp: %s", timeString)
 	}
 	return parsed.Format(timeFormat), nil
 }
