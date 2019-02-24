@@ -6,10 +6,13 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 	"transport/lib/database"
 
 	"github.com/tidwall/gjson"
 )
+
+const timeFormat = "2006-01-02 15:04:05"
 
 func store(liveVehicleData *string, dataIncoming chan bool) {
 	database.OpenDBConnection()
@@ -26,10 +29,11 @@ func parseAndStore(liveVehicleData *string) {
 
 	// Construct a DB row from each vehicle activity entry and insert the row into the DB
 	vehicleActivity.ForEach(func(_, activityEntry gjson.Result) bool {
-		_, err := getFieldValues(&activityEntry)
+		fieldValues, err := getFieldValues(&activityEntry)
 		if err != nil {
 			return true
 		}
+		fmt.Printf("%v\n", fieldValues)
 		// Insert fields into DB
 		return true
 	})
@@ -41,29 +45,33 @@ func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	location := journey.Get("VehicleLocation")
 	call := journey.Get("MonitoredCall")
 
-	// Extract field values
-	latitude, longitude := location.Get("Longitude"), location.Get("Longitude")
-	timestamp := activityEntry.Get("RecordedAtTime")
+	fieldCount := 11
+	fields := make([]string, fieldCount)
 
+	// Store fields in slice
+	fields[0], fields[1] = location.Get("Latitude").String(), location.Get("Longitude").String()
+	timestamp, err := parseTime(activityEntry.Get("RecordedAtTime").String())
+	if err != nil {
+		return nil, err
+	}
+	fields[2] = timestamp
 	vehicleID, err := intFromID(journey.Get("VehicleRef").String())
 	if err != nil {
 		return nil, err
 	}
-
-	directionID := journey.Get("DirectionRef")
-
+	fields[3] = strconv.Itoa(vehicleID)
+	fields[4] = "0"
+	fields[5] = journey.Get("DirectionRef").String()
 	phase, err := parseProgressRate(journey.Get("ProgressRate").String())
 	if err != nil {
 		return nil, err
 	}
-
-	routeID := journey.Get("LineRef")
-	tripID := journey.Get("BlockRef")
-	nextStopDistance := call.Get("DistanceFromStop")
-	nextStopID := call.Get("StopPointRef")
-
-	log.Printf("Lat: %v, Lon: %v, Timestamp: %v, VehicleID: %v, directionID: %v, next: %v, next: %v, next: %v, next: %v, next: %v\n\n\n", latitude, longitude, timestamp, vehicleID, directionID, phase, routeID, tripID, nextStopDistance, nextStopID)
-	return nil, nil
+	fields[6] = phase
+	fields[7] = journey.Get("LineRef").String()
+	fields[8] = journey.Get("BlockRef").String()
+	fields[9] = call.Get("DistanceFromStop").String()
+	fields[10] = call.Get("StopPointRef").String()
+	return &fields, nil
 }
 
 func intFromID(stringID string) (numericID int, parseError error) {
@@ -93,4 +101,12 @@ func parseProgressRate(progressRate string) (string, error) {
 	default:
 		return "", errors.New(fmt.Sprintf("invalid progress rate: %s\n", progressRate))
 	}
+}
+
+func parseTime(timeString string) (string, error) {
+	parsed, err := time.Parse(time.RFC3339, timeString)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("invalid timestamp: %s\n", timeString))
+	}
+	return parsed.Format(timeFormat), nil
 }

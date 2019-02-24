@@ -1,8 +1,6 @@
 package main
 
-import (
-	"transport/lib/iohelper"
-)
+import "transport/lib/iohelper"
 
 // Currently cached data from MTA
 var vehicleData string
