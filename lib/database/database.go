@@ -53,3 +53,29 @@ func OpenDBConnection() *sql.DB {
 func getDatabaseLoginDetails() (username string, password string) {
 	return iohelper.GetEnv("TRANSPORT_DB_USERNAME"), iohelper.GetEnv("TRANSPORT_DB_PASSWORD")
 }
+
+// CreateTransaction starts a DB transaction and returns a pointer to it
+func CreateTransaction(db *sql.DB) *sql.Tx {
+	transaction, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return transaction
+}
+
+// CommitTransaction runs a blank .Exec() call to flush the given statement,
+// before closing the statement and committing the transaction.
+func CommitTransaction(stmt *sql.Stmt, transaction *sql.Tx) {
+	_, err := stmt.Exec()
+	if err != nil {
+		log.Printf("error whilst flushing statement: %v\n", err)
+	}
+	err = stmt.Close()
+	if err != nil {
+		log.Printf("error whilst closing insertion statement: %v\n", err)
+	}
+	err = transaction.Commit()
+	if err != nil {
+		log.Printf("error whilst committing insertion transaction to db: %v\n", err)
+	}
+}

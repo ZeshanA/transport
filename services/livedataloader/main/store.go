@@ -15,8 +15,10 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const timeFormat = "2006-01-02 15:04:05"
+// Constants
+const dbTimeFormat = "2006-01-02 15:04:05"
 
+// Parses and stores data when notified that data has been received
 func store(liveVehicleData *string, dataIncoming chan bool) {
 	db := database.OpenDBConnection()
 	for {
@@ -26,38 +28,54 @@ func store(liveVehicleData *string, dataIncoming chan bool) {
 	}
 }
 
+// Parses string data into gjson Result, extracts relevant fields and inserts into DB
 func parseAndStore(liveVehicleData *string, db *sql.DB) {
 	// Extract vehicle activity from JSON string
 	vehicleActivity := gjson.Get(*liveVehicleData, VehicleActivityPath)
+	printEntryCount(&vehicleActivity)
+	insert(db, &vehicleActivity)
+}
 
-	arr := vehicleActivity.Array()
-	fmt.Printf("This many items: %d\n", len(arr))
+// Prints the number of individual entries stored within a vehicleActivity item
+func printEntryCount(vehicleActivity *gjson.Result) {
+	arr := (*vehicleActivity).Array()
+	log.Printf("Vehicle entries received: %d\n", len(arr))
+}
 
-	txn, err := db.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
+// Batch inserts all vehicle entries in `vehicleActivity` into the DB
+func insert(db *sql.DB, vehicleActivity *gjson.Result) {
+	// Start transaction
+	transaction := database.CreateTransaction(db)
+	stmt := createStatement(transaction)
+	addEntriesToStatement(vehicleActivity, stmt)
+	database.CommitTransaction(stmt, transaction)
+}
 
+// Creates an SQL statement for batch insertion into the `arrivals` table
+func createStatement(txn *sql.Tx) *sql.Stmt {
 	stmt, err := txn.Prepare(pq.CopyIn(
 		"arrivals",
 		"latitude", "longitude", "timestamp", "vehicle_id",
 		"distance_along", "direction_id", "phase", "route_id",
 		"trip_id", "next_stop_distance", "next_stop_id",
 	))
-
 	if err != nil {
 		log.Fatal(err)
 	}
+	return stmt
+}
 
+// Adds an insertion statement for each vehicle activity entry in `vehicleActivity` into `stmt`
+func addEntriesToStatement(vehicleActivity *gjson.Result, stmt *sql.Stmt) {
 	// Construct a DB row from each vehicle activity entry and insert the row into the DB
-	vehicleActivity.ForEach(func(_, activityEntry gjson.Result) bool {
+	(*vehicleActivity).ForEach(func(_, activityEntry gjson.Result) bool {
+		// Get field values
 		fieldValues, err := getFieldValues(&activityEntry)
 		if err != nil {
 			fmt.Printf("Error whilst parsing field values: %v\n", fieldValues)
 			return true
 		}
-		fmt.Printf("%v\n", fieldValues)
-		// Insert fields into DB
+		// Add field values of current vehicle entry to the SQL statement
 		_, err = stmt.Exec(stringhelper.SliceToInterface(fieldValues)...)
 		if err != nil {
 			log.Printf("error occurred whilst executing insert statement for %v:\n%v\n", fieldValues, err)
@@ -65,23 +83,9 @@ func parseAndStore(liveVehicleData *string, db *sql.DB) {
 		}
 		return true
 	})
-
-	_, err = stmt.Exec()
-	if err != nil {
-		log.Printf("error whilst flushing statements: %v\n", err)
-	}
-	err = stmt.Close()
-	if err != nil {
-		log.Printf("error whilst closing insertion statement: %v\n", err)
-	}
-	err = txn.Commit()
-	if err != nil {
-		log.Printf("error whilst committing insertion transaction to db: %v\n", err)
-	}
-
 }
 
-// Returns a slice representing a DB row that the given activityEntry corresponds to
+// Returns a slice representing the single, given `activityEntry` as a DB row
 func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	// Some fields are nested directly under journey, others are nested more deeply
 	journey := activityEntry.Get("MonitoredVehicleJourney")
@@ -117,6 +121,7 @@ func getFieldValues(activityEntry *gjson.Result) (*[]string, error) {
 	return &fields, nil
 }
 
+// Used for converting null strings to "0', to allow insertion into a numeric DB column
 func numericNull(val string) string {
 	if val == "" {
 		return "0"
@@ -124,6 +129,18 @@ func numericNull(val string) string {
 	return val
 }
 
+// Converts the time strings found in the live data into
+// the format specified by the historical DB
+func parseTime(timeString string) (string, error) {
+	parsed, err := time.Parse(time.RFC3339, timeString)
+	if err != nil {
+		return "", fmt.Errorf("invalid timestamp: %s", timeString)
+	}
+	return parsed.Format(dbTimeFormat), nil
+}
+
+// Takes a string formatted MTA ID (e.g. "MTA NYCT_520") and returns
+// the numeric portion as an integer
 func intFromID(stringID string) (numericID int, parseError error) {
 	split := strings.Split(stringID, "_")
 	numericValue, err := strconv.Atoi(split[1])
@@ -151,12 +168,4 @@ func parseProgressRate(progressRate string) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid progress rate: %s", progressRate)
 	}
-}
-
-func parseTime(timeString string) (string, error) {
-	parsed, err := time.Parse(time.RFC3339, timeString)
-	if err != nil {
-		return "", fmt.Errorf("invalid timestamp: %s", timeString)
-	}
-	return parsed.Format(timeFormat), nil
 }
