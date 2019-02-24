@@ -41,7 +41,7 @@ func fetchSingleDay(URL string, directory string) (pathToFile string) {
 		panic(fmt.Sprintf("failed to fetch URL %s due to the following error: %v\n", URL, err))
 	}
 
-	fmt.Printf("Succesfully fetched %s...\n", nameOfFile)
+	log.Printf("Succesfully fetched %s...\n", nameOfFile)
 
 	return storagePath
 }
@@ -52,7 +52,7 @@ func decompressFile(compressedPath string) (decompressedPath string) {
 	// Construct paths for decompressed files
 	newPath := compressedPath + "_uncompressed"
 
-	fmt.Printf("Decompressing %s into %s...\n", compressedPath, newPath)
+	log.Printf("Decompressing %s into %s...\n", compressedPath, newPath)
 
 	// Decompress file and write it to newPath
 	err := archiver.DecompressFile(compressedPath, newPath)
@@ -60,7 +60,7 @@ func decompressFile(compressedPath string) (decompressedPath string) {
 		panic(fmt.Sprintf("failed to unzip file '%s' due to the following error: %v\n", newPath, err))
 	}
 
-	fmt.Printf("Successfully decompressed %s...\n", compressedPath)
+	log.Printf("Successfully decompressed %s...\n", compressedPath)
 
 	return newPath
 }
@@ -76,7 +76,7 @@ func removeNullRows(path string) (validRows *[]byte) {
 			err,
 		))
 	}
-	fmt.Printf("Successfully removed null rows from %s...\n", path)
+	log.Printf("Successfully removed null rows from %s...\n", path)
 	return cleanedRows
 }
 
@@ -93,16 +93,16 @@ func unmarshalMTADataBytes(bytes *[]byte) []ArrivalEntry {
 		return r
 	})
 
-	fmt.Println("Unmarshalling rows...")
+	log.Println("Unmarshalling rows...")
 
 	// Unmarshal the .tsv file into an array of ArrivalEntry structs
 	if err := gocsv.UnmarshalBytes(*bytes, &entries); err != nil {
-		fmt.Printf("Following error whilst unmarshalling: %s\n", err)
-		fmt.Printf("Error occurred whilst unmarshalling the following: %s\n", string(*bytes))
+		log.Printf("Following error whilst unmarshalling: %s\n", err)
+		log.Printf("Error occurred whilst unmarshalling the following: %s\n", string(*bytes))
 		panic(err)
 	}
 
-	fmt.Printf("Succesfully unmarshalled %d rows...\n", len(entries))
+	log.Printf("Succesfully unmarshalled %d rows...\n", len(entries))
 
 	return entries
 }

@@ -1,7 +1,7 @@
 package progress
 
 import (
-	"fmt"
+	"log"
 	"math"
 )
 
@@ -10,7 +10,7 @@ import (
 func PrintAtIntervals(completed int, total int, process string) {
 	tenPercentIncrement := int(math.Floor(float64(total / 10)))
 	if tenPercentIncrement == 0 || completed%tenPercentIncrement == 0 {
-		fmt.Printf(
+		log.Printf(
 			"%s: processed %d/%d tasks (~%f%%)\n",
 			process, completed, total, float64(completed)/float64(total)*100,
 		)

@@ -1,22 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
 )
 
 func main() {
-	hostID, err := strconv.Atoi(os.Args[1])
-	hostCount, err := strconv.Atoi(os.Args[2])
+	hostID, hostIDErr := strconv.Atoi(os.Args[1])
+	hostCount, hostCountErr := strconv.Atoi(os.Args[2])
 	storageDirectory := os.Args[3]
-	if err != nil {
+	if hostIDErr != nil || hostCountErr != nil {
 		log.Fatalf("Failed to convert args to integers: %v\n", os.Args)
 	}
-	err = os.MkdirAll(storageDirectory, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Failed to create storage directory %s due to: %v", storageDirectory, err)
+	mkdirErr := os.MkdirAll(storageDirectory, os.ModePerm)
+	if mkdirErr != nil {
+		log.Fatalf("Failed to create storage directory %s due to: %v", storageDirectory, mkdirErr)
 	}
 	fetchAndStoreArchives(hostID, hostCount, storageDirectory)
 }
@@ -31,9 +30,9 @@ func fetchAndStoreArchives(hostID int, hostCount int, storageDirectory string) {
 	// The index of the first URL this host should process (based on its ID)
 	firstTaskIndex := hostID * taskCount
 
-	fmt.Printf("Host ID: %d	Host Count: %d\n", hostID, hostCount)
-	fmt.Printf("First Task Index: %d\n", firstTaskIndex)
-	fmt.Printf("Last Task Index: %d\n", firstTaskIndex+taskCount-1)
+	log.Printf("Host ID: %d	Host Count: %d\n", hostID, hostCount)
+	log.Printf("First Task Index: %d\n", firstTaskIndex)
+	log.Printf("Last Task Index: %d\n", firstTaskIndex+taskCount-1)
 
 	// Process 'taskCount' URLs starting from firstTaskIndex
 	for i := firstTaskIndex; i < firstTaskIndex+taskCount; i++ {

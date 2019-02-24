@@ -17,15 +17,16 @@ const (
 
 // Fetches initial data, telling the HTTP server it can start up, and fetches new data
 // at a fixed time interval
-func initialiseDataFetching(key string, dataLocation *string) {
+func initialiseDataFetching(key string, dataLocation *string, dataWritten chan bool) {
 	URLWithKey := fmt.Sprintf("%s?key=%s&version=2", vehicleMonitoringURL, key)
-	fetchInitialData(URLWithKey, dataLocation)
-	fetchAtInterval(URLWithKey, fetchFrequency, dataLocation)
+	fetchInitialData(URLWithKey, dataLocation, dataWritten)
+	fetchAtInterval(URLWithKey, fetchFrequency, dataLocation, dataWritten)
 }
 
-// Fetches initial data and tells the HTTP server it can start up (via the `initialDataFetched` channel)
-func fetchInitialData(URL string, dataLocation *string) {
+// Fetches initial data and writes to the dataWritten channel once complete
+func fetchInitialData(URL string, dataLocation *string, dataWritten chan bool) {
 	fetch(URL, dataLocation)
+	dataWritten <- true
 	log.Printf("Succesfully fetched initial data from URL (%s)\n", URL)
 }
 
@@ -39,12 +40,13 @@ Make a time.NewTicker, which returns a channel that will be written to every X s
 	- fetches the data
 	- returns to the start of the loop and blocks on the channel again
 */
-func fetchAtInterval(URL string, timeBetweenFetches time.Duration, dataLocation *string) {
+func fetchAtInterval(URL string, timeBetweenFetches time.Duration, dataLocation *string, dataWritten chan bool) {
 	ticker := time.NewTicker(timeBetweenFetches)
 	go func() {
 		for {
 			<-ticker.C
 			fetch(URL, dataLocation)
+			dataWritten <- true
 		}
 	}()
 }
@@ -61,7 +63,7 @@ func fetch(URL string, dataLocation *string) {
 	}
 	defer iohelper.CloseSafely(resp.Body, URL)
 
-	// Load body response into memory
+	// Load body of response into memory
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Reading response from URL (%s) failed due to:\n%s\n", err)
