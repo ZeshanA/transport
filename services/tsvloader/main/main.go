@@ -7,16 +7,19 @@ import (
 )
 
 func main() {
+	// Extract runtime args from sysargs
 	hostID, hostIDErr := strconv.Atoi(os.Args[1])
 	hostCount, hostCountErr := strconv.Atoi(os.Args[2])
 	storageDirectory := os.Args[3]
 	if hostIDErr != nil || hostCountErr != nil {
 		log.Fatalf("Failed to convert args to integers: %v\n", os.Args)
 	}
+	// Create storage directory
 	mkdirErr := os.MkdirAll(storageDirectory, os.ModePerm)
 	if mkdirErr != nil {
 		log.Fatalf("Failed to create storage directory %s due to: %v", storageDirectory, mkdirErr)
 	}
+	// Store archives in DB
 	fetchAndStoreArchives(hostID, hostCount, storageDirectory)
 }
 
