@@ -38,9 +38,9 @@ var nestedFields = map[string]nestParent{
 	"Latitude":               vehicleLocation,
 }
 
-// The JSON path in the response where the VehicleActivity array (containing MonitoredVehicleJourney
-// objects) can be found
-const vehicleActivityPath = "Siri.ServiceDelivery.VehicleMonitoringDelivery.0.VehicleActivity"
+// VehicleActivityPath is the JSON path in the response where the VehicleActivity array
+// (containing MonitoredVehicleJourney objects) can be found
+const VehicleActivityPath = "Siri.ServiceDelivery.VehicleMonitoringDelivery.0.VehicleActivity"
 
 // Returns a JSON array (as a string) that contains only the MonitoredVehicleJourney
 // items that satisfied the filters passed in (e.g. LineRef="MTA NYCT_B59")
@@ -49,7 +49,7 @@ func createVehicleDataResponse(JSONData *string, filters url.Values) *string {
 	log.Println("Creating response...")
 
 	// Extract the array of MonitoredVehicleJourney items from the response
-	liveVehicleData := gjson.Get(*JSONData, vehicleActivityPath)
+	liveVehicleData := gjson.Get(*JSONData, VehicleActivityPath)
 
 	// If there are no filters, return a string of the entire array
 	if len(filters) == 0 {
@@ -72,7 +72,7 @@ func getJSONArrayOfMatches(liveVehicleData *gjson.Result, filters url.Values) *s
 
 	log.Println("Applying filters...")
 
-	liveVehicleData.ForEach(func(key, value gjson.Result) bool {
+	liveVehicleData.ForEach(func(_, value gjson.Result) bool {
 		if satisfiesFilters(value, filters) {
 			matches = append(matches, value)
 		}
