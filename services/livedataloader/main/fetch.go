@@ -70,8 +70,8 @@ func fetch(URL string, dataLocation *string) {
 		return
 	}
 
-	// Store response body at dataLocation
-	*dataLocation = string(data)
+	// Store converted version of response body at dataLocation
+	*dataLocation = convertToIR(data)
 
 	log.Printf("Completed processing of URL (%s)\n", URL)
 }

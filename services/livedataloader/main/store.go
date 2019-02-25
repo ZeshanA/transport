@@ -11,7 +11,6 @@ import (
 	"transport/lib/stringhelper"
 
 	"github.com/lib/pq"
-
 	"github.com/tidwall/gjson"
 )
 
@@ -19,11 +18,12 @@ import (
 const dbTimeFormat = "2006-01-02 15:04:05"
 
 // Parses and stores data when notified that data has been received
+// TODO: Enable parse and store for new internal data format
 func store(liveVehicleData *string, dataIncoming chan bool) {
-	db := database.OpenDBConnection()
+	// db := database.OpenDBConnection()
 	for {
 		<-dataIncoming
-		parseAndStore(liveVehicleData, db)
+		// parseAndStore(liveVehicleData, db)
 		log.Println("Finished sending vehicle entries to DB")
 	}
 }
