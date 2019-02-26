@@ -10,7 +10,7 @@ func initialiseServer() {
 	log.Printf("Starting HTTP server...")
 
 	// Attach request handlers
-	http.HandleFunc("/api/liveData", liveDataRequestHandler)
+	http.HandleFunc("/api/v1/vehicles", liveDataRequestHandler)
 	http.HandleFunc("/health", healthEndpoint)
 
 	// Start HTTP server
