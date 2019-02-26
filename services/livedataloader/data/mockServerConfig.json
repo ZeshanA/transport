@@ -86032,5 +86032,148 @@
         }
       }
     }
+  },
+  "/single": {
+    "get": {
+      "Siri": {
+        "ServiceDelivery": {
+          "ResponseTimestamp": "2019-02-16T10:59:38.968-05:00",
+          "VehicleMonitoringDelivery": [
+            {
+              "VehicleActivity": [
+                {
+                  "MonitoredVehicleJourney": {
+                    "LineRef": "MTA NYCT_M20",
+                    "DirectionRef": "0",
+                    "FramedVehicleJourneyRef": {
+                      "DataFrameRef": "2019-02-16",
+                      "DatedVehicleJourneyRef": "MTA NYCT_MQ_A9-Saturday-059000_M20_5"
+                    },
+                    "JourneyPatternRef": "MTA_M200116",
+                    "PublishedLineName": [
+                      "M20"
+                    ],
+                    "OperatorRef": "MTA NYCT",
+                    "OriginRef": "MTA_803184",
+                    "DestinationRef": "MTA_400858",
+                    "DestinationName": [
+                      "LINCOLN CENTER 66 ST via 8 AV"
+                    ],
+                    "OriginAimedDepartureTime": "2019-02-16T11:00:00.000-05:00",
+                    "SituationRef": [
+                      {
+                        "SituationSimpleRef": "A FAKE ID STRING"
+                      },
+                      {
+                        "SituationSimpleRef": "And another one"
+                      },
+                      {
+                        "SituationSimpleRef": "And another"
+                      }
+                    ],
+                    "Monitored": true,
+                    "VehicleLocation": {
+                      "Longitude": -73.982272,
+                      "Latitude": 40.771799
+                    },
+                    "Bearing": 272.1927,
+                    "ProgressRate": "noProgress",
+                    "ProgressStatus": [
+                      "layover"
+                    ],
+                    "BlockRef": "MTA NYCT_MQ_A9-Saturday_A_MQ_30300_M20-5",
+                    "VehicleRef": "MTA NYCT_3820",
+                    "MonitoredCall": {
+                      "ArrivalProximityText": "approaching",
+                      "DistanceFromStop": 101,
+                      "NumberOfStopsAway": 0,
+                      "StopPointRef": "MTA_401348",
+                      "VisitNumber": 1,
+                      "StopPointName": [
+                        "BROADWAY/W 63 ST"
+                      ]
+                    }
+                  },
+                  "RecordedAtTime": "2019-02-16T10:59:15.000-05:00"
+                }
+              ],
+              "ResponseTimestamp": "2019-02-16T10:59:38.968-05:00",
+              "ValidUntil": "2019-02-16T11:00:38.968-05:00"
+            }
+          ],
+          "SituationExchangeDelivery": []
+        }
+      }
+    }
+  },
+  "/internal": {
+    "get": [
+      {
+        "LineRef": "MTA NYCT_M50",
+        "DirectionRef": 1,
+        "TripID": "MTA NYCT_MQ_E9-Weekday-SDon-035500_M50_1",
+        "PublishedLineName": "M50",
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_402183",
+        "DestinationRef": "MTA_903084",
+        "OriginAimedDepartureTime": "0001-01-01T00:00:00Z",
+        "SituationRef": [],
+        "Longitude": -73.967423,
+        "Latitude": 40.753593,
+        "ProgressRate": "noProgress",
+        "Occupancy": "",
+        "VehicleRef": "MTA NYCT_3823",
+        "ExpectedArrivalTime": "2019-02-25T05:54:24.732-05:00",
+        "ExpectedDepartureTime": "2019-02-25T05:54:24.732-05:00",
+        "DistanceFromStop": 191,
+        "NumberOfStopsAway": 0,
+        "StopPointRef": "MTA_405193",
+        "Timestamp": "2019-02-25T05:53:59-05:00"
+      },
+      {
+        "LineRef": "MTA NYCT_M55",
+        "DirectionRef": 1,
+        "TripID": "MTA NYCT_MQ_E9-Weekday-SDon-033000_M55_2",
+        "PublishedLineName": "M55",
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_803080",
+        "DestinationRef": "MTA_803185",
+        "OriginAimedDepartureTime": "0001-01-01T00:00:00Z",
+        "SituationRef": [],
+        "Longitude": -74.013932,
+        "Latitude": 40.702428,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "",
+        "VehicleRef": "MTA NYCT_3824",
+        "ExpectedArrivalTime": "2019-02-25T05:54:28.752-05:00",
+        "ExpectedDepartureTime": "2019-02-25T05:54:28.752-05:00",
+        "DistanceFromStop": 78,
+        "NumberOfStopsAway": 0,
+        "StopPointRef": "MTA_803185",
+        "Timestamp": "2019-02-25T05:54:10-05:00"
+      },
+      {
+        "LineRef": "MTA NYCT_M22",
+        "DirectionRef": 0,
+        "TripID": "MTA NYCT_MQ_E9-Weekday-SDon-033000_M22_301",
+        "PublishedLineName": "M22",
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405054",
+        "DestinationRef": "MTA_903025",
+        "OriginAimedDepartureTime": "2019-02-25T06:00:00-05:00",
+        "SituationRef": [],
+        "Longitude": -73.979774,
+        "Latitude": 40.713675,
+        "ProgressRate": "noProgress",
+        "Occupancy": "",
+        "VehicleRef": "MTA NYCT_3826",
+        "ExpectedArrivalTime": "2019-02-25T05:54:45.821-05:00",
+        "ExpectedDepartureTime": "2019-02-25T05:54:45.821-05:00",
+        "DistanceFromStop": 137,
+        "NumberOfStopsAway": 0,
+        "StopPointRef": "MTA_903025",
+        "Timestamp": "2019-02-25T05:54:07-05:00"
+      }
+    ]
   }
 }
