@@ -20,8 +20,7 @@ func initialiseServer() {
 func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
 	// Construct response based on currently cached data (declared in main.go)
 	// and the query params from the request
-	// TODO: Implement querying for the new internal VehicleJourney format
-	response := vehicleData // *createVehicleDataResponse(&vehicleData, req.URL.Query())
+	response := *createVehicleDataResponse(&vehicleData, req.URL.Query())
 
 	log.Printf("Response created succesfully, writing to output...")
 
