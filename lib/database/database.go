@@ -16,12 +16,23 @@ const (
 	databaseName = "postgres"
 )
 
-// DBTable type holds strings for each table in the DB
-type DBTable string
+// DBTable type holds name and column list for each table in the DB
+type DBTable struct {
+	Name    string
+	Columns []string
+}
 
-const (
-	// VehicleJourneyTable contains historical movements + live vehicle movements
-	VehicleJourneyTable DBTable = "vehicle_journey"
+// VehicleJourneyTable contains historical movements + live vehicle movements
+var (
+	VehicleJourneyTable = DBTable{
+		"vehicle_journey2",
+		[]string{
+			"line_ref", "direction_ref", "trip_id", "published_line_name", "operator_ref", "origin_ref",
+			"destination_ref", "origin_aimed_departure_time", "situation_ref", "longitude", "latitude", "progress_rate",
+			"occupancy", "vehicle_ref", "expected_arrival_time", "expected_departure_time", "distance_from_stop",
+			"number_of_stops_away", "stop_point_ref", "timestamp",
+		},
+	}
 )
 
 // OpenDBConnection connects you to the MTAData DB in Azure, using
