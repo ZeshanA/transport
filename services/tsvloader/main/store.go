@@ -14,29 +14,6 @@ import (
 	"github.com/lib/pq"
 )
 
-var columnNames = []string{
-	"line_ref",
-	"direction_ref",
-	"trip_id",
-	"published_line_name",
-	"operator_ref",
-	"origin_ref",
-	"destination_ref",
-	"origin_aimed_departure_time",
-	"situation_ref",
-	"longitude",
-	"latitude",
-	"progress_rate",
-	"occupancy",
-	"vehicle_ref",
-	"expected_arrival_time",
-	"expected_departure_time",
-	"distance_from_stop",
-	"number_of_stops_away",
-	"stop_point_ref",
-	"timestamp",
-}
-
 func store(entries []ArrivalEntry) {
 	// Open DB connection
 	db := database.OpenDBConnection()
@@ -60,8 +37,8 @@ func store(entries []ArrivalEntry) {
 
 func copyAllEntries(transaction *sql.Tx, entries []ArrivalEntry) {
 	// Create Copy statement for all columns of the table
-	tableName := string(database.VehicleJourneyTable)
-	statement, err := transaction.Prepare(pq.CopyIn(tableName, columnNames...))
+	table := database.VehicleJourneyTable
+	statement, err := transaction.Prepare(pq.CopyIn(table.Name, table.Columns...))
 	if err != nil {
 		log.Fatal(err)
 	}
