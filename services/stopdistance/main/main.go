@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"transport/lib/bustime"
+	"transport/lib/iohelper"
+)
 
 func main() {
-	fmt.Println("Hello world!")
+	client := bustime.Client{Key: iohelper.GetEnv("MTA_API_KEY")}
+	fmt.Println(client.GetAgencies())
 }
