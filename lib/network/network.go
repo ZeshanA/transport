@@ -34,3 +34,18 @@ func DownloadFile(URL string, filepath string) error {
 
 	return err
 }
+
+// GetRequestFunc returns a function that executes an HTTP GET request to
+// `requestURL` and changes the pointer stored at responseLocation to point
+// to the GET request's response.
+// This is primarily intended to be composed with the retry.Do function as follows:
+//     var resp *http.Response
+//     err := retry.Do(GetRequestFunc(requestURL, &resp))
+// This will retry the request 10 times and return an error if none of the 10 requests succeed
+func GetRequestFunc(requestURL string, responseLocation **http.Response) func() error {
+	return func() error {
+		response, err := http.Get(requestURL)
+		*responseLocation = response
+		return err
+	}
+}
