@@ -1,3 +1,4 @@
+github.com/avast/retry-go v2.2.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 h1:eX+pdPPlD279OWgdx7f6KqIRSONuK7egk+jDx7OM3Ac=
 github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76/go.mod h1:KjxHHirfLaw19iGT70HvVjHQsL1vq1SRQB4yOsAfy2s=
 github.com/gocarina/gocsv v0.0.0-20190131101517-2a8c07cdf701 h1:3GYEASiqWM1mIxHN11ai0c0vRGl1ZFk/VCw/4srmoxE=

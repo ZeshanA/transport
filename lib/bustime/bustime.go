@@ -1,13 +1,14 @@
 package bustime
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 	"transport/lib/iohelper"
+	"transport/lib/network"
+
+	"github.com/avast/retry-go"
 
 	"github.com/tidwall/gjson"
 )
@@ -28,24 +29,25 @@ func (client *Client) GetAgencies() []string {
 
 func (client *Client) getAgenciesWithURL(requestURL string) []string {
 	var resp *http.Response
-	// Create non-nil error so the 'for' loop runs at least once
-	err := errors.New("")
 
-	for err != nil {
-		resp, err = http.Get(requestURL)
-		if err != nil {
-			log.Println(err)
-			time.Sleep(2 * time.Second)
-		}
+	// Send GET request for agencies; retry a limited number of times if it fails.
+	err := retry.Do(network.GetRequestFunc(requestURL, &resp))
+	if err != nil {
+		log.Fatalf("fetch.AllAgencies: error fetching list of agencies: %s", err)
 	}
 	defer iohelper.CloseSafely(resp.Body, requestURL)
 
+	// Read response body
 	rawData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("fetch.AllAgencies: error parsing list of agencies: %s", err)
 	}
 
-	stringData := string(rawData)
+	return client.parseIDsFromAgencyResponse(rawData)
+}
+
+func (client *Client) parseIDsFromAgencyResponse(rawResponseBody []byte) []string {
+	stringData := string(rawResponseBody)
 
 	var agencyIDs []string
 	gjson.Get(stringData, "data").ForEach(func(_, agency gjson.Result) bool {
