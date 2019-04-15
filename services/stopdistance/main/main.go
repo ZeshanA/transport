@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"transport/lib/bustime"
 	"transport/lib/iohelper"
 )

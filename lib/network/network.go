@@ -2,10 +2,13 @@ package network
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"transport/lib/iohelper"
+
+	"github.com/avast/retry-go"
 )
 
 // DownloadFile will download a URL to a local file. Avoids loading
@@ -48,4 +51,27 @@ func GetRequestFunc(requestURL string, responseLocation **http.Response) func() 
 		*responseLocation = response
 		return err
 	}
+}
+
+// GetRequestBody fetches the resource at the given URL and
+// returns a pointer to a []byte containing just the body of the response.
+// If the request fails, it will be retried up to 10 times before logging
+// a fatal error. Failure to read the response bytes results in a fatal error.
+func GetRequestBody(requestURL string) *[]byte {
+	var resp *http.Response
+
+	// Send GET request for agencies; retry a limited number of times if it fails.
+	err := retry.Do(GetRequestFunc(requestURL, &resp))
+	if err != nil {
+		log.Fatalf("fetch.AllAgencies: error fetching list of agencies: %s", err)
+	}
+	defer iohelper.CloseSafely(resp.Body, requestURL)
+
+	// Read response body
+	rawData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("fetch.AllAgencies: error parsing list of agencies: %s", err)
+	}
+
+	return &rawData
 }
