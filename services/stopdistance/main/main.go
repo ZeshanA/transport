@@ -8,5 +8,7 @@ import (
 
 func main() {
 	client := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
-	fmt.Println(client.GetAgencies())
+	agencies := client.GetAgencies()
+	routes := client.GetRoutes(*agencies...)
+	fmt.Println(len(routes))
 }
