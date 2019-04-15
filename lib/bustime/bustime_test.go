@@ -1,4 +1,4 @@
-package bustime
+package bustime_test
 
 import (
 	"fmt"
@@ -7,11 +7,15 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"transport/lib/bustime"
 )
 
-func TestClient_GetAgenciesWithURL(t *testing.T) {
+// TODO: Add more than one test case for each method
+
+const agencyList = `[{"agency":{"id":"MTA NYCT"}}, {"agency":{"id":"MTABC"}}]`
+
+func TestClient_GetAgencies(t *testing.T) {
 	// Construct mocked JSON response
-	const agencyList = `[{"agency":{"id":"MTA NYCT"}}, {"agency":{"id":"MTABC"}}]`
 	response := fmt.Sprintf(`{"code":200, "currentTime":1555241357581,"data": %s}`, agencyList)
 
 	// Create HTTP server to serve mock JSON response
@@ -23,11 +27,11 @@ func TestClient_GetAgenciesWithURL(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// Create bustime.Client
-	client := Client{Key: "TEST"}
+	// Create bustime.client
+	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	expected := []string{"MTA NYCT", "MTABC"}
-	actual := client.getAgenciesWithURL(ts.URL)
+	actual := *client.GetAgencies()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetAgencies did not return expected list of agency IDs (expected: %s, received: %s)", expected, actual)
 	}

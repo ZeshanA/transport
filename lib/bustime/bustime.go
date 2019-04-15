@@ -2,32 +2,51 @@ package bustime
 
 import (
 	"fmt"
+	"log"
 	"transport/lib/network"
 
 	"github.com/tidwall/gjson"
 )
 
+/* TODO: Optimise all client methods to return pointers to avoid
+   copying return values around. */
+
 const (
-	baseURL          = "http://bustime.mta.info/api/where"
+	defaultBaseURL   = "http://bustime.mta.info/api/where"
 	agenciesEndpoint = "agencies-with-coverage.json"
 )
 
-type Client struct {
-	Key string
+type client struct {
+	Key     string
+	BaseURL string
+}
+
+func NewClient(key string, options ...func(*client) error) *client {
+	client := client{Key: key, BaseURL: defaultBaseURL}
+	for _, option := range options {
+		err := option(&client)
+		if err != nil {
+			log.Fatalf("bustime.client initialisation error: %s", err)
+		}
+	}
+	return &client
+}
+
+func CustomBaseURLOption(customBaseURL string) func(*client) error {
+	return func(client *client) error {
+		client.BaseURL = customBaseURL
+		return nil
+	}
 }
 
 /* Agencies */
-func (client *Client) GetAgencies() []string {
-	URLWithKey := fmt.Sprintf("%s/%s?key=%s", baseURL, agenciesEndpoint, client.Key)
-	return client.getAgenciesWithURL(URLWithKey)
-}
-
-func (client *Client) getAgenciesWithURL(requestURL string) []string {
-	rawData := network.GetRequestBody(requestURL)
+func (client *client) GetAgencies() *[]string {
+	URLWithKey := fmt.Sprintf("%s/%s?key=%s", client.BaseURL, agenciesEndpoint, client.Key)
+	rawData := network.GetRequestBody(URLWithKey)
 	return client.parseIDsFromAgencyResponse(rawData)
 }
 
-func (client *Client) parseIDsFromAgencyResponse(rawResponseBody *[]byte) []string {
+func (client *client) parseIDsFromAgencyResponse(rawResponseBody *[]byte) *[]string {
 	stringData := string(*rawResponseBody)
 
 	var agencyIDs []string
@@ -36,5 +55,5 @@ func (client *Client) parseIDsFromAgencyResponse(rawResponseBody *[]byte) []stri
 		return true
 	})
 
-	return agencyIDs
+	return &agencyIDs
 }
