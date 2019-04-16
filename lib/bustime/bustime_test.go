@@ -76,7 +76,7 @@ func TestClient_GetRoutesWithURL(t *testing.T) {
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	expected := []string{"MTA NYCT_BX4A", "MTA NYCT_M31", "MTABC_BX4A", "MTABC_M31"}
-	actual := client.GetRoutes(agencyIDsList...)
+	actual := *client.GetRoutes(agencyIDsList...)
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetRoutes did not return expected list of route IDs (expected: %s, received: %s)", expected, actual)
 	}
@@ -92,7 +92,7 @@ func TestClient_GetRoutesWithURLEmpty(t *testing.T) {
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	var expected []string
-	actual := client.GetRoutes()
+	actual := *client.GetRoutes()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetRoutes did not return empty list of route IDs (expected: %s, received: %s)", expected, actual)
 	}
