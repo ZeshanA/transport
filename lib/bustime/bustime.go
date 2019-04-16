@@ -71,7 +71,7 @@ func (client *client) parseIDsFromResponse(rawResponseBody *[]byte, pathToArray 
 func (client *client) GetAgencies() *[]string {
 	URLWithKey := fmt.Sprintf("%s/%s?%s", client.BaseURL, agenciesEndpoint, client.MandatoryParams)
 	rawData := network.GetRequestBody(URLWithKey)
-	return client.parseIDsFromResponse(rawData, "data", "agency.id")
+	return client.parseIDsFromResponse(rawData, "data.list", "agencyId")
 }
 
 // Routes
@@ -83,14 +83,4 @@ func (client *client) GetRoutes(agencyIDs ...string) *[]string {
 		routeIDs = append(routeIDs, *client.parseIDsFromResponse(rawData, "data.list", "id")...)
 	}
 	return &routeIDs
-}
-
-func (client *client) parseIDsFromRoutesResponse(rawResponseBody *[]byte) []string {
-	stringData := string(*rawResponseBody)
-	routeObjects := gjson.Get(stringData, "data.list").Array()
-	routeIDs := make([]string, len(routeObjects))
-	for i, route := range routeObjects {
-		routeIDs[i] = route.Get("id").String()
-	}
-	return routeIDs
 }
