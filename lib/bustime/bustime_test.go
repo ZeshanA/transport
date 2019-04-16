@@ -24,7 +24,7 @@ func TestClient_GetAgencies(t *testing.T) {
 
 	// We expect the following slice of agency ID strings
 	expected := []string{"MTA NYCT", "MTABC"}
-	actual := *client.GetAgencies()
+	actual := client.GetAgencies()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetAgencies did not return expected list of agency IDs (expected: %s, received: %s)", expected, actual)
 	}
@@ -41,7 +41,7 @@ func TestClient_GetAgenciesEmptyResponse(t *testing.T) {
 
 	// We expect nil (no slice should have been allocated, as there were no agency IDs returned)
 	var expected []string
-	actual := *client.GetAgencies()
+	actual := client.GetAgencies()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetAgencies did not return empty list of agency IDs (expected: %s, received: %s)", expected, actual)
 	}
@@ -76,7 +76,7 @@ func TestClient_GetRoutesWithURL(t *testing.T) {
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	expected := []string{"MTA NYCT_BX4A", "MTA NYCT_M31", "MTABC_BX4A", "MTABC_M31"}
-	actual := *client.GetRoutes(agencyIDsList...)
+	actual := client.GetRoutes(agencyIDsList...)
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetRoutes did not return expected list of route IDs (expected: %s, received: %s)", expected, actual)
 	}
@@ -92,7 +92,7 @@ func TestClient_GetRoutesWithURLEmpty(t *testing.T) {
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	var expected []string
-	actual := *client.GetRoutes()
+	actual := client.GetRoutes()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("bustime.GetRoutes did not return empty list of route IDs (expected: %s, received: %s)", expected, actual)
 	}
