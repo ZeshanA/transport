@@ -57,7 +57,7 @@ func GetRequestFunc(requestURL string, responseLocation **http.Response) func() 
 // returns a pointer to a []byte containing just the body of the response.
 // If the request fails, it will be retried up to 10 times before logging
 // a fatal error. Failure to read the response bytes results in a fatal error.
-func GetRequestBody(requestURL string) *[]byte {
+func GetRequestBody(requestURL string) string {
 	var resp *http.Response
 
 	// Send GET request for agencies; retry a limited number of times if it fails.
@@ -73,5 +73,5 @@ func GetRequestBody(requestURL string) *[]byte {
 		log.Fatalf("fetch.AllAgencies: error parsing list of agencies: %s", err)
 	}
 
-	return &rawData
+	return string(rawData)
 }
