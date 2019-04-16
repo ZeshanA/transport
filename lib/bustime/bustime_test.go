@@ -14,8 +14,8 @@ import (
 
 func TestClient_GetAgencies(t *testing.T) {
 	// Create HTTP server to serve mock JSON response
-	agencyList := `[{"agency":{"id":"MTA NYCT"}}, {"agency":{"id":"MTABC"}}]`
-	response := fmt.Sprintf(`{"data": %s}`, agencyList)
+	agencyList := `[{"agencyId": "MTA NYCT"}, {"agencyId": "MTABC"}]`
+	response := fmt.Sprintf(`{"data": {"list": %s}}`, agencyList)
 	ts := testhelper.ServeMock(response)
 	defer ts.Close()
 
@@ -32,7 +32,7 @@ func TestClient_GetAgencies(t *testing.T) {
 
 func TestClient_GetAgenciesEmptyResponse(t *testing.T) {
 	// Create HTTP server to serve mock JSON response
-	response := fmt.Sprintf(`{"data": %s}`, "[]")
+	response := fmt.Sprintf(`{"data": {"list": %s}}`, "[]")
 	ts := testhelper.ServeMock(response)
 	defer ts.Close()
 
