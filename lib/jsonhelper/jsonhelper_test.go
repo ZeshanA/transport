@@ -4,6 +4,8 @@ import (
 	"testing"
 	"transport/lib/jsonhelper"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,6 +52,38 @@ func TestExtractNonArrayPath(t *testing.T) {
 	// We expect a `nil` slice - no slice should have been allocated
 	var expected []string
 	actual := jsonhelper.ExtractNested(jsonString, invalidPath)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestResultArrayToStringArray(t *testing.T) {
+	jsonString := `{"data": {"list": [{"id": "ID1"},{"id": "ID2"}]}}`
+	resultArray := gjson.Get(jsonString, "data.list.#.id").Array()
+
+	expected := []string{"ID1", "ID2"}
+	actual := jsonhelper.ResultArrayToStringArray(resultArray)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestResultArrayToStringArrayEmpty(t *testing.T) {
+	jsonString := `{"data": {"list": []}}`
+	resultArray := gjson.Get(jsonString, "data.list.#.id").Array()
+
+	// Expect a nil slice - no slice should have been allocated
+	var expected []string
+	actual := jsonhelper.ResultArrayToStringArray(resultArray)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestResultArrayToStringArrayInvalidPath(t *testing.T) {
+	jsonString := `{"data": {"list": []}}`
+	resultArray := gjson.Get(jsonString, "data.invalid.#.id").Array()
+
+	// Expect a nil slice - no slice should have been allocated
+	var expected []string
+	actual := jsonhelper.ResultArrayToStringArray(resultArray)
 
 	assert.Equal(t, expected, actual)
 }

@@ -4,10 +4,10 @@ import "github.com/tidwall/gjson"
 
 func ExtractNested(json string, path string) []string {
 	nestedProperties := gjson.Get(json, path).Array()
-	return resultArrayToStringArray(nestedProperties)
+	return ResultArrayToStringArray(nestedProperties)
 }
 
-func resultArrayToStringArray(resultArray []gjson.Result) []string {
+func ResultArrayToStringArray(resultArray []gjson.Result) []string {
 	if len(resultArray) == 0 {
 		return nil
 	}
