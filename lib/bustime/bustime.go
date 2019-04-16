@@ -8,18 +8,17 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-/* TODO: Optimise all client methods to return pointers to avoid
-   copying return values around. */
-
 const (
-	defaultBaseURL   = "http://bustime.mta.info/api/where"
-	agenciesEndpoint = "agencies-with-coverage.json"
-	routesEndpoint   = "routes-for-agency"
+	defaultBaseURL    = "http://bustime.mta.info/api/where"
+	defaultAPIVersion = "2"
+	agenciesEndpoint  = "agencies-with-coverage.json"
+	routesEndpoint    = "routes-for-agency"
 )
 
 type client struct {
-	Key     string
-	BaseURL string
+	Key             string
+	BaseURL         string
+	MandatoryParams string
 }
 
 // NewClient creates a new bustime.client
@@ -37,6 +36,7 @@ func NewClient(key string, options ...func(*client) error) *client {
 			log.Fatalf("bustime.client initialisation error: %s", err)
 		}
 	}
+	client.MandatoryParams = fmt.Sprintf("key=%s&version=%s", client.Key, defaultAPIVersion)
 	return &client
 }
 
@@ -51,7 +51,7 @@ func CustomBaseURLOption(customBaseURL string) func(*client) error {
 
 // Agencies
 func (client *client) GetAgencies() *[]string {
-	URLWithKey := fmt.Sprintf("%s/%s?key=%s", client.BaseURL, agenciesEndpoint, client.Key)
+	URLWithKey := fmt.Sprintf("%s/%s?%s", client.BaseURL, agenciesEndpoint, client.MandatoryParams)
 	rawData := network.GetRequestBody(URLWithKey)
 	return client.parseIDsFromAgencyResponse(rawData)
 }
@@ -72,7 +72,7 @@ func (client *client) parseIDsFromAgencyResponse(rawResponseBody *[]byte) *[]str
 func (client *client) GetRoutes(agencyIDs ...string) []string {
 	var routeIDs []string
 	for _, agencyID := range agencyIDs {
-		URLWithKey := fmt.Sprintf("%s/%s/%s.json?key=%s", client.BaseURL, routesEndpoint, agencyID, client.Key)
+		URLWithKey := fmt.Sprintf("%s/%s/%s.json?%s", client.BaseURL, routesEndpoint, agencyID, client.MandatoryParams)
 		rawData := network.GetRequestBody(URLWithKey)
 		routeIDs = append(routeIDs, client.parseIDsFromRoutesResponse(rawData)...)
 	}
