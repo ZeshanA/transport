@@ -12,6 +12,6 @@ func main() {
 	fmt.Println(agencies)
 	routes := client.GetRoutes(agencies...)
 	fmt.Println(len(routes))
-	stops := client.GetStops(routes[:5]...)
+	stops := client.GetStops(routes[0])
 	fmt.Println(stops)
 }
