@@ -16,3 +16,7 @@ for SERVICE in ${SERVICES}; do
     # -f (fileName): path to the service's Dockerfile
     docker build -t ${SERVICE} -f services/${SERVICE}/Dockerfile --build-arg SERVICE_NAME=${SERVICE} .
 done
+
+# Test lib folder
+cd lib && go test ./...
+cd ../
