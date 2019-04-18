@@ -1,70 +1,21 @@
 package mapping
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"transport/lib/network"
-	"transport/lib/urlhelper"
 
-	"github.com/tidwall/gjson"
+	"googlemaps.github.io/maps"
 )
 
-const (
-	defaultBaseURL           = "https://api.mapbox.com"
-	directionsMatrixEndpoint = "directions-matrix/v1"
-)
-
-type Client struct {
-	key     string
-	baseURL string
-}
-
-// NewClient creates a new mapping.Client
-// The API `key` parameter is mandatory, the remainder of the
-// parameters are optional and are the functions suffixed with
-// 'Option' in this file.
-// (see: Functional Options pattern – https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis)
-
-// Example Usage:
-// client := mapping.NewClient("API_KEY", CustomBaseURLOption("http://google.com/"))
-func NewClient(key string, options ...func(*Client) error) *Client {
-	client := Client{key: key, baseURL: defaultBaseURL}
-	for _, option := range options {
-		err := option(&client)
-		if err != nil {
-			log.Fatalf("mapping.Client initialisation error: %s", err)
-		}
+func RoadDistance(mc *maps.Client, fromLat, fromLon, toLat, toLon float64) (distanceInMetres float64) {
+	r := &maps.DistanceMatrixRequest{
+		Origins:      []string{fmt.Sprintf("%f,%f", fromLat, fromLon)},
+		Destinations: []string{fmt.Sprintf("%f,%f", toLat, toLon)},
 	}
-	return &client
-}
-
-// CustomBaseURLOption returns a *function* that can be passed
-// to the NewClient constructor to override the default base URL
-func CustomBaseURLOption(customBaseURL string) func(*Client) error {
-	return func(client *Client) error {
-		client.baseURL = customBaseURL
-		return nil
+	distance, err := mc.DistanceMatrix(context.Background(), r)
+	if err != nil {
+		log.Fatalf("mapping.RoadDistance: error whilst fetching distance matrix response: %s", err)
 	}
-}
-
-func (c *Client) RoadDistance(fromLat, fromLon, toLat, toLon float64) (distanceInMetres float64) {
-	URL := c.constructRoadDistanceURL(fromLat, fromLon, toLat, toLon)
-	resp := network.GetRequestBody(URL)
-	parsedResp := gjson.Parse(resp)
-	if parsedResp.Get("code").String() != "Ok" {
-		log.Panicf("mapping: error reported in MapBox API response: %s", resp)
-	}
-	return parsedResp.Get("distances.0.0").Float()
-}
-
-func (c *Client) constructRoadDistanceURL(fromLat, fromLon, toLat, toLon float64) string {
-	coords := fmt.Sprintf("%f,%f;%f,%f", fromLat, fromLon, toLat, toLon)
-	rawURL := fmt.Sprintf("%s/%s/mapbox/driving/%s", c.baseURL, directionsMatrixEndpoint, coords)
-	params := map[string]string{
-		"access_token": c.key,
-		"sources":      "0",
-		"destinations": "1",
-		"annotations":  "distance",
-	}
-	return fmt.Sprintf("%s%s", rawURL, urlhelper.BuildQueryString(params))
+	return float64(distance.Rows[0].Elements[0].Distance.Meters)
 }

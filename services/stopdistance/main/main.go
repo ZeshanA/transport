@@ -7,6 +7,8 @@ import (
 	"transport/lib/bustime"
 	"transport/lib/iohelper"
 	"transport/lib/mapping"
+
+	"googlemaps.github.io/maps"
 )
 
 type stopDistance struct {
@@ -17,9 +19,16 @@ type stopDistance struct {
 	distance    float64
 }
 
+func (sd *stopDistance) String() string {
+	return fmt.Sprintf("%s – Direction %d – From %s – To %s = %f metres", sd.routeID, sd.directionID, sd.fromID, sd.toID, sd.distance)
+}
+
 func main() {
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
-	mc := mapping.NewClient(iohelper.GetEnv("MAPBOX_API_KEY"))
+	mc, err := maps.NewClient(maps.WithAPIKey(iohelper.GetEnv("GOOGLE_MAPS_API_KEY")))
+	if err != nil {
+		log.Panicf("main: failed to initialise Maps API client: %s", err)
+	}
 
 	// Get stopDetails in map with format routeID -> directionID -> []BusStop
 	agencies := bt.GetAgencies()
@@ -33,7 +42,7 @@ func main() {
 	StoreDistances(distances)
 }
 
-func GetDistances(mc *mapping.Client, stopDetails map[string]map[int][]bustime.BusStop) []stopDistance {
+func GetDistances(mc *maps.Client, stopDetails map[string]map[int][]bustime.BusStop) []stopDistance {
 	var distances []stopDistance
 	for routeID, directionIDs := range stopDetails {
 		for directionID, stopsForDirectionID := range directionIDs {
@@ -47,7 +56,7 @@ func GetDistances(mc *mapping.Client, stopDetails map[string]map[int][]bustime.B
 	return distances
 }
 
-func getDistancesAlongRoute(mc *mapping.Client, routeID string, directionID int, stops []bustime.BusStop) ([]stopDistance, error) {
+func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, stops []bustime.BusStop) ([]stopDistance, error) {
 	if len(stops) < 2 {
 		return nil, errors.New("getDistancesAlongRoute: fewer than 2 stops in list provided")
 	}
@@ -56,7 +65,7 @@ func getDistancesAlongRoute(mc *mapping.Client, routeID string, directionID int,
 		from, to := stops[i], stops[j]
 		dists[i] = stopDistance{
 			routeID: routeID, directionID: directionID, fromID: from.ID, toID: to.ID,
-			distance: mc.RoadDistance(from.Latitude, from.Longitude, to.Latitude, to.Longitude),
+			distance: mapping.RoadDistance(mc, from.Latitude, from.Longitude, to.Latitude, to.Longitude),
 		}
 	}
 	return dists, nil
