@@ -27,9 +27,9 @@ func ServeMock(response string) *httptest.Server {
 // .JSON endpoints your test will hit, and the corresponding responses that
 // should be served, and pass it to ServeMultiResponseMock to spin up
 // a test HTTP server that handles all of that for you.
-func ServeMultiResponseMock(responses map[string]string) *httptest.Server {
+func ServeMultiResponseMock(responses map[string]string, extractKeyFromURL func(string) string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		keyInMap := extractJSONFilepath(r.URL.Path)
+		keyInMap := extractKeyFromURL(r.URL.Path)
 		response := responses[keyInMap]
 		_, err := w.Write([]byte(response))
 		if err != nil {
@@ -38,7 +38,7 @@ func ServeMultiResponseMock(responses map[string]string) *httptest.Server {
 	}))
 }
 
-func extractJSONFilepath(url string) string {
+func ExtractJSONFilepath(url string) string {
 	components := strings.Split(url, "/")
 	filepath := components[len(components)-1]
 	return strings.Replace(filepath, ".json", "", 1)
