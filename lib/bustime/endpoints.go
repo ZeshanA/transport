@@ -16,7 +16,7 @@ const (
 )
 
 type BusStop struct {
-	StopID    string
+	ID        string
 	Latitude  float64
 	Longitude float64
 }
@@ -99,10 +99,10 @@ func (client *client) populateDirectionWithStops(
 	// Initialise the list of BusStop structs under the current routeID and directionID
 	mapOfStops[routeID][directionID] = make([]BusStop, len(stopIDs))
 	// Construct a BusStop struct for each stop and store it in the map
-	for i, stopID := range stopIDs {
-		curStopDetails := stopDetails[stopID]
+	for i, id := range stopIDs {
+		curStopDetails := stopDetails[id]
 		lat, lon := curStopDetails.Get("lat").Float(), curStopDetails.Get("lon").Float()
-		stopStruct := BusStop{StopID: stopID, Latitude: lat, Longitude: lon}
+		stopStruct := BusStop{ID: id, Latitude: lat, Longitude: lon}
 		mapOfStops[routeID][directionID][i] = stopStruct
 	}
 }

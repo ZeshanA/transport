@@ -14,12 +14,12 @@ const (
 	directionsMatrixEndpoint = "directions-matrix/v1"
 )
 
-type client struct {
+type Client struct {
 	key     string
 	baseURL string
 }
 
-// NewClient creates a new mapping.client
+// NewClient creates a new mapping.Client
 // The API `key` parameter is mandatory, the remainder of the
 // parameters are optional and are the functions suffixed with
 // 'Option' in this file.
@@ -27,12 +27,12 @@ type client struct {
 
 // Example Usage:
 // client := mapping.NewClient("API_KEY", CustomBaseURLOption("http://google.com/"))
-func NewClient(key string, options ...func(*client) error) *client {
-	client := client{key: key, baseURL: defaultBaseURL}
+func NewClient(key string, options ...func(*Client) error) *Client {
+	client := Client{key: key, baseURL: defaultBaseURL}
 	for _, option := range options {
 		err := option(&client)
 		if err != nil {
-			log.Fatalf("mapping.client initialisation error: %s", err)
+			log.Fatalf("mapping.Client initialisation error: %s", err)
 		}
 	}
 	return &client
@@ -40,14 +40,14 @@ func NewClient(key string, options ...func(*client) error) *client {
 
 // CustomBaseURLOption returns a *function* that can be passed
 // to the NewClient constructor to override the default base URL
-func CustomBaseURLOption(customBaseURL string) func(*client) error {
-	return func(client *client) error {
+func CustomBaseURLOption(customBaseURL string) func(*Client) error {
+	return func(client *Client) error {
 		client.baseURL = customBaseURL
 		return nil
 	}
 }
 
-func (c *client) RoadDistance(fromLat, fromLon, toLat, toLon float64) (distanceInMetres float64) {
+func (c *Client) RoadDistance(fromLat, fromLon, toLat, toLon float64) (distanceInMetres float64) {
 	URL := c.constructRoadDistanceURL(fromLat, fromLon, toLat, toLon)
 	resp := network.GetRequestBody(URL)
 	parsedResp := gjson.Parse(resp)
@@ -57,7 +57,7 @@ func (c *client) RoadDistance(fromLat, fromLon, toLat, toLon float64) (distanceI
 	return parsedResp.Get("distances.0.0").Float()
 }
 
-func (c *client) constructRoadDistanceURL(fromLat, fromLon, toLat, toLon float64) string {
+func (c *Client) constructRoadDistanceURL(fromLat, fromLon, toLat, toLon float64) string {
 	coords := fmt.Sprintf("%f,%f;%f,%f", fromLat, fromLon, toLat, toLon)
 	rawURL := fmt.Sprintf("%s/%s/mapbox/driving/%s", c.baseURL, directionsMatrixEndpoint, coords)
 	params := map[string]string{

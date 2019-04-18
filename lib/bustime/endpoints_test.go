@@ -58,7 +58,7 @@ func TestClient_GetRoutesWithURL(t *testing.T) {
 		"MTA NYCT": `{"data": {"list": [{"id": "MTA NYCT_BX4A"}, {"id": "MTA NYCT_M31"}]}}`,
 		"MTABC":    `{"data": {"list": [{"id": "MTABC_BX4A"}, {"id": "MTABC_M31"}]}}`,
 	}
-	ts := testhelper.ServeMultiResponseMock(responses)
+	ts := testhelper.ServeMultiResponseMock(responses, testhelper.ExtractJSONFilepath)
 	defer ts.Close()
 
 	// Create bustime.client
@@ -94,7 +94,7 @@ func TestClient_GetRoutesWithURLEmpty(t *testing.T) {
 
 func TestClient_GetStops(t *testing.T) {
 	// Create HTTP server to serve the correct JSON response, based on the routeID in the request URL
-	ts := testhelper.ServeMultiResponseMock(stopsResponses)
+	ts := testhelper.ServeMultiResponseMock(stopsResponses, testhelper.ExtractJSONFilepath)
 	defer ts.Close()
 
 	// Create bustime.client
@@ -244,26 +244,26 @@ var stopsResponses = map[string]string{
 var stopsExpectedOutput = map[string]map[int][]bustime.BusStop{
 	"MTA NYCT_M1": {
 		0: {
-			bustime.BusStop{StopID: "MTA_100001", Latitude: 40.731, Longitude: -73.990},
-			bustime.BusStop{StopID: "MTA_100002", Latitude: 40.831, Longitude: -73.390},
-			bustime.BusStop{StopID: "MTA_100003", Latitude: 40.131, Longitude: -72.890},
+			bustime.BusStop{ID: "MTA_100001", Latitude: 40.731, Longitude: -73.990},
+			bustime.BusStop{ID: "MTA_100002", Latitude: 40.831, Longitude: -73.390},
+			bustime.BusStop{ID: "MTA_100003", Latitude: 40.131, Longitude: -72.890},
 		},
 		1: {
-			bustime.BusStop{StopID: "MTA_100004", Latitude: 49.731, Longitude: -73.990},
-			bustime.BusStop{StopID: "MTA_100005", Latitude: 48.831, Longitude: -72.390},
-			bustime.BusStop{StopID: "MTA_100006", Latitude: 49.131, Longitude: -73.890},
+			bustime.BusStop{ID: "MTA_100004", Latitude: 49.731, Longitude: -73.990},
+			bustime.BusStop{ID: "MTA_100005", Latitude: 48.831, Longitude: -72.390},
+			bustime.BusStop{ID: "MTA_100006", Latitude: 49.131, Longitude: -73.890},
 		},
 	},
 	"MTA NYCT_M2": {
 		0: {
-			{StopID: "MTA_200001", Latitude: 48.931, Longitude: -71.290},
-			{StopID: "MTA_200002", Latitude: 43.431, Longitude: -75.790},
-			{StopID: "MTA_200003", Latitude: 44.231, Longitude: -71.990},
+			{ID: "MTA_200001", Latitude: 48.931, Longitude: -71.290},
+			{ID: "MTA_200002", Latitude: 43.431, Longitude: -75.790},
+			{ID: "MTA_200003", Latitude: 44.231, Longitude: -71.990},
 		},
 		1: {
-			{StopID: "MTA_200004", Latitude: 48.931, Longitude: -71.290},
-			{StopID: "MTA_200005", Latitude: 43.431, Longitude: -75.790},
-			{StopID: "MTA_200006", Latitude: 44.231, Longitude: -71.990},
+			{ID: "MTA_200004", Latitude: 48.931, Longitude: -71.290},
+			{ID: "MTA_200005", Latitude: 43.431, Longitude: -75.790},
+			{ID: "MTA_200006", Latitude: 44.231, Longitude: -71.990},
 		},
 	},
 }
