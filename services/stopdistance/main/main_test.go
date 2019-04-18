@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 	"testing"
 	"transport/lib/bustime"
-	"transport/lib/mapping"
 	"transport/lib/testhelper"
+
+	"googlemaps.github.io/maps"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -14,26 +17,26 @@ func TestGetDistances(t *testing.T) {
 	ts := testhelper.ServeMultiResponseMock(mockedDistanceResponses, extractCoordsFromURL)
 	defer ts.Close()
 
+	mc, err := maps.NewClient(maps.WithAPIKey("TEST"), maps.WithBaseURL(ts.URL))
+	if err != nil {
+		assert.Fail(t, fmt.Sprintf("failed to initialise maps client: %s", err))
+	}
+
 	expected := stopDistances
-
-	mc := mapping.NewClient("TEST", mapping.CustomBaseURLOption(ts.URL))
 	actual := GetDistances(mc, stopDetails)
-
 	assert.Equal(t, expected, actual)
 }
 
-func extractCoordsFromURL(url string) string {
-	components := strings.Split(url, "/")
-	coordinates := components[len(components)-1]
-	// Conversion from float64 coordinates to strings adds five 0s onto the end,
-	// remove them here just to make hardcoding the mocked responses easier
-	return strings.Replace(coordinates, "00000", "", -1)
+func extractCoordsFromURL(fullURL *url.URL) string {
+	from := strings.Replace(fullURL.Query().Get("origins"), "00000", "", -1)
+	to := strings.Replace(fullURL.Query().Get("destinations"), "00000", "", -1)
+	return fmt.Sprintf("%s;%s", from, to)
 }
 
 var mockedDistanceResponses = map[string]string{
-	"12.3,34.5;67.8,90.1": `{"code": "Ok", "distances": [[157.8]]}`,
-	"67.8,90.1;23.4,56.7": `{"code": "Ok", "distances": [[148.1]]}`,
-	"14.1,23.5;13.8,83.1": `{"code": "Ok", "distances": [[127.2]]}`,
+	"12.3,34.5;67.8,90.1": `{"rows": [{"elements": [{"distance": {"value": 157}}]}], "status": "OK"}`,
+	"67.8,90.1;23.4,56.7": `{"rows": [{"elements": [{"distance": {"value": 148}}]}], "status": "OK"}`,
+	"14.1,23.5;13.8,83.1": `{"rows": [{"elements": [{"distance": {"value": 127}}]}], "status": "OK"}`,
 }
 
 var stopDetails = map[string]map[int][]bustime.BusStop{
@@ -57,7 +60,7 @@ var stopDetails = map[string]map[int][]bustime.BusStop{
 }
 
 var stopDistances = []stopDistance{
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop1", toID: "Stop2", distance: 157.8},
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop2", toID: "Stop3", distance: 148.1},
-	{routeID: "MTA M1", directionID: 1, fromID: "Stop4", toID: "Stop5", distance: 127.2},
+	{routeID: "MTA M1", directionID: 0, fromID: "Stop1", toID: "Stop2", distance: 157},
+	{routeID: "MTA M1", directionID: 0, fromID: "Stop2", toID: "Stop3", distance: 148},
+	{routeID: "MTA M1", directionID: 1, fromID: "Stop4", toID: "Stop5", distance: 127},
 }
