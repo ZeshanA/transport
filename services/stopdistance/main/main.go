@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"transport/lib/bustime"
+	"transport/lib/database"
 	"transport/lib/iohelper"
 
 	"googlemaps.github.io/maps"
@@ -37,5 +38,22 @@ func main() {
 
 	// Calculate distances between stops and store in DB
 	distances := GetDistances(mc, stopDetails)
-	StoreDistances(distances)
+	storeDistances(distances)
+}
+
+func storeDistances(distances []stopDistance) {
+	database.Store(database.StopDistanceTable, extractStopDistanceColumns, stopDistanceToInterface(distances))
+}
+
+func stopDistanceToInterface(distances []stopDistance) []interface{} {
+	r := make([]interface{}, len(distances))
+	for i, distance := range distances {
+		r[i] = distance
+	}
+	return r
+}
+
+func extractStopDistanceColumns(sdEntry interface{}) []interface{} {
+	sd := sdEntry.(stopDistance)
+	return []interface{}{sd.routeID, sd.fromID, sd.toID, sd.distance, sd.directionID}
 }
