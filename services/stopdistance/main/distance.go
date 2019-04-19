@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"transport/lib/bus"
 	"transport/lib/bustime"
 	"transport/lib/mapping"
 
@@ -12,12 +13,12 @@ import (
 )
 
 type distanceResponse struct {
-	res []stopDistance
+	res []bus.StopDistance
 	err error
 }
 
-func GetDistances(mc *maps.Client, stopDetails map[string]map[int][]bustime.BusStop) []stopDistance {
-	var distances []stopDistance
+func GetDistances(mc *maps.Client, stopDetails map[string]map[int][]bustime.BusStop) []bus.StopDistance {
+	var distances []bus.StopDistance
 	mux := &sync.Mutex{}
 	fetched, count := make(chan distanceResponse), 0
 	for routeID, directionIDs := range stopDetails {
@@ -45,12 +46,12 @@ func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, st
 		return
 	}
 	log.Printf("Fetching distances for routeID: %s, directionID: %d\n", routeID, directionID)
-	dists := make([]stopDistance, len(stops)-1)
+	dists := make([]bus.StopDistance, len(stops)-1)
 	for i, j := 0, 1; j < len(stops); i, j = i+1, j+1 {
 		from, to := stops[i], stops[j]
-		dists[i] = stopDistance{
-			routeID: routeID, directionID: directionID, fromID: from.ID, toID: to.ID,
-			distance: mapping.RoadDistance(mc, from.Latitude, from.Longitude, to.Latitude, to.Longitude),
+		dists[i] = bus.StopDistance{
+			RouteID: routeID, DirectionID: directionID, FromID: from.ID, ToID: to.ID,
+			Distance: mapping.RoadDistance(mc, from.Latitude, from.Longitude, to.Latitude, to.Longitude),
 		}
 	}
 	log.Printf("Succesfully fetched distances for routeID: %s, directionID: %d\n", routeID, directionID)
