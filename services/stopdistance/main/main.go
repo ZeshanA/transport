@@ -1,26 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"transport/lib/bus"
 	"transport/lib/bustime"
 	"transport/lib/database"
 	"transport/lib/iohelper"
 
 	"googlemaps.github.io/maps"
 )
-
-type stopDistance struct {
-	routeID     string
-	directionID int
-	fromID      string
-	toID        string
-	distance    float64
-}
-
-func (sd *stopDistance) String() string {
-	return fmt.Sprintf("%s – Direction %d – From %s – To %s = %f metres", sd.routeID, sd.directionID, sd.fromID, sd.toID, sd.distance)
-}
 
 func main() {
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
@@ -41,11 +29,11 @@ func main() {
 	storeDistances(distances)
 }
 
-func storeDistances(distances []stopDistance) {
+func storeDistances(distances []bus.StopDistance) {
 	database.Store(database.StopDistanceTable, extractStopDistanceColumns, stopDistanceToInterface(distances))
 }
 
-func stopDistanceToInterface(distances []stopDistance) []interface{} {
+func stopDistanceToInterface(distances []bus.StopDistance) []interface{} {
 	r := make([]interface{}, len(distances))
 	for i, distance := range distances {
 		r[i] = distance
@@ -54,6 +42,6 @@ func stopDistanceToInterface(distances []stopDistance) []interface{} {
 }
 
 func extractStopDistanceColumns(sdEntry interface{}) []interface{} {
-	sd := sdEntry.(stopDistance)
-	return []interface{}{sd.routeID, sd.fromID, sd.toID, sd.distance, sd.directionID}
+	sd := sdEntry.(bus.StopDistance)
+	return []interface{}{sd.RouteID, sd.FromID, sd.ToID, sd.Distance, sd.DirectionID}
 }

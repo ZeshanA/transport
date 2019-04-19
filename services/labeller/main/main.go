@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"labeller/stopdistance"
+	"transport/lib/database"
+)
+
+var db = database.OpenDBConnection()
 
 func main() {
-	fmt.Println("Hello, world!")
+	stopDistances := stopdistance.Get(db)
+	fmt.Println(stopDistances)
 }

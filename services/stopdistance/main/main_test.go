@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"transport/lib/bus"
 	"transport/lib/bustime"
 	"transport/lib/testhelper"
 
@@ -31,15 +32,15 @@ func TestGetDistancesIntegration(t *testing.T) {
 	stopDetails := bt.GetStops(routes...)
 
 	// Calculate distances between stops and store in DB
-	expected := []stopDistance{
-		{routeID: "MTA NYCT_M1", directionID: 0, fromID: "MTA_100001", toID: "MTA_100002", distance: 123},
-		{routeID: "MTA NYCT_M1", directionID: 0, fromID: "MTA_100002", toID: "MTA_100003", distance: 456},
-		{routeID: "MTA NYCT_M1", directionID: 1, fromID: "MTA_100004", toID: "MTA_100005", distance: 789},
-		{routeID: "MTA NYCT_M1", directionID: 1, fromID: "MTA_100005", toID: "MTA_100006", distance: 1011},
+	expected := []bus.StopDistance{
+		{RouteID: "MTA NYCT_M1", DirectionID: 0, FromID: "MTA_100001", ToID: "MTA_100002", Distance: 123},
+		{RouteID: "MTA NYCT_M1", DirectionID: 0, FromID: "MTA_100002", ToID: "MTA_100003", Distance: 456},
+		{RouteID: "MTA NYCT_M1", DirectionID: 1, FromID: "MTA_100004", ToID: "MTA_100005", Distance: 789},
+		{RouteID: "MTA NYCT_M1", DirectionID: 1, FromID: "MTA_100005", ToID: "MTA_100006", Distance: 1011},
 	}
 	actual := GetDistances(mc, stopDetails)
 	sort.Slice(actual, func(i, j int) bool {
-		return actual[i].fromID < actual[j].fromID
+		return actual[i].FromID < actual[j].FromID
 	})
 	assert.Equal(t, expected, actual)
 }

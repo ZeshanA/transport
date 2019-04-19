@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"transport/lib/bus"
 	"transport/lib/bustime"
 	"transport/lib/testhelper"
 
@@ -27,7 +28,7 @@ func TestGetDistances(t *testing.T) {
 	expected := stopDistances
 	actual := GetDistances(mc, stopDetails)
 	sort.Slice(actual, func(i, j int) bool {
-		return actual[i].fromID < actual[j].fromID
+		return actual[i].FromID < actual[j].FromID
 	})
 	assert.Equal(t, expected, actual)
 }
@@ -70,8 +71,8 @@ var stopDetails = map[string]map[int][]bustime.BusStop{
 	},
 }
 
-var stopDistances = []stopDistance{
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop1", toID: "Stop2", distance: 157},
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop2", toID: "Stop3", distance: 148},
-	{routeID: "MTA M1", directionID: 1, fromID: "Stop4", toID: "Stop5", distance: 127},
+var stopDistances = []bus.StopDistance{
+	{RouteID: "MTA M1", DirectionID: 0, FromID: "Stop1", ToID: "Stop2", Distance: 157},
+	{RouteID: "MTA M1", DirectionID: 0, FromID: "Stop2", ToID: "Stop3", Distance: 148},
+	{RouteID: "MTA M1", DirectionID: 1, FromID: "Stop4", ToID: "Stop5", Distance: 127},
 }
