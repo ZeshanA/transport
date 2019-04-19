@@ -1,70 +1,26 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"math"
 	"strconv"
 	"strings"
 	"time"
-	"transport/lib/progress"
-
-	"transport/lib/database"
-
-	"github.com/lib/pq"
 )
 
-func store(entries []ArrivalEntry) {
-	// Open DB connection
-	db := database.OpenDBConnection()
-	defer db.Close()
-
-	// Start transaction
-	transaction, err := db.Begin()
-	if err != nil {
-		log.Fatal(err)
+// Takes an ArrivalEntry struct and outputs a slice representing the database
+// columns for that entry
+func extractColsFromArrivalEntry(arrivalEntry interface{}) []interface{} {
+	entry, ok := arrivalEntry.(ArrivalEntry)
+	if !ok {
+		log.Panicf("processArrivalEntry: entry passed in is not an ArrivalEntry struct")
 	}
-
-	// Copy all entries into the DB (as part of the transaction)
-	copyAllEntries(transaction, entries)
-
-	// Commit transaction
-	err = transaction.Commit()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func copyAllEntries(transaction *sql.Tx, entries []ArrivalEntry) {
-	// Create Copy statement for all columns of the table
-	table := database.VehicleJourneyTable
-	statement, err := transaction.Prepare(pq.CopyIn(table.Name, table.Columns...))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Execute Copy statement for each ArrivalEntry
-	for i, entry := range entries {
-		operatorRef := extractOperatorRef(entry.RouteID)
-		progress.PrintAtIntervals(i, len(entries), "Inserting into DB:")
-
-		// Execute statement with converted or naked fields (depending on if conversion is needed)
-		_, err = statement.Exec(
-			entry.RouteID, entry.DirectionID, entry.TripID, nil, operatorRef, nil, nil, nil, nil,
-			entry.Longitude, entry.Latitude, phaseToProgressRate(entry.Phase), nil,
-			vehicleIDToRef(operatorRef, entry.VehicleID), nil, nil, convertDistance(entry.NextStopDistance),
-			-1, entry.NextStopID, entry.Timestamp.Format(time.RFC3339),
-		)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// Close statement
-	err = statement.Close()
-	if err != nil {
-		log.Fatal(err)
+	operatorRef := extractOperatorRef(entry.RouteID)
+	return []interface{}{
+		entry.RouteID, entry.DirectionID, entry.TripID, nil, operatorRef, nil, nil, nil, nil,
+		entry.Longitude, entry.Latitude, phaseToProgressRate(entry.Phase), nil,
+		vehicleIDToRef(operatorRef, entry.VehicleID), nil, nil, convertDistance(entry.NextStopDistance),
+		-1, entry.NextStopID, entry.Timestamp.Format(time.RFC3339),
 	}
 }
 

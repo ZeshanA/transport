@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"transport/lib/iohelper"
+	"transport/lib/progress"
+
+	"github.com/lib/pq"
 
 	_ "github.com/lib/pq"
 )
@@ -88,5 +91,52 @@ func CommitTransaction(stmt *sql.Stmt, transaction *sql.Tx) {
 	err = transaction.Commit()
 	if err != nil {
 		log.Printf("error whilst committing insertion transaction to db: %v\n", err)
+	}
+}
+
+// Store sends an array of entries to the specified database table.
+// columnExtractor takes a single entry and outputs a slice representing the corresponding
+// database row.
+func Store(table DBTable, columnExtractor func(interface{}) []interface{}, entries ...interface{}) {
+	// Open DB connection
+	db := OpenDBConnection()
+	defer db.Close()
+
+	// Start transaction
+	transaction, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Copy all entries into the DB (as part of the transaction)
+	CopyIntoDB(table, columnExtractor, transaction, entries)
+
+	// Commit transaction
+	err = transaction.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func CopyIntoDB(table DBTable, columnExtractor func(interface{}) []interface{}, transaction *sql.Tx, entries []interface{}) {
+	// Create Copy statement for all columns of the table
+	statement, err := transaction.Prepare(pq.CopyIn(table.Name, table.Columns...))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Execute Copy statement for each ArrivalEntry
+	for i, entry := range entries {
+		progress.PrintAtIntervals(i, len(entries), "Inserting into DB:")
+		_, err := statement.Exec(columnExtractor(entry)...)
+		if err != nil {
+			log.Printf("database.CopyIntoDB: error whilst executing copy statement: %s\n", err)
+		}
+	}
+
+	// Close statement
+	err = statement.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
