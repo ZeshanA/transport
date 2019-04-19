@@ -2,65 +2,133 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 	"testing"
 	"transport/lib/bustime"
 	"transport/lib/testhelper"
 
-	"googlemaps.github.io/maps"
-
 	"github.com/stretchr/testify/assert"
+	"googlemaps.github.io/maps"
 )
 
-func TestGetDistances(t *testing.T) {
-	ts := testhelper.ServeMultiResponseMock(mockedDistanceResponses, extractCoordsFromURL)
-	defer ts.Close()
+func TestGetDistancesIntegration(t *testing.T) {
+	btMock := testhelper.ServeMultiResponseMock(bustimeResponses, extractBustimeEndpoint)
+	bt := bustime.NewClient("TEST", bustime.CustomBaseURLOption(btMock.URL))
 
-	mc, err := maps.NewClient(maps.WithAPIKey("TEST"), maps.WithBaseURL(ts.URL))
+	mapsMock := testhelper.ServeMultiResponseMock(distanceResponses, extractCoordsFromURL)
+	mc, err := maps.NewClient(maps.WithAPIKey("TEST"), maps.WithBaseURL(mapsMock.URL))
 	if err != nil {
-		assert.Fail(t, fmt.Sprintf("failed to initialise maps client: %s", err))
+		log.Panicf("main: failed to initialise Maps API client: %s", err)
 	}
 
-	expected := stopDistances
+	agencies := bt.GetAgencies()
+	log.Printf("%d agencies fetched\n", len(agencies))
+	routes := bt.GetRoutes(agencies...)
+	log.Printf("%d routes fetched\n", len(agencies))
+	stopDetails := bt.GetStops(routes...)
+
+	// Calculate distances between stops and store in DB
+	expected := []stopDistance{
+		{routeID: "MTA NYCT_M1", directionID: 0, fromID: "MTA_100001", toID: "MTA_100002", distance: 123},
+		{routeID: "MTA NYCT_M1", directionID: 0, fromID: "MTA_100002", toID: "MTA_100003", distance: 456},
+		{routeID: "MTA NYCT_M1", directionID: 1, fromID: "MTA_100004", toID: "MTA_100005", distance: 789},
+		{routeID: "MTA NYCT_M1", directionID: 1, fromID: "MTA_100005", toID: "MTA_100006", distance: 1011},
+	}
 	actual := GetDistances(mc, stopDetails)
 	assert.Equal(t, expected, actual)
 }
 
-func extractCoordsFromURL(fullURL *url.URL) string {
-	from := strings.Replace(fullURL.Query().Get("origins"), "00000", "", -1)
-	to := strings.Replace(fullURL.Query().Get("destinations"), "00000", "", -1)
-	return fmt.Sprintf("%s;%s", from, to)
+func extractBustimeEndpoint(fullURL *url.URL) string {
+	if strings.Contains(fullURL.String(), "agencies-with-coverage") {
+		return "agencies"
+	} else if strings.Contains(fullURL.String(), "routes-for-agency") {
+		return "routes"
+	} else if strings.Contains(fullURL.String(), "stops-for-route") {
+		return "stops"
+	} else {
+		return "invalid"
+	}
 }
 
-var mockedDistanceResponses = map[string]string{
-	"12.3,34.5;67.8,90.1": `{"rows": [{"elements": [{"distance": {"value": 157}}]}], "status": "OK"}`,
-	"67.8,90.1;23.4,56.7": `{"rows": [{"elements": [{"distance": {"value": 148}}]}], "status": "OK"}`,
-	"14.1,23.5;13.8,83.1": `{"rows": [{"elements": [{"distance": {"value": 127}}]}], "status": "OK"}`,
+func distanceResponse(distance int) string {
+	return fmt.Sprintf(`{"rows": [{"elements": [{"distance": {"value": %d}}]}], "status": "OK"}`, distance)
 }
 
-var stopDetails = map[string]map[int][]bustime.BusStop{
-	"MTA M1": {
-		0: {
-			bustime.BusStop{ID: "Stop1", Latitude: 12.3, Longitude: 34.5},
-			bustime.BusStop{ID: "Stop2", Latitude: 67.8, Longitude: 90.1},
-			bustime.BusStop{ID: "Stop3", Latitude: 23.4, Longitude: 56.7},
-		},
-		1: {
-			bustime.BusStop{ID: "Stop4", Latitude: 14.1, Longitude: 23.5},
-			bustime.BusStop{ID: "Stop5", Latitude: 13.8, Longitude: 83.1},
-		},
-	},
-	"MTA M2": {
-		0: {
-			bustime.BusStop{ID: "Stop6", Latitude: 10.3, Longitude: 13.5},
-		},
-		1: {},
-	},
+var distanceResponses = map[string]string{
+	"40.7,-73.9;40.8,-73.3": distanceResponse(123),
+	"40.8,-73.3;40.1,-72.8": distanceResponse(456),
+	"49.7,-73.9;48.8,-72.3": distanceResponse(789),
+	"48.8,-72.3;49.1,-73.8": distanceResponse(1011),
 }
 
-var stopDistances = []stopDistance{
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop1", toID: "Stop2", distance: 157},
-	{routeID: "MTA M1", directionID: 0, fromID: "Stop2", toID: "Stop3", distance: 148},
-	{routeID: "MTA M1", directionID: 1, fromID: "Stop4", toID: "Stop5", distance: 127},
+var bustimeResponses = map[string]string{
+	"agencies": `{"data": {"list":[{"agencyId": "MTA NYCT"}]}}`,
+	"routes":   `{"data": {"list": [{"id": "MTA NYCT_M1"}]}}`,
+	"stops":    stopsResponse,
 }
+
+var stopsResponse = `
+{
+  "data": {
+    "entry": {
+      "stopGroupings": [
+        {
+          "stopGroups": [
+            {
+              "id": 0,
+              "stopIds": [
+                "MTA_100001",
+                "MTA_100002",
+                "MTA_100003"
+              ]
+            },
+            {
+              "id": 1,
+              "stopIds": [
+                "MTA_100004",
+                "MTA_100005",
+                "MTA_100006"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "references": {
+      "stops": [
+        {
+          "id": "MTA_100001",
+          "lat": "40.7",
+          "lon": "-73.9"
+        },
+        {
+          "id": "MTA_100002",
+          "lat": "40.8",
+          "lon": "-73.3"
+        },
+        {
+          "id": "MTA_100003",
+          "lat": "40.1",
+          "lon": "-72.8"
+        },
+        {
+          "id": "MTA_100004",
+          "lat": "49.7",
+          "lon": "-73.9"
+        },
+        {
+          "id": "MTA_100005",
+          "lat": "48.8",
+          "lon": "-72.3"
+        },
+        {
+          "id": "MTA_100006",
+          "lat": "49.1",
+          "lon": "-73.8"
+        }
+      ]
+    }
+  }
+}`
