@@ -4,29 +4,45 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 	"transport/lib/bustime"
 	"transport/lib/mapping"
 
 	"googlemaps.github.io/maps"
 )
 
+type distanceResponse struct {
+	res []stopDistance
+	err error
+}
+
 func GetDistances(mc *maps.Client, stopDetails map[string]map[int][]bustime.BusStop) []stopDistance {
 	var distances []stopDistance
+	mux := &sync.Mutex{}
+	fetched, count := make(chan distanceResponse), 0
 	for routeID, directionIDs := range stopDetails {
 		for directionID, stopsForDirectionID := range directionIDs {
-			distsForRoute, err := getDistancesAlongRoute(mc, routeID, directionID, stopsForDirectionID)
-			if err != nil {
-				fmt.Println(err)
-			}
-			distances = append(distances, distsForRoute...)
+			go getDistancesAlongRoute(mc, routeID, directionID, stopsForDirectionID, fetched)
+			count++
+		}
+	}
+	for i := 0; i < count; i++ {
+		distResp := <-fetched
+		if distResp.err != nil {
+			fmt.Println(distResp.err)
+		} else {
+			mux.Lock()
+			distances = append(distances, distResp.res...)
+			mux.Unlock()
 		}
 	}
 	return distances
 }
 
-func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, stops []bustime.BusStop) ([]stopDistance, error) {
+func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, stops []bustime.BusStop, fetched chan distanceResponse) {
 	if len(stops) < 2 {
-		return nil, errors.New("getDistancesAlongRoute: fewer than 2 stops in list provided")
+		fetched <- distanceResponse{nil, errors.New("getDistancesAlongRoute: fewer than 2 stops in list provided")}
+		return
 	}
 	log.Printf("Fetching distances for routeID: %s, directionID: %d\n", routeID, directionID)
 	dists := make([]stopDistance, len(stops)-1)
@@ -37,6 +53,6 @@ func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, st
 			distance: mapping.RoadDistance(mc, from.Latitude, from.Longitude, to.Latitude, to.Longitude),
 		}
 	}
-	log.Printf("Succesfully fetched distances for routeID: %s\n, directionID: %d", routeID, directionID)
-	return dists, nil
+	log.Printf("Succesfully fetched distances for routeID: %s, directionID: %d\n", routeID, directionID)
+	fetched <- distanceResponse{dists, nil}
 }

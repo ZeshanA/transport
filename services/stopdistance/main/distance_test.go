@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 	"transport/lib/bustime"
@@ -25,6 +26,9 @@ func TestGetDistances(t *testing.T) {
 
 	expected := stopDistances
 	actual := GetDistances(mc, stopDetails)
+	sort.Slice(actual, func(i, j int) bool {
+		return actual[i].fromID < actual[j].fromID
+	})
 	assert.Equal(t, expected, actual)
 }
 

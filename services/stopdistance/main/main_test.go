@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 	"transport/lib/bustime"
@@ -37,6 +38,9 @@ func TestGetDistancesIntegration(t *testing.T) {
 		{routeID: "MTA NYCT_M1", directionID: 1, fromID: "MTA_100005", toID: "MTA_100006", distance: 1011},
 	}
 	actual := GetDistances(mc, stopDetails)
+	sort.Slice(actual, func(i, j int) bool {
+		return actual[i].fromID < actual[j].fromID
+	})
 	assert.Equal(t, expected, actual)
 }
 
@@ -52,15 +56,15 @@ func extractBustimeEndpoint(fullURL *url.URL) string {
 	}
 }
 
-func distanceResponse(distance int) string {
+func distanceJSON(distance int) string {
 	return fmt.Sprintf(`{"rows": [{"elements": [{"distance": {"value": %d}}]}], "status": "OK"}`, distance)
 }
 
 var distanceResponses = map[string]string{
-	"40.7,-73.9;40.8,-73.3": distanceResponse(123),
-	"40.8,-73.3;40.1,-72.8": distanceResponse(456),
-	"49.7,-73.9;48.8,-72.3": distanceResponse(789),
-	"48.8,-72.3;49.1,-73.8": distanceResponse(1011),
+	"40.7,-73.9;40.8,-73.3": distanceJSON(123),
+	"40.8,-73.3;40.1,-72.8": distanceJSON(456),
+	"49.7,-73.9;48.8,-72.3": distanceJSON(789),
+	"48.8,-72.3;49.1,-73.8": distanceJSON(1011),
 }
 
 var bustimeResponses = map[string]string{
