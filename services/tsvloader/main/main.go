@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"transport/lib/database"
 )
 
 func main() {
@@ -50,5 +51,5 @@ func fetchAndStore(URL string, storageDirectory string) {
 	validRows := removeNullRows(decompressedFile)
 	arrivalEntries := unmarshalMTADataBytes(validRows)
 	removeDataFiles(compressedFile, decompressedFile)
-	store(arrivalEntries)
+	database.Store(database.VehicleJourneyTable, extractColsFromArrivalEntry, arrivalEntries)
 }
