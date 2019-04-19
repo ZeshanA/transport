@@ -34,7 +34,7 @@ func main() {
 	log.Printf("%d agencies fetched\n", len(agencies))
 	routes := bt.GetRoutes(agencies...)
 	log.Printf("%d routes fetched\n", len(agencies))
-	stopDetails := bt.GetStops(routes[0])
+	stopDetails := bt.GetStops(routes...)
 
 	// Calculate distances between stops and store in DB
 	distances := GetDistances(mc, stopDetails)
