@@ -38,6 +38,19 @@ var (
 	}
 )
 
+// StopDistanceTable contains pairs of stops and the distance in metres between them
+var (
+	StopDistanceTable = DBTable{
+		"stop_distance",
+		[]string{
+			"route_id",
+			"from_stop_id", "to_stop_id",
+			"distance",
+			"direction_id",
+		},
+	}
+)
+
 // OpenDBConnection connects you to the MTAData DB in Azure, using
 // username and password combination fetched from the environment
 func OpenDBConnection() *sql.DB {
@@ -97,7 +110,8 @@ func CommitTransaction(stmt *sql.Stmt, transaction *sql.Tx) {
 // Store sends an array of entries to the specified database table.
 // columnExtractor takes a single entry and outputs a slice representing the corresponding
 // database row.
-func Store(table DBTable, columnExtractor func(interface{}) []interface{}, entries ...interface{}) {
+func Store(table DBTable, columnExtractor func(interface{}) []interface{}, entries interface{}) {
+	entriesSlice := entries.([]interface{})
 	// Open DB connection
 	db := OpenDBConnection()
 	defer db.Close()
@@ -109,7 +123,7 @@ func Store(table DBTable, columnExtractor func(interface{}) []interface{}, entri
 	}
 
 	// Copy all entries into the DB (as part of the transaction)
-	CopyIntoDB(table, columnExtractor, transaction, entries)
+	CopyIntoDB(table, columnExtractor, transaction, entriesSlice)
 
 	// Commit transaction
 	err = transaction.Commit()
