@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"transport/lib/bustime"
 	"transport/lib/mapping"
 
@@ -27,6 +28,7 @@ func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, st
 	if len(stops) < 2 {
 		return nil, errors.New("getDistancesAlongRoute: fewer than 2 stops in list provided")
 	}
+	log.Printf("Fetching distances for routeID: %s, directionID: %d\n", routeID, directionID)
 	dists := make([]stopDistance, len(stops)-1)
 	for i, j := 0, 1; j < len(stops); i, j = i+1, j+1 {
 		from, to := stops[i], stops[j]
@@ -35,5 +37,6 @@ func getDistancesAlongRoute(mc *maps.Client, routeID string, directionID int, st
 			distance: mapping.RoadDistance(mc, from.Latitude, from.Longitude, to.Latitude, to.Longitude),
 		}
 	}
+	log.Printf("Succesfully fetched distances for routeID: %s\n, directionID: %d", routeID, directionID)
 	return dists, nil
 }

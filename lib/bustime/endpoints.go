@@ -3,6 +3,7 @@ package bustime
 import (
 	"fmt"
 	"log"
+	"sync"
 	"transport/lib/jsonhelper"
 	"transport/lib/network"
 
@@ -52,9 +53,11 @@ func (client *client) GetRoutes(agencyIDs ...string) []string {
 // the form: routeID -> directionID -> []stopID
 func (client *client) GetStops(routeIDs ...string) map[string]map[int][]BusStop {
 	mapOfStops := map[string]map[int][]BusStop{}
-	done := make(chan string)
+	// Create mutex to protect map from concurrent writes and
+	// channel to mark routeID as completed
+	mux, done := &sync.Mutex{}, make(chan string)
 	for _, routeID := range routeIDs {
-		go client.populateStopsForRoute(mapOfStops, routeID, done)
+		go client.populateStopsForRoute(mapOfStops, routeID, mux, done)
 	}
 	// Wait for all go routines to report completion to the 'done' channel
 	for i := 0; i < len(routeIDs); i++ {
@@ -64,10 +67,12 @@ func (client *client) GetStops(routeIDs ...string) map[string]map[int][]BusStop 
 	return mapOfStops
 }
 
-func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusStop, routeID string, done chan string) {
+func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusStop, routeID string, mux *sync.Mutex, done chan string) {
 	log.Printf("Fetching stops for route ID: %s\n", routeID)
 	// Initialise inner map for this routeID
+	mux.Lock()
 	mapOfStops[routeID] = map[int][]BusStop{}
+	mux.Unlock()
 	// Construct the URL to fetch data from
 	URLWithKey := fmt.Sprintf(
 		"%s/%s/%s.json?%s&includePolylines=false",
@@ -82,7 +87,7 @@ func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusS
 	stopDetails := getStopDetails(jsonString)
 	// For the current routeID, populate each direction (0 or 1) with BusStop structs
 	for _, direction := range travelDirections {
-		client.populateDirectionWithStops(mapOfStops, stopDetails, routeID, direction)
+		client.populateDirectionWithStops(mapOfStops, stopDetails, routeID, direction, mux)
 	}
 	// Write to channel to mark the current routeID as completed
 	done <- routeID
@@ -90,20 +95,26 @@ func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusS
 
 func (client *client) populateDirectionWithStops(
 	mapOfStops map[string]map[int][]BusStop,
-	stopDetails map[string]gjson.Result,
-	routeID string, direction gjson.Result) {
+	stopDetails map[string]gjson.Result, routeID string, direction gjson.Result, mux *sync.Mutex,
+) {
 	// Convert direction to integer (0 or 1)
 	directionID := int(direction.Get("id").Int())
 	// Extract list of stopIDs from JSON
 	stopIDs := jsonhelper.ResultArrayToStringArray(direction.Get("stopIds").Array())
+
 	// Initialise the list of BusStop structs under the current routeID and directionID
+	mux.Lock()
 	mapOfStops[routeID][directionID] = make([]BusStop, len(stopIDs))
+	mux.Unlock()
+
 	// Construct a BusStop struct for each stop and store it in the map
 	for i, id := range stopIDs {
 		curStopDetails := stopDetails[id]
 		lat, lon := curStopDetails.Get("lat").Float(), curStopDetails.Get("lon").Float()
 		stopStruct := BusStop{ID: id, Latitude: lat, Longitude: lon}
+		mux.Lock()
 		mapOfStops[routeID][directionID][i] = stopStruct
+		mux.Unlock()
 	}
 }
 
