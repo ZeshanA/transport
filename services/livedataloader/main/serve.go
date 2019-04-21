@@ -7,20 +7,22 @@ import (
 
 // Starts the HTTP server which serves the live data
 func initialiseServer() {
-	log.Printf("Starting HTTP server...")
+	port := ":8001"
+	log.Printf("Starting HTTP server at http://localhost%s", port)
 
 	// Attach request handlers
 	http.HandleFunc("/api/v1/vehicles", liveDataRequestHandler)
 	http.HandleFunc("/health", healthEndpoint)
+	http.HandleFunc("/", healthEndpoint)
 
 	// Start HTTP server
-	log.Fatal(http.ListenAndServe(":8001", nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 }
 
 func liveDataRequestHandler(w http.ResponseWriter, req *http.Request) {
 	// Construct response based on currently cached data (declared in main.go)
 	// and the query params from the request
-	response := *createVehicleDataResponse(&vehicleData, req.URL.Query())
+	response := createVehicleDataResponse(vehicleData, req.URL.Query())
 
 	log.Printf("Response created succesfully, writing to output...")
 
