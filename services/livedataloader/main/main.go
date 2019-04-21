@@ -1,9 +1,12 @@
 package main
 
-import "transport/lib/iohelper"
+import (
+	"transport/lib/bus"
+	"transport/lib/iohelper"
+)
 
 // Currently cached data from MTA
-var vehicleData string
+var vehicleData []bus.VehicleJourney
 
 func main() {
 	// Create a channel which is written to when new data is finished being written

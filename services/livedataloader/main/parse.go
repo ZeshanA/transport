@@ -3,62 +3,56 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"strings"
-	"time"
+	"transport/lib/bus"
+	"transport/lib/database"
+	"transport/lib/nulltypes"
+
+	"gopkg.in/guregu/null.v3"
 )
 
 // Takes a JSON string representing an MTAVehicleMonitoringResponse and return
-// a JSON string with the same data in the internal VehicleJourney format
-func convertToIR(jsonString []byte) string {
+// a slice containing the same data in the internal VehicleJourney format
+func convertToIR(jsonString []byte) []bus.VehicleJourney {
 	var response MTAVehicleMonitoringResponse
 	err := json.Unmarshal(jsonString, &response)
 	if err != nil {
 		log.Fatalf("error parsing JSON: %v\n", err)
 	}
-	result, err := json.Marshal(response)
-	if err != nil {
-		log.Fatalf("error marshalling JSON for response: %v\n", err)
-	}
-	return string(result)
-}
 
-// MarshalJSON is a custom marshalling method for MTAVehicleMonitoringResponse
-// that converts the response to the internal data format and performs marshalling
-// on that struct
-func (response MTAVehicleMonitoringResponse) MarshalJSON() ([]byte, error) {
-	vehicleActivity := response.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity
-	var journeys = make([]VehicleJourney, len(vehicleActivity))
-	for i, activityEntry := range vehicleActivity {
-		MTAJourney := activityEntry.MonitoredVehicleJourney
-		timestamp := activityEntry.RecordedAtTime
-		journeys[i] = getVehicleJourney(MTAJourney, timestamp)
+	externalJourneys := response.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity
+	var internalJourneys = make([]bus.VehicleJourney, len(externalJourneys))
+
+	for i, jrny := range externalJourneys {
+		mvj, ts := jrny.MonitoredVehicleJourney, jrny.RecordedAtTime
+		internalJourneys[i] = getVehicleJourney(mvj, ts)
 	}
-	return json.Marshal(journeys)
+
+	return internalJourneys
 }
 
 // Converts an MTAMonitoredVehicleJourney into the internal VehicleJourney format
-func getVehicleJourney(mvj MTAMonitoredVehicleJourney, timestamp Timestamp) VehicleJourney {
-	return VehicleJourney{
-		mvj.LineRef,
-		mvj.DirectionRef,
-		mvj.FramedVehicleJourneyRef.DatedVehicleJourneyRef,
-		mvj.PublishedLineName[0],
-		mvj.OperatorRef,
-		mvj.OriginRef,
-		mvj.DestinationRef,
-		mvj.OriginAimedDepartureTime,
-		flattenSituationRef(mvj.SituationRef),
-		mvj.VehicleLocation.Longitude,
-		mvj.VehicleLocation.Latitude,
-		mvj.ProgressRate,
-		mvj.Occupancy,
-		mvj.VehicleRef,
-		mvj.MonitoredCall.ExpectedArrivalTime,
-		mvj.MonitoredCall.ExpectedDepartureTime,
-		mvj.MonitoredCall.DistanceFromStop,
-		mvj.MonitoredCall.NumberOfStopsAway,
-		mvj.MonitoredCall.StopPointRef,
-		timestamp,
+func getVehicleJourney(mvj MTAMonitoredVehicleJourney, timestamp database.Timestamp) bus.VehicleJourney {
+	return bus.VehicleJourney{
+		LineRef:                  null.StringFrom(mvj.LineRef),
+		DirectionRef:             null.IntFrom(int64(mvj.DirectionRef)),
+		TripID:                   null.StringFrom(mvj.FramedVehicleJourneyRef.DatedVehicleJourneyRef),
+		PublishedLineName:        null.StringFrom(mvj.PublishedLineName[0]),
+		OperatorRef:              null.StringFrom(mvj.OperatorRef),
+		OriginRef:                null.StringFrom(mvj.OriginRef),
+		DestinationRef:           null.StringFrom(mvj.DestinationRef),
+		OriginAimedDepartureTime: nulltypes.TimestampFrom(mvj.OriginAimedDepartureTime),
+		SituationRef:             nulltypes.StringSliceFrom(flattenSituationRef(mvj.SituationRef)),
+		Longitude:                null.FloatFrom(mvj.VehicleLocation.Longitude),
+		Latitude:                 null.FloatFrom(mvj.VehicleLocation.Latitude),
+		ProgressRate:             null.StringFrom(mvj.ProgressRate),
+		Occupancy:                null.StringFrom(mvj.Occupancy),
+		VehicleRef:               null.StringFrom(mvj.VehicleRef),
+		ExpectedArrivalTime:      nulltypes.TimestampFrom(mvj.MonitoredCall.ExpectedArrivalTime),
+		ExpectedDepartureTime:    nulltypes.TimestampFrom(mvj.MonitoredCall.ExpectedDepartureTime),
+		DistanceFromStop:         null.IntFrom(int64(mvj.MonitoredCall.DistanceFromStop)),
+		NumberOfStopsAway:        null.IntFrom(int64(mvj.MonitoredCall.NumberOfStopsAway)),
+		StopPointRef:             null.StringFrom(mvj.MonitoredCall.StopPointRef),
+		Timestamp:                nulltypes.TimestampFrom(timestamp),
 	}
 }
 
@@ -70,21 +64,4 @@ func flattenSituationRef(refs []MTASituationRef) []string {
 		flattened[i] = ref.SituationSimpleRef
 	}
 	return flattened
-}
-
-// Timestamp is a wrapper around time.Time to allow for a custom
-// UnmarshalJSON method
-type Timestamp struct {
-	time.Time
-}
-
-// Custom parsing of incoming timestamps
-func (t *Timestamp) UnmarshalJSON(b []byte) error {
-	noQuotes := strings.Replace(string(b), "\"", "", 2)
-	parsed, err := time.Parse(time.RFC3339, noQuotes)
-	if err != nil {
-		log.Printf("error whilst parsing Timestamp: %v", err)
-	}
-	*t = Timestamp{parsed}
-	return nil
 }

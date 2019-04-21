@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"transport/lib/bus"
 	"transport/lib/iohelper"
 )
 
@@ -17,14 +18,14 @@ const (
 
 // Fetches initial data, telling the HTTP server it can start up, and fetches new data
 // at a fixed time interval
-func initialiseDataFetching(key string, dataLocation *string, dataWritten chan bool) {
+func initialiseDataFetching(key string, dataLocation *[]bus.VehicleJourney, dataWritten chan bool) {
 	URLWithKey := fmt.Sprintf("%s?key=%s&version=2", vehicleMonitoringURL, key)
 	fetchInitialData(URLWithKey, dataLocation, dataWritten)
 	fetchAtInterval(URLWithKey, fetchFrequency, dataLocation, dataWritten)
 }
 
 // Fetches initial data and writes to the dataWritten channel once complete
-func fetchInitialData(URL string, dataLocation *string, dataWritten chan bool) {
+func fetchInitialData(URL string, dataLocation *[]bus.VehicleJourney, dataWritten chan bool) {
 	fetch(URL, dataLocation)
 	dataWritten <- true
 	log.Printf("Succesfully fetched initial data from URL (%s)\n", URL)
@@ -40,7 +41,7 @@ Make a time.NewTicker, which returns a channel that will be written to every X s
 	- fetches the data
 	- returns to the start of the loop and blocks on the channel again
 */
-func fetchAtInterval(URL string, timeBetweenFetches time.Duration, dataLocation *string, dataWritten chan bool) {
+func fetchAtInterval(URL string, timeBetweenFetches time.Duration, dataLocation *[]bus.VehicleJourney, dataWritten chan bool) {
 	ticker := time.NewTicker(timeBetweenFetches)
 	go func() {
 		for {
@@ -52,13 +53,13 @@ func fetchAtInterval(URL string, timeBetweenFetches time.Duration, dataLocation 
 }
 
 // Fetches the JSON object at `URL`, reads it into memory and stores it at `dataLocation`
-func fetch(URL string, dataLocation *string) {
+func fetch(URL string, dataLocation *[]bus.VehicleJourney) {
 	log.Printf("Fetching data from URL (%s)\n", URL)
 
 	// Get response from URL
 	resp, err := http.Get(URL)
 	if err != nil {
-		log.Printf("Fetching URL (%s) failed due to:\n%s\n", err)
+		log.Printf("Fetching URL (%s) failed due to: %s\n", URL, err)
 		return
 	}
 	defer iohelper.CloseSafely(resp.Body, URL)
@@ -66,7 +67,7 @@ func fetch(URL string, dataLocation *string) {
 	// Load body of response into memory
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Reading response from URL (%s) failed due to:\n%s\n", err)
+		log.Printf("Reading response from URL (%s) failed due to: %s\n", URL, err)
 		return
 	}
 
