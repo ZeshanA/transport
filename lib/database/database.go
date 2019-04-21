@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
+	"time"
 	"transport/lib/iohelper"
 	"transport/lib/progress"
 
@@ -17,6 +19,7 @@ const (
 	databaseHost = "mtadata.postgres.database.azure.com"
 	databasePort = 5432
 	databaseName = "postgres"
+	TimeFormat   = "2006-01-02 15:04:05"
 )
 
 // DBTable type holds name and column list for each table in the DB
@@ -25,10 +28,27 @@ type DBTable struct {
 	Columns []string
 }
 
+// Timestamp is a wrapper around time.Time to allow for a custom
+// UnmarshalJSON method
+type Timestamp struct {
+	time.Time
+}
+
+// Custom parsing of incoming timestamps
+func (t *Timestamp) UnmarshalJSON(b []byte) error {
+	noQuotes := strings.Replace(string(b), "\"", "", 2)
+	parsed, err := time.Parse(time.RFC3339, noQuotes)
+	if err != nil {
+		log.Printf("error whilst parsing Timestamp: %v", err)
+	}
+	*t = Timestamp{parsed}
+	return nil
+}
+
 // VehicleJourneyTable contains historical movements + live vehicle movements
 var (
 	VehicleJourneyTable = DBTable{
-		"vehicle_journey2",
+		"vehicle_journey",
 		[]string{
 			"line_ref", "direction_ref", "trip_id", "published_line_name", "operator_ref", "origin_ref",
 			"destination_ref", "origin_aimed_departure_time", "situation_ref", "longitude", "latitude", "progress_rate",

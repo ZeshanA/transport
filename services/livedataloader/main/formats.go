@@ -1,29 +1,8 @@
 package main
 
-// Internal Format Structs
-// ==========================================================================
-type VehicleJourney struct {
-	LineRef                  string
-	DirectionRef             int
-	TripID                   string
-	PublishedLineName        string
-	OperatorRef              string
-	OriginRef                string
-	DestinationRef           string
-	OriginAimedDepartureTime Timestamp
-	SituationRef             []string
-	Longitude                float64
-	Latitude                 float64
-	ProgressRate             string
-	Occupancy                string
-	VehicleRef               string
-	ExpectedArrivalTime      Timestamp
-	ExpectedDepartureTime    Timestamp
-	DistanceFromStop         int
-	NumberOfStopsAway        int
-	StopPointRef             string
-	Timestamp                Timestamp
-}
+import (
+	"transport/lib/database"
+)
 
 // External (MTA) structs
 // ==========================================================================
@@ -36,7 +15,7 @@ type MTASiri struct {
 }
 
 type MTAServiceDelivery struct {
-	ResponseTimestamp         Timestamp
+	ResponseTimestamp         database.Timestamp
 	VehicleMonitoringDelivery []MTAVehicleMonitoringDelivery
 	SituationExchangeDelivery []MTASituationExchangeDelivery
 }
@@ -45,13 +24,13 @@ type MTAServiceDelivery struct {
 
 type MTAVehicleMonitoringDelivery struct {
 	VehicleActivity   []MTAVehicleActivity
-	ResponseTimestamp Timestamp
-	ValidUntil        Timestamp
+	ResponseTimestamp database.Timestamp
+	ValidUntil        database.Timestamp
 }
 
 type MTAVehicleActivity struct {
 	MonitoredVehicleJourney MTAMonitoredVehicleJourney
-	RecordedAtTime          Timestamp
+	RecordedAtTime          database.Timestamp
 }
 
 type MTAMonitoredVehicleJourney struct {
@@ -64,7 +43,7 @@ type MTAMonitoredVehicleJourney struct {
 	OriginRef                string
 	DestinationRef           string
 	DestinationName          []string
-	OriginAimedDepartureTime Timestamp
+	OriginAimedDepartureTime database.Timestamp
 	SituationRef             []MTASituationRef
 	Monitored                bool
 	VehicleLocation          MTAVehicleLocation
@@ -92,9 +71,9 @@ type MTAVehicleLocation struct {
 }
 
 type MTAMonitoredCall struct {
-	ExpectedArrivalTime   Timestamp
+	ExpectedArrivalTime   database.Timestamp
 	ArrivalProximityText  string
-	ExpectedDepartureTime Timestamp
+	ExpectedDepartureTime database.Timestamp
 	DistanceFromStop      int
 	NumberOfStopsAway     int
 	StopPointRef          string
@@ -118,7 +97,7 @@ type MTAPTSituationElement struct {
 	Description       []string
 	Affects           MTAAffected
 	Consequences      MTAConsequence
-	CreationTime      Timestamp
+	CreationTime      database.Timestamp
 	SituationNumber   string
 }
 
@@ -131,8 +110,8 @@ type MTACondition struct {
 }
 
 type MTAPublicationWindow struct {
-	StartTime Timestamp
-	EndTime   Timestamp
+	StartTime database.Timestamp
+	EndTime   database.Timestamp
 }
 
 type MTAAffected struct {
