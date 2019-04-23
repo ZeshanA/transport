@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"log"
+	"strings"
 	"time"
 	"transport/lib/database"
 )
@@ -40,21 +40,33 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Scan uses a cell from the DB to populate a Timestamp struct
 func (ts *Timestamp) Scan(value interface{}) error {
 	if value == nil {
 		ts.Timestamp, ts.Valid = database.Timestamp{}, false
 		return nil
 	}
-	ts.Valid = true
-	newTS := database.Timestamp{}
-	err := newTS.UnmarshalJSON(value.([]byte))
-	ts.Timestamp = newTS
-	if err != nil {
-		log.Fatal(err)
+	switch v := value.(type) {
+	case string:
+		if v == "NULL" {
+			ts.Timestamp, ts.Valid = database.Timestamp{}, false
+			return nil
+		}
+		parsed, err := time.Parse(database.TimeFormat, v)
+		if err != nil {
+			return fmt.Errorf("nulltypes.Timestamp.Scan: unable to parse string: %v\n", value)
+		}
+		ts.Timestamp, ts.Valid = database.Timestamp{Time: parsed}, true
+	case time.Time:
+		ts.Timestamp, ts.Valid = database.Timestamp{Time: v}, true
+	default:
+		return fmt.Errorf("nulltypes.Timestamp.Scan: invalid type passed in: %v\n", v)
 	}
 	return nil
 }
 
+// Value takes a Timestamp struct and outputs a value that can be stored
+// in the DB
 func (ts Timestamp) Value() (driver.Value, error) {
 	if !ts.Valid {
 		return nil, nil
@@ -101,12 +113,29 @@ func (ss *StringSlice) Scan(value interface{}) error {
 		return nil
 	}
 	ss.Valid = true
-	// Use JSON unmarshaller for convenience
-	err := ss.UnmarshalJSON(value.([]byte))
-	if err != nil {
-		return err
+	switch v := value.(type) {
+	case string:
+		ss.StringSlice = parseStringSlice([]byte(v))
+	case []byte:
+		ss.StringSlice = parseStringSlice(v)
+	default:
+		ss.StringSlice, ss.Valid = nil, false
+		return fmt.Errorf("nulltypes.StringSlice.Scan: invalid type passed in: %v\n", value)
 	}
 	return nil
+}
+
+func parseStringSlice(rawBytes []byte) []string {
+	str := string(rawBytes)
+	// Remove {} braces from start and end of string
+	noBrackets := str[1 : len(str)-1]
+	// Split the string into its components
+	components := strings.Split(noBrackets, ",")
+	// Remove quote marks from each component
+	for i, v := range components {
+		components[i] = strings.Replace(v, `"`, ``, -1)
+	}
+	return components
 }
 
 func (ss *StringSlice) Value() (driver.Value, error) {

@@ -1,11 +1,16 @@
 package testhelper
 
 import (
+	"database/sql"
+	"database/sql/driver"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 // ServeMock creates a new httptest server that responds to all requests with
@@ -44,4 +49,26 @@ func ExtractJSONFilepath(fullURL *url.URL) string {
 	components := strings.Split(path, "/")
 	filepath := components[len(components)-1]
 	return strings.Replace(filepath, ".json", "", 1)
+}
+
+// SetupDBMock can be used to get a sql.DB instance that will
+// return the specified rows when queries.
+func SetupDBMock(t *testing.T, columnNames []string, rowsToReturn [][]driver.Value, expectedQuery string) (*sql.DB, sqlmock.Sqlmock) {
+	// Set up DB mock
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	// Initialise DB mock for rows
+	rows := sqlmock.NewRows(columnNames)
+
+	// Assign rows for mock DB to return
+	for _, r := range rowsToReturn {
+		rows.AddRow(r...)
+	}
+
+	// Expect the correct query to be executed
+	mock.ExpectQuery(expectedQuery).WillReturnRows(rows)
+	return db, mock
 }
