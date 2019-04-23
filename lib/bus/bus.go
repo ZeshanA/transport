@@ -60,12 +60,17 @@ func (vj *VehicleJourney) Value() []interface{} {
 type DirectedRoute struct {
 	RouteID     string
 	DirectionID int
+	VehicleRef  string
 }
 
 func PartitionJourneys(journeys []VehicleJourney) map[DirectedRoute][]VehicleJourney {
 	result := map[DirectedRoute][]VehicleJourney{}
 	for _, journey := range journeys {
-		route := DirectedRoute{journey.LineRef.String, int(journey.DirectionRef.Int64)}
+		route := DirectedRoute{
+			journey.LineRef.String,
+			int(journey.DirectionRef.Int64),
+			journey.VehicleRef.String,
+		}
 		result[route] = append(result[route], journey)
 	}
 	return result
