@@ -1,3 +1,4 @@
+github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/avast/retry-go v2.2.0+incompatible h1:m+w7mVLWa/oKqX2xYqiEKQQkeGH8DDEXB/XnjS54Wyw=
 github.com/avast/retry-go v2.2.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

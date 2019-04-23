@@ -1,6 +1,7 @@
 module transport/lib
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/avast/retry-go v2.2.0+incompatible
 	github.com/google/go-cmp v0.2.0
 	github.com/google/uuid v1.1.1 // indirect
