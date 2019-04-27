@@ -48,7 +48,7 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 // VehicleJourneyTable contains historical movements + live vehicle movements
 var (
 	VehicleJourneyTable = DBTable{
-		"vehicle_journey",
+		"vehicle_journey2",
 		[]string{
 			"line_ref", "direction_ref", "trip_id", "published_line_name", "operator_ref", "origin_ref",
 			"destination_ref", "origin_aimed_departure_time", "situation_ref", "longitude", "latitude", "progress_rate",
