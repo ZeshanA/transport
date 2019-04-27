@@ -9,13 +9,13 @@ import (
 )
 
 // Get fetches all stop distances from
-// the database and returns a slice of them, parsed
-// into bus.StopDistance structs.
-func Get(db *sql.DB) []bus.StopDistance {
+// the database and returns a map of distances,
+// queryable by StopDistanceKey.
+func Get(db *sql.DB) map[Key]float64 {
 	rows := fetchRows(db)
 	defer rows.Close()
 	sdList := scanIntoStructs(rows)
-	return sdList
+	return partitionStopDistanceList(sdList)
 }
 
 // Fetch raw rows from stop_distance table
@@ -43,4 +43,21 @@ func scanIntoStructs(rows *sql.Rows) []bus.StopDistance {
 		log.Fatal(err)
 	}
 	return sdList
+}
+
+type Key struct {
+	RouteID     string
+	DirectionID int
+	FromID      string
+	ToID        string
+}
+
+// Returns a nested map of fromStopID -> toStopID -> distance
+func partitionStopDistanceList(distances []bus.StopDistance) map[Key]float64 {
+	partitioned := map[Key]float64{}
+	for _, sd := range distances {
+		key := Key{RouteID: sd.RouteID, DirectionID: sd.DirectionID, FromID: sd.FromID, ToID: sd.ToID}
+		partitioned[key] = sd.Distance
+	}
+	return partitioned
 }
