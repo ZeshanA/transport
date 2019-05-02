@@ -2,29 +2,19 @@ package stopdistance
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"transport/lib/bus"
 	"transport/lib/database"
 )
 
-// Get fetches all stop distances from
+// stopdistance.Get fetches all stop distances from
 // the database and returns a map of distances,
 // queryable by StopDistanceKey.
 func Get(db *sql.DB) map[Key]float64 {
-	rows := fetchRows(db)
+	rows := database.FetchAllRows(db, database.StopDistanceTable.Name)
 	defer rows.Close()
 	sdList := scanIntoStructs(rows)
 	return partitionStopDistanceList(sdList)
-}
-
-// Fetch raw rows from stop_distance table
-func fetchRows(db *sql.DB) *sql.Rows {
-	rows, err := db.Query(fmt.Sprintf(`SELECT * FROM %s`, database.StopDistanceTable.Name))
-	if err != nil {
-		log.Panicf("stopdistance.Get: error whilst reading from db: %s\n", err)
-	}
-	return rows
 }
 
 // Convert database rows into bus.StopDistance structs
@@ -60,4 +50,29 @@ func partitionStopDistanceList(distances []bus.StopDistance) map[Key]float64 {
 		partitioned[key] = sd.Distance
 	}
 	return partitioned
+}
+
+func GetAverage(db *sql.DB) map[string]int {
+	// Init map
+	distances := map[string]int{}
+	// Fetch rows from average distance table
+	rows := database.FetchAllRows(db, database.AverageDistanceTable.Name)
+	defer rows.Close()
+
+	for rows.Next() {
+		// Scan row into relevant variables
+		var routeID string
+		var distance int
+		err := rows.Scan(&routeID, &distance)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Store distance under correct routeID in map
+		distances[routeID] = distance
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return distances
 }
