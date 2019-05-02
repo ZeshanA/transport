@@ -17,21 +17,15 @@ var dateRange = []time.Time{
 
 func main() {
 	stopDistances := stopdistance.Get(dbConn)
+	avgStopDistances := stopdistance.GetAverage(dbConn)
 	dataForDates := fetch.DateRange(dbConn, dateRange[0], dateRange[1])
 	var labelledJourneys []bus.LabelledJourney
 	for _, journeysOnDate := range dataForDates {
 		partitionedJourneys := bus.PartitionJourneys(journeysOnDate)
-		labelledData := labels.Create(partitionedJourneys, stopDistances)
+		labelledData := labels.Create(partitionedJourneys, stopDistances, avgStopDistances)
 		labelledJourneys = append(labelledJourneys, labelledData...)
 	}
 	//for i, j := range labelledJourneys {
 	//	fmt.Printf("Journey %d: %v\n", i, j)
 	//}
-}
-
-func countMapItems(m map[bus.DirectedRoute][]bus.VehicleJourney) (total int) {
-	for _, v := range m {
-		total += len(v)
-	}
-	return total
 }
