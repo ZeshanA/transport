@@ -7,30 +7,39 @@ import (
 	"transport/lib/bus"
 )
 
+// Create takes a map of journeys partitioned by their DirectedRoute
+// returns: a slice of labelledMovements that can be inserted into the DB.
 func Create(partitionedJourneys map[bus.DirectedRoute][]bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) (labelledMvmts []bus.LabelledJourney) {
 	for route, mvmts := range partitionedJourneys {
 		if len(mvmts) < 2 {
 			log.Println("Fewer than 2 movements for route.")
 			continue
 		}
-		for i, fromMvmt := range mvmts {
-			finalPreStopMvmt, reachedStopMvmt, wentPastStop := ExtractKeyMvmts(mvmts, i)
-			// No movement event where the vehicle reaches its stop or moves to the next stopID: we can't ascertain
-			// arrival time, so skip the current movement event.
-			// TODO: could potentially extrapolate it using the same technique as wentPastStop
-			if reachedStopMvmt == nil {
-				continue
-			} else if !wentPastStop {
-				// Perfect stop, so we can just subtract the timestamps to calculate how long the journey took
-				timeTaken := SubtractMvmtTimestamps(reachedStopMvmt, &fromMvmt)
-				labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(timeTaken)))
-			} else {
-				// Went past stop: need to extrapolate time
-				timeToFinalPreStopMvmt := SubtractMvmtTimestamps(finalPreStopMvmt, &fromMvmt)
-				timeFromFinalPreStopMvmtToStop := GetTimeToStopFromFinalMovement(route, fromMvmt, finalPreStopMvmt, reachedStopMvmt, stopDistances, averageStopDistances)
-				totalTimeFromMvmtToStop := float64(timeToFinalPreStopMvmt) + timeFromFinalPreStopMvmtToStop
-				labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(totalTimeFromMvmtToStop)))
-			}
+		labelledMvmts = append(labelledMvmts, labelMvmtsForRoute(route, mvmts, stopDistances, averageStopDistances)...)
+	}
+	return labelledMvmts
+}
+
+// Returns a slice of labelledJourneys for a single route
+func labelMvmtsForRoute(route bus.DirectedRoute, mvmts []bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) []bus.LabelledJourney {
+	var labelledMvmts []bus.LabelledJourney
+	for i, fromMvmt := range mvmts {
+		finalPreStopMvmt, reachedStopMvmt, wentPastStop := ExtractKeyMvmts(mvmts, i)
+		// No movement event where the vehicle reaches its stop or moves to the next stopID: we can't ascertain
+		// arrival time, so skip the current movement event.
+		// TODO: could potentially extrapolate it using the same technique as wentPastStop
+		if reachedStopMvmt == nil {
+			continue
+		} else if !wentPastStop {
+			// Perfect stop, so we can just subtract the timestamps to calculate how long the journey took
+			timeTaken := SubtractMvmtTimestamps(reachedStopMvmt, &fromMvmt)
+			labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(timeTaken)))
+		} else {
+			// Went past stop: need to extrapolate time
+			timeToFinalPreStopMvmt := SubtractMvmtTimestamps(finalPreStopMvmt, &fromMvmt)
+			timeFromFinalPreStopMvmtToStop := GetTimeToStopFromFinalMovement(route, fromMvmt, finalPreStopMvmt, reachedStopMvmt, stopDistances, averageStopDistances)
+			totalTimeFromMvmtToStop := float64(timeToFinalPreStopMvmt) + timeFromFinalPreStopMvmtToStop
+			labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(totalTimeFromMvmtToStop)))
 		}
 	}
 	return labelledMvmts
@@ -63,6 +72,8 @@ func ExtractKeyMvmts(mvmts []bus.VehicleJourney, startIndex int) (finalPreStopMv
 	return finalPreStopMvmt, reachedStopMvmt, wentPastStop
 }
 
+// Returns an estimate of how long it took the bus to reach the stop from the position it was at when
+// we received the final pre-stop movement event.
 func GetTimeToStopFromFinalMovement(route bus.DirectedRoute, fromMvmt bus.VehicleJourney, preStopMvmt *bus.VehicleJourney, postStopMvmt *bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) float64 {
 	distanceBetweenStops := GetDistanceBetweenStops(route, fromMvmt, postStopMvmt, stopDistances, averageStopDistances)
 	distanceToNextStop := float64(postStopMvmt.DistanceFromStop.Int64)
