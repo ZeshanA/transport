@@ -6,11 +6,16 @@ import (
 	"transport/lib/bustime"
 	"transport/lib/database"
 	"transport/lib/iohelper"
+	"transport/services/labeller/stopdistance"
 
 	"googlemaps.github.io/maps"
 )
 
 func main() {
+	db := database.OpenDBConnection()
+	defer db.Close()
+	existingSDs := stopdistance.Get(db)
+
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
 	mc, err := maps.NewClient(maps.WithAPIKey(iohelper.GetEnv("GOOGLE_MAPS_API_KEY")))
 	if err != nil {
@@ -25,7 +30,7 @@ func main() {
 	stopDetails := bt.GetStops(routes...)
 
 	// Calculate distances between stops and store in DB
-	distances := GetDistances(mc, stopDetails)
+	distances := GetDistances(mc, stopDetails, existingSDs)
 	storeDistances(distances)
 }
 
