@@ -71,6 +71,17 @@ var (
 	}
 )
 
+// AverageDistanceTable contains pairs of route_id and average_distance between stops along that route
+var (
+	AverageDistanceTable = DBTable{
+		"average_stop_distance",
+		[]string{
+			"route_id",
+			"average_distance",
+		},
+	}
+)
+
 // OpenDBConnection connects you to the MTAData DB in Azure, using
 // username and password combination fetched from the environment
 func OpenDBConnection() *sql.DB {
@@ -173,4 +184,13 @@ func CopyIntoDB(table DBTable, columnExtractor func(interface{}) []interface{}, 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Fetch all raw rows from given table
+func FetchAllRows(db *sql.DB, tableName string) *sql.Rows {
+	rows, err := db.Query(fmt.Sprintf(`SELECT * FROM %s`, tableName))
+	if err != nil {
+		log.Panicf("error whilst reading from db: %s\n", err)
+	}
+	return rows
 }
