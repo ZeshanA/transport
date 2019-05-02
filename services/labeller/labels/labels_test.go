@@ -39,7 +39,7 @@ func TestReachesStop(t *testing.T) {
 			},
 		},
 	}
-	actual := labels.Create(reachesStopSequence, nil)
+	actual := labels.Create(reachesStopSequence, nil, nil)
 	expected := getExpectedLabelledJourneys(reachesStopSequence, []int{180, 120, 60})
 	assert.Equal(t, expected, actual)
 }
@@ -64,7 +64,7 @@ func TestStopNotReached(t *testing.T) {
 		},
 	}
 	expected := getExpectedLabelledJourneys(stopNotReached, []int{})
-	actual := labels.Create(stopNotReached, nil)
+	actual := labels.Create(stopNotReached, nil, nil)
 	assert.Equal(t, expected, actual)
 }
 
@@ -93,7 +93,7 @@ func TestGoesPastStop(t *testing.T) {
 		},
 	}
 	expected := getExpectedLabelledJourneys(goesPastStop, []int{120, 60, 600})
-	actual := labels.Create(goesPastStop, stopDistances)
+	actual := labels.Create(goesPastStop, stopDistances, nil)
 	assert.Equal(t, expected, actual)
 }
 
