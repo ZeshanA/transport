@@ -14,3 +14,16 @@ func TestPartitionJourneys(t *testing.T) {
 	actual := PartitionJourneys([]VehicleJourney{ExampleVJs[0], ExampleVJs[1]})
 	assert.Equal(t, expected, actual)
 }
+
+func TestRemoveAgencyID(t *testing.T) {
+	expected := map[string]string{
+		"MTA NYCT_B41":   "B41",
+		"MTA NYCT_BX41+": "BX41+",
+		"MTABC_Q10":      "Q10",
+		"MTABC_Q114":     "Q114",
+	}
+	for input, expectedOutput := range expected {
+		actualOutput := RemoveAgencyID(input)
+		assert.Equal(t, expectedOutput, actualOutput)
+	}
+}

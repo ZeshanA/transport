@@ -2,6 +2,7 @@ package bus
 
 import (
 	"fmt"
+	"strings"
 	"transport/lib/nulltypes"
 
 	"github.com/lib/pq"
@@ -9,6 +10,10 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// Constants
+const AverageDistanceBetweenStops = 317
+
+// StopDistances
 type StopDistance struct {
 	RouteID     string
 	DirectionID int
@@ -116,4 +121,9 @@ func PartitionJourneys(journeys []VehicleJourney) map[DirectedRoute][]VehicleJou
 		result[route] = append(result[route], journey)
 	}
 	return result
+}
+
+func RemoveAgencyID(routeID string) string {
+	split := strings.Split(routeID, "_")
+	return split[1]
 }

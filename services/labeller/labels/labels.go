@@ -1,16 +1,14 @@
 package labels
 
 import (
-	"fmt"
 	"labeller/stopdistance"
 	"log"
 	"time"
 	"transport/lib/bus"
 )
 
-func Create(partitionedJourneys map[bus.DirectedRoute][]bus.VehicleJourney, stopDistances map[stopdistance.Key]float64) (labelledMvmts []bus.LabelledJourney) {
+func Create(partitionedJourneys map[bus.DirectedRoute][]bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) (labelledMvmts []bus.LabelledJourney) {
 	for route, mvmts := range partitionedJourneys {
-		x, y, z := 0, 0, 0
 		if len(mvmts) < 2 {
 			log.Println("Fewer than 2 movements for route.")
 			continue
@@ -21,26 +19,20 @@ func Create(partitionedJourneys map[bus.DirectedRoute][]bus.VehicleJourney, stop
 			// arrival time, so skip the current movement event.
 			// TODO: could potentially extrapolate it using the same technique as wentPastStop
 			if reachedStopMvmt == nil {
-				x += 1
 				continue
 			} else if !wentPastStop {
 				// Perfect stop, so we can just subtract the timestamps to calculate how long the journey took
-				y += 1
 				timeTaken := SubtractMvmtTimestamps(reachedStopMvmt, &fromMvmt)
 				labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(timeTaken)))
 			} else {
 				// Went past stop: need to extrapolate time
-				z += 1
 				timeToFinalPreStopMvmt := SubtractMvmtTimestamps(finalPreStopMvmt, &fromMvmt)
-				timeFromFinalPreStopMvmtToStop := GetTimeToStopFromFinalMovement(route, fromMvmt, finalPreStopMvmt, reachedStopMvmt, stopDistances)
+				timeFromFinalPreStopMvmtToStop := GetTimeToStopFromFinalMovement(route, fromMvmt, finalPreStopMvmt, reachedStopMvmt, stopDistances, averageStopDistances)
 				totalTimeFromMvmtToStop := float64(timeToFinalPreStopMvmt) + timeFromFinalPreStopMvmtToStop
 				labelledMvmts = append(labelledMvmts, bus.LabelledJourneyFrom(fromMvmt, int(totalTimeFromMvmtToStop)))
 			}
-			fmt.Printf("No stop: %d, Exact stop: %d, Went Past Stop: %d, Total: %d\n", x, y, z, x+y+z)
 		}
 	}
-	fmt.Println(count)
-	fmt.Println(total)
 	return labelledMvmts
 }
 
@@ -71,8 +63,8 @@ func ExtractKeyMvmts(mvmts []bus.VehicleJourney, startIndex int) (finalPreStopMv
 	return finalPreStopMvmt, reachedStopMvmt, wentPastStop
 }
 
-func GetTimeToStopFromFinalMovement(route bus.DirectedRoute, fromMvmt bus.VehicleJourney, preStopMvmt *bus.VehicleJourney, postStopMvmt *bus.VehicleJourney, stopDistances map[stopdistance.Key]float64) float64 {
-	distanceBetweenStops := GetDistanceBetweenStops(route, fromMvmt, postStopMvmt, stopDistances)
+func GetTimeToStopFromFinalMovement(route bus.DirectedRoute, fromMvmt bus.VehicleJourney, preStopMvmt *bus.VehicleJourney, postStopMvmt *bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) float64 {
+	distanceBetweenStops := GetDistanceBetweenStops(route, fromMvmt, postStopMvmt, stopDistances, averageStopDistances)
 	distanceToNextStop := float64(postStopMvmt.DistanceFromStop.Int64)
 	distanceTravelledPastPrevStop := distanceBetweenStops - distanceToNextStop
 	distanceFromFinalPreStopMvmtToStop := float64(preStopMvmt.DistanceFromStop.Int64)
@@ -83,20 +75,19 @@ func GetTimeToStopFromFinalMovement(route bus.DirectedRoute, fromMvmt bus.Vehicl
 	return timeFromFinalPreStopMvmtToStop
 }
 
-var count = 0
-var total = 0
-
-func GetDistanceBetweenStops(route bus.DirectedRoute, from bus.VehicleJourney, to *bus.VehicleJourney, stopDistances map[stopdistance.Key]float64) float64 {
+func GetDistanceBetweenStops(route bus.DirectedRoute, from bus.VehicleJourney, to *bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) float64 {
 	prevStopID, nextStopID := from.StopPointRef.String, to.StopPointRef.String
 	key := stopdistance.Key{RouteID: route.RouteID, DirectionID: route.DirectionID, FromID: prevStopID, ToID: nextStopID}
-	if _, ok := stopDistances[key]; true {
-		fmt.Println(key)
-		if !ok {
-			count += 1
-		}
-		total += 1
+	if preciseDist, found := stopDistances[key]; found {
+		// Found precise distance between the two stops
+		return preciseDist
+	} else if avgDist, found := averageStopDistances[bus.RemoveAgencyID(route.RouteID)]; found {
+		// Couldn't find the precise distance between the stops, use average distance for stops on that route.
+		return float64(avgDist)
+	} else {
+		// Couldn't find the average distance for this route, use average distance for stops across NYC.
+		return bus.AverageDistanceBetweenStops
 	}
-	return stopDistances[key]
 }
 
 func SubtractMvmtTimestamps(mvmtA, mvmtB *bus.VehicleJourney) float64 {
