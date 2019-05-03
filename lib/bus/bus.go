@@ -2,6 +2,7 @@ package bus
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"transport/lib/nulltypes"
 
@@ -107,6 +108,30 @@ func LabelledJourneyFrom(mvmt VehicleJourney, timeToStop int) LabelledJourney {
 		StopPointRef:          mvmt.StopPointRef,
 		Timestamp:             mvmt.Timestamp,
 		TimeToStop:            null.IntFrom(int64(timeToStop)),
+	}
+}
+
+// LabelledJourneyToInterface converts a slice of LabelledJourney structs into
+// a slice of interface{}
+func LabelledJourneyToInterface(journeys []LabelledJourney) []interface{} {
+	r := make([]interface{}, len(journeys))
+	for i, journey := range journeys {
+		r[i] = journey
+	}
+	return r
+}
+
+// ExtractEntriesFromLabelledJourney converts a single LabelledJourney struct into
+// a slice of interface{} which represents the database row
+func ExtractEntriesFromLabelledJourney(ljEntry interface{}) []interface{} {
+	lj, ok := ljEntry.(LabelledJourney)
+	if !ok {
+		log.Panicf("ExtractEntriesFromLabelledJourney: entry passed in is not an LabelledJourney struct")
+	}
+	return []interface{}{
+		lj.LineRef, lj.DirectionRef, lj.OperatorRef, lj.OriginRef, lj.DestinationRef, lj.Longitude, lj.Latitude,
+		lj.ProgressRate, lj.Occupancy, lj.VehicleRef, lj.ExpectedArrivalTime, lj.ExpectedDepartureTime,
+		lj.DistanceFromStop, lj.NumberOfStopsAway, lj.StopPointRef, lj.Timestamp, lj.TimeToStop,
 	}
 }
 

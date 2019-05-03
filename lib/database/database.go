@@ -82,6 +82,32 @@ var (
 	}
 )
 
+// LabelledJourneyTable contains labelled movement events
+var (
+	LabelledJourneyTable = DBTable{
+		"labelled_journey",
+		[]string{
+			"line_ref",
+			"direction_ref",
+			"operator_ref",
+			"origin_ref",
+			"destination_ref",
+			"longitude",
+			"latitude",
+			"progress_rate",
+			"occupancy",
+			"vehicle_ref",
+			"expected_arrival_time",
+			"expected_departure_time",
+			"distance_from_stop",
+			"number_of_stops_away",
+			"stop_point_ref",
+			"timestamp",
+			"time_to_stop",
+		},
+	}
+)
+
 // OpenDBConnection connects you to the MTAData DB in Azure, using
 // username and password combination fetched from the environment
 func OpenDBConnection() *sql.DB {
