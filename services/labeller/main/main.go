@@ -25,7 +25,5 @@ func main() {
 		labelledData := labels.Create(partitionedJourneys, stopDistances, avgStopDistances)
 		labelledJourneys = append(labelledJourneys, labelledData...)
 	}
-	//for i, j := range labelledJourneys {
-	//	fmt.Printf("Journey %d: %v\n", i, j)
-	//}
+	database.Store(database.LabelledJourneyTable, bus.ExtractEntriesFromLabelledJourney, bus.LabelledJourneyToInterface(labelledJourneys))
 }
