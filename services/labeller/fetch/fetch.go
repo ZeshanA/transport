@@ -53,11 +53,13 @@ func scanVehicleJournies(rows *sql.Rows) []bus.VehicleJourney {
 	return journeys
 }
 
-func queryByDate(date time.Time, db *sql.DB) *sql.Rows {
+func queryByDate(start time.Time, db *sql.DB) *sql.Rows {
+	end := start.AddDate(0, 0, 1)
 	q := fmt.Sprintf(
-		`SELECT * FROM %[1]s WHERE TIMESTAMP BETWEEN '%[2]d-%[3]d-%[4]d 00:00:00' AND '%[2]d-%[3]d-%[4]d 23:59:59'`,
+		`SELECT * FROM %[1]s WHERE TIMESTAMP BETWEEN '%[2]d-%[3]d-%[4]d 04:00:00' AND '%[5]d-%[6]d-%[7]d 03:59:59' ORDER BY TIMESTAMP ASC`,
 		database.VehicleJourneyTable.Name,
-		date.Year(), date.Month(), date.Day(),
+		start.Year(), start.Month(), start.Day(),
+		end.Year(), end.Month(), end.Day(),
 	)
 	rows, err := db.Query(q)
 	if err != nil {
