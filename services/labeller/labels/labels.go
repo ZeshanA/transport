@@ -78,6 +78,9 @@ func GetTimeToStopFromFinalMovement(route bus.DirectedRoute, fromMvmt bus.Vehicl
 	distanceBetweenStops := GetDistanceBetweenStops(route, fromMvmt, postStopMvmt, stopDistances, averageStopDistances)
 	distanceToNextStop := float64(postStopMvmt.DistanceFromStop.Int64)
 	distanceTravelledPastPrevStop := distanceBetweenStops - distanceToNextStop
+	if distanceTravelledPastPrevStop < 0 {
+		distanceTravelledPastPrevStop = bus.AverageDistanceBetweenStops * 0.1
+	}
 	distanceFromFinalPreStopMvmtToStop := float64(preStopMvmt.DistanceFromStop.Int64)
 	distanceTravelledBetweenMvmts := distanceFromFinalPreStopMvmtToStop + distanceTravelledPastPrevStop
 	timeBetweenMvmtEvents := SubtractMvmtTimestamps(postStopMvmt, preStopMvmt)
