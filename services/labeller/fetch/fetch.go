@@ -11,6 +11,7 @@ import (
 )
 
 func DateRange(db *sql.DB, startDate time.Time, lastDate time.Time) [][]bus.VehicleJourney {
+	log.Printf("Fetching rows from vehicle_journey table with timestamps between %s and %s\n", startDate, lastDate)
 	endDate := lastDate.AddDate(0, 0, 1)
 	var journeys [][]bus.VehicleJourney
 	for d := startDate; !dates.Equal(d, endDate); d = d.AddDate(0, 0, 1) {

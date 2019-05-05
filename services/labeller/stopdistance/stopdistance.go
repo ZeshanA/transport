@@ -11,6 +11,7 @@ import (
 // the database and returns a map of distances,
 // queryable by StopDistanceKey.
 func Get(db *sql.DB) map[Key]float64 {
+	log.Println("Fetching all stop distances from DB")
 	rows := database.FetchAllRows(db, database.StopDistanceTable.Name)
 	defer rows.Close()
 	sdList := scanIntoStructs(rows)
@@ -53,6 +54,7 @@ func partitionStopDistanceList(distances []bus.StopDistance) map[Key]float64 {
 }
 
 func GetAverage(db *sql.DB) map[string]int {
+	log.Println("Fetching average stop distances for each route from the DB")
 	// Init map
 	distances := map[string]int{}
 	// Fetch rows from average distance table
