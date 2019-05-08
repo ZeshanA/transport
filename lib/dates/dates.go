@@ -17,3 +17,9 @@ func Equal(a time.Time, b time.Time) bool {
 func DaysBetween(a time.Time, b time.Time) int {
 	return int(b.Sub(a).Hours()/HoursInDay) + 1
 }
+
+// SetHour returns a Time with the same year, month and date,
+// the specified `newHourValue`, and 0 for minutes, seconds and nanoseconds.
+func SetHour(t time.Time, newHourValue int, loc *time.Location) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), newHourValue, 0, 0, 0, loc)
+}

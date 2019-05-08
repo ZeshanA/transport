@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"labeller/fetch"
 	"labeller/labels"
 	"labeller/stopdistance"
@@ -16,6 +17,9 @@ import (
 var dbConn = database.OpenDBConnection()
 var newYorkLoc, _ = time.LoadLocation("America/New_York")
 
+// Boundary between days is at 4am
+var dayBoundary = 4
+
 type DateRange struct {
 	Start time.Time
 	End   time.Time
@@ -27,12 +31,17 @@ func main() {
 	mode := os.Args[1]
 	switch mode {
 	case "range":
-		dateRange := getHostDateRange()
-		processDateRange(dateRange, stopDistances, avgStopDistances)
+		dr := getHostDateRange()
+		processDateRange(dr, stopDistances, avgStopDistances)
+		deleteFromDB(dr)
 	case "live":
-		sleepUntilProcessingTime()
-		dateToProcess := time.Now().In(newYorkLoc).AddDate(0, 0, -1)
-		processDateRange(DateRange{dateToProcess, dateToProcess}, stopDistances, avgStopDistances)
+		for {
+			sleepUntilProcessingTime()
+			dateToProcess := time.Now().In(newYorkLoc).AddDate(0, 0, -1)
+			dr := DateRange{dateToProcess, dateToProcess}
+			processDateRange(dr, stopDistances, avgStopDistances)
+			deleteFromDB(dr)
+		}
 	}
 }
 
@@ -45,8 +54,6 @@ func processDateRange(dateRange DateRange, stopDistances map[stopdistance.Key]fl
 func sleepUntilProcessingTime() {
 	// Sleep until it's 4am
 	t := time.Now().In(newYorkLoc)
-	// Boundary between days is at 4am
-	dayBoundary := 4
 	endDate := t.Day()
 	// If the current time is after 4am, the current day will be cut off *tomorrow* at 4am
 	if t.Hour() >= dayBoundary {
@@ -103,4 +110,33 @@ func labelDataForDates(dataForDates [][]bus.VehicleJourney, stopDistances map[st
 	}
 	log.Println("Successfully labelled data for all dates!")
 	return labelledJourneys
+}
+
+func deleteFromDB(dateRange DateRange) {
+	// Start transaction
+	transaction, err := dbConn.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	start, end := dateRange.Start, dateRange.End.AddDate(0, 0, 1)
+	startStamp := dates.SetHour(start, dayBoundary, newYorkLoc).Format(database.TimeFormat)
+	endStamp := dates.SetHour(end, dayBoundary, newYorkLoc).Format(database.TimeFormat)
+	log.Printf("Deleting entries in DB with timestamps between %s and %s", startStamp, endStamp)
+	query := fmt.Sprintf(
+		"DELETE FROM %s WHERE timestamp BETWEEN '%s' and '%s'",
+		database.VehicleJourneyTable.Name, startStamp, endStamp,
+	)
+	stat, err := transaction.Prepare(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = stat.Exec()
+	if err != nil {
+		log.Printf("deleteFromDB: error whilst executing delete statement: %s\n", err)
+	}
+	err = transaction.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Successfully deleted entries in DB with timestamps between %s and %s", startStamp, endStamp)
 }
