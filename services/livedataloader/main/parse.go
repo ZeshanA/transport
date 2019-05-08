@@ -16,7 +16,8 @@ func convertToIR(jsonString []byte) []bus.VehicleJourney {
 	var response MTAVehicleMonitoringResponse
 	err := json.Unmarshal(jsonString, &response)
 	if err != nil {
-		log.Fatalf("error parsing JSON: %v\n", err)
+		log.Printf("error parsing JSON: %v", err)
+		return []bus.VehicleJourney{}
 	}
 
 	externalJourneys := response.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity
