@@ -20,6 +20,7 @@ const (
 	databasePort = 5432
 	databaseName = "postgres"
 	TimeFormat   = "2006-01-02 15:04:05"
+	DateFormat   = "2006-01-02"
 )
 
 // DBTable type holds name and column list for each table in the DB
@@ -48,7 +49,7 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 // VehicleJourneyTable contains historical movements + live vehicle movements
 var (
 	VehicleJourneyTable = DBTable{
-		"vehicle_journey2",
+		"vehicle_journey",
 		[]string{
 			"line_ref", "direction_ref", "trip_id", "published_line_name", "operator_ref", "origin_ref",
 			"destination_ref", "origin_aimed_departure_time", "situation_ref", "longitude", "latitude", "progress_rate",
