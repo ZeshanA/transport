@@ -18,10 +18,12 @@ func DateRange(db *sql.DB, startDate time.Time, lastDate time.Time) [][]bus.Vehi
 		data := getDataForDate(db, d)
 		journeys = append(journeys, data)
 	}
+	log.Printf("Succesfully fetched rows for timestamps between %s and %s\n", startDate, lastDate)
 	return journeys
 }
 
 func getDataForDate(db *sql.DB, date time.Time) []bus.VehicleJourney {
+	log.Printf("Fetching rows for date %s\n", date)
 	rows := queryByDate(date, db)
 	defer rows.Close()
 	journeys := scanVehicleJournies(rows)
@@ -57,10 +59,10 @@ func scanVehicleJournies(rows *sql.Rows) []bus.VehicleJourney {
 func queryByDate(start time.Time, db *sql.DB) *sql.Rows {
 	end := start.AddDate(0, 0, 1)
 	q := fmt.Sprintf(
-		`SELECT * FROM %[1]s WHERE TIMESTAMP BETWEEN '%[2]d-%[3]d-%[4]d 04:00:00' AND '%[5]d-%[6]d-%[7]d 03:59:59' ORDER BY TIMESTAMP ASC`,
+		`SELECT * FROM %s WHERE TIMESTAMP BETWEEN '%s 04:00:00' AND '%s 03:59:59' ORDER BY TIMESTAMP ASC`,
 		database.VehicleJourneyTable.Name,
-		start.Year(), start.Month(), start.Day(),
-		end.Year(), end.Month(), end.Day(),
+		start.Format(database.DateFormat),
+		end.Format(database.DateFormat),
 	)
 	rows, err := db.Query(q)
 	if err != nil {

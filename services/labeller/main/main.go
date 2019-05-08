@@ -14,6 +14,7 @@ import (
 )
 
 var dbConn = database.OpenDBConnection()
+var newYorkLoc, _ = time.LoadLocation("America/New_York")
 
 type DateRange struct {
 	Start time.Time
@@ -21,12 +22,41 @@ type DateRange struct {
 }
 
 func main() {
-	dateRange := getHostDateRange()
 	stopDistances := stopdistance.Get(dbConn)
 	avgStopDistances := stopdistance.GetAverage(dbConn)
+	mode := os.Args[1]
+	switch mode {
+	case "range":
+		dateRange := getHostDateRange()
+		processDateRange(dateRange, stopDistances, avgStopDistances)
+	case "live":
+		sleepUntilProcessingTime()
+		dateToProcess := time.Now().In(newYorkLoc).AddDate(0, 0, -1)
+		processDateRange(DateRange{dateToProcess, dateToProcess}, stopDistances, avgStopDistances)
+	}
+}
+
+func processDateRange(dateRange DateRange, stopDistances map[stopdistance.Key]float64, avgStopDistances map[string]int) {
 	dataForDates := fetch.DateRange(dbConn, dateRange.Start, dateRange.End)
 	labelledJourneys := labelDataForDates(dataForDates, stopDistances, avgStopDistances)
 	database.Store(database.LabelledJourneyTable, bus.ExtractEntriesFromLabelledJourney, bus.LabelledJourneyToInterface(labelledJourneys))
+}
+
+func sleepUntilProcessingTime() {
+	// Sleep until it's 4am
+	t := time.Now().In(newYorkLoc)
+	// Boundary between days is at 4am
+	dayBoundary := 4
+	endDate := t.Day()
+	// If the current time is after 4am, the current day will be cut off *tomorrow* at 4am
+	if t.Hour() >= dayBoundary {
+		endDate += 1
+	}
+	// Sleep until the dayBoundary time (4am) has been reached
+	processAtTime := time.Date(t.Year(), t.Month(), endDate, dayBoundary, 0, 0, 0, newYorkLoc)
+	timeToSleep := processAtTime.Sub(t)
+	log.Printf("Sleeping until %s\n", processAtTime.Format(database.TimeFormat))
+	time.Sleep(timeToSleep)
 }
 
 func getHostDateRange() DateRange {
@@ -50,7 +80,7 @@ func extractCLIArgs() (hostID int, hostCount int, dateRange DateRange) {
 	if sdErr != nil || edErr != nil {
 		log.Fatalf("Failed to parse start or end date from args: %v\n", os.Args)
 	}
-	return hostID, hostCount, DateRange{sd, ed}
+	return hostID + 1, hostCount + 1, DateRange{sd, ed}
 }
 
 // Returns the (inclusive) date range that this host needs to label.
@@ -65,10 +95,12 @@ func calculateHostDateRange(hostID int, hostCount int, dRange DateRange) DateRan
 
 func labelDataForDates(dataForDates [][]bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, avgStopDistances map[string]int) []bus.LabelledJourney {
 	var labelledJourneys []bus.LabelledJourney
-	for _, journeysOnDate := range dataForDates {
+	for i, journeysOnDate := range dataForDates {
+		log.Printf("Labelling data for date %d of %d...\n", i, len(dataForDates))
 		partitionedJourneys := bus.PartitionJourneys(journeysOnDate)
 		labelledData := labels.Create(partitionedJourneys, stopDistances, avgStopDistances)
 		labelledJourneys = append(labelledJourneys, labelledData...)
 	}
+	log.Println("Successfully labelled data for all dates!")
 	return labelledJourneys
 }
