@@ -7,8 +7,8 @@ import (
 
 // Starts the HTTP server which serves the live data
 func initialiseServer() {
-	port := ":8001"
-	log.Printf("Starting HTTP server at http://localhost%s", port)
+	port := ":8090"
+	log.Printf("Starting HTTP server at http://localhost:%s", port)
 
 	// Attach request handlers
 	http.HandleFunc("/api/v1/vehicles", liveDataRequestHandler)
