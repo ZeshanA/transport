@@ -20,7 +20,11 @@ func convertToIR(jsonString []byte) []bus.VehicleJourney {
 		return []bus.VehicleJourney{}
 	}
 
-	externalJourneys := response.Siri.ServiceDelivery.VehicleMonitoringDelivery[0].VehicleActivity
+	delivery := response.Siri.ServiceDelivery.VehicleMonitoringDelivery
+	if len(delivery) == 0 {
+		return []bus.VehicleJourney{}
+	}
+	externalJourneys := delivery[0].VehicleActivity
 	var internalJourneys = make([]bus.VehicleJourney, len(externalJourneys))
 
 	for i, jrny := range externalJourneys {
