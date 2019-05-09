@@ -1,6 +1,11 @@
 package dates
 
-import "time"
+import (
+	"log"
+	"time"
+	"transport/lib/database"
+	"transport/lib/stringhelper"
+)
 
 const HoursInDay = 24
 
@@ -22,4 +27,17 @@ func DaysBetween(a time.Time, b time.Time) int {
 // the specified `newHourValue`, and 0 for minutes, seconds and nanoseconds.
 func SetHour(t time.Time, newHourValue int, loc *time.Location) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), newHourValue, 0, 0, 0, loc)
+}
+
+// Printf can be used to easily log time.Time structs as dates, without the time included.
+// Example usage:
+//     dates.Printf("Fetching timestamps between %s and %s", time.Now(), time.Now())
+// Output:
+//     "Fetching timestamps between 2019-05-09 and 2019-05-09"
+func Printf(format string, times ...time.Time) {
+	dates := make([]string, len(times))
+	for i, t := range times {
+		dates[i] = t.Format(database.DateFormat)
+	}
+	log.Printf(format, stringhelper.SliceToInterface(&dates)...)
 }

@@ -11,19 +11,22 @@ import (
 )
 
 func DateRange(db *sql.DB, startDate time.Time, lastDate time.Time) [][]bus.VehicleJourney {
-	log.Printf("Fetching rows from vehicle_journey table with timestamps between %s and %s\n", startDate, lastDate)
+	dates.Printf("Fetching rows from vehicle_journey table with timestamps between %s and %s\n", startDate, lastDate)
 	endDate := lastDate.AddDate(0, 0, 1)
+	rowCount := 0
 	var journeys [][]bus.VehicleJourney
 	for d := startDate; !dates.Equal(d, endDate); d = d.AddDate(0, 0, 1) {
 		data := getDataForDate(db, d)
+		rowCount += len(data)
 		journeys = append(journeys, data)
 	}
-	log.Printf("Succesfully fetched rows for timestamps between %s and %s\n", startDate, lastDate)
+	dates.Printf("Succesfully fetched rows for timestamps between %s and %s\n", startDate, lastDate)
+	log.Printf("Row count: %d", rowCount)
 	return journeys
 }
 
 func getDataForDate(db *sql.DB, date time.Time) []bus.VehicleJourney {
-	log.Printf("Fetching rows for date %s\n", date)
+	log.Printf("Fetching rows for date %s\n", date.Format(database.DateFormat))
 	rows := queryByDate(date, db)
 	defer rows.Close()
 	journeys := scanVehicleJournies(rows)

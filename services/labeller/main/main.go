@@ -28,10 +28,21 @@ type DateRange struct {
 func main() {
 	stopDistances := stopdistance.Get(dbConn)
 	avgStopDistances := stopdistance.GetAverage(dbConn)
-	mode := os.Args[1]
+	executeMode(os.Args[1], stopDistances, avgStopDistances)
+}
+
+func executeMode(mode string, stopDistances map[stopdistance.Key]float64, avgStopDistances map[string]int) {
 	switch mode {
 	case "range":
 		dr := getHostDateRange()
+		processDateRange(dr, stopDistances, avgStopDistances)
+		deleteFromDB(dr)
+	case "single":
+		date, err := time.Parse(database.DateFormat, os.Args[2])
+		if err != nil {
+			log.Fatalf("%s is not a valid date, make sure you use the format YYYY-MM-DD", os.Args[2])
+		}
+		dr := DateRange{date, date}
 		processDateRange(dr, stopDistances, avgStopDistances)
 		deleteFromDB(dr)
 	case "live":

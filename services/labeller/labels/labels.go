@@ -2,7 +2,6 @@ package labels
 
 import (
 	"labeller/stopdistance"
-	"log"
 	"time"
 	"transport/lib/bus"
 )
@@ -12,7 +11,6 @@ import (
 func Create(partitionedJourneys map[bus.DirectedRoute][]bus.VehicleJourney, stopDistances map[stopdistance.Key]float64, averageStopDistances map[string]int) (labelledMvmts []bus.LabelledJourney) {
 	for route, mvmts := range partitionedJourneys {
 		if len(mvmts) < 2 {
-			log.Println("Fewer than 2 movements for route.")
 			continue
 		}
 		labelledMvmts = append(labelledMvmts, labelMvmtsForRoute(route, mvmts, stopDistances, averageStopDistances)...)

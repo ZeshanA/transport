@@ -86,7 +86,7 @@ var (
 // LabelledJourneyTable contains labelled movement events
 var (
 	LabelledJourneyTable = DBTable{
-		"labelled_journey",
+		"labelled_journey2",
 		[]string{
 			"line_ref",
 			"direction_ref",
