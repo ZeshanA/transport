@@ -42,6 +42,8 @@ func main() {
 			processDateRange(dr, stopDistances, avgStopDistances)
 			deleteFromDB(dr)
 		}
+	default:
+		log.Fatalf("%s is not a valid mode, you can pick either 'range' or 'live'", mode)
 	}
 }
 
@@ -77,13 +79,13 @@ func extractCLIArgs() (hostID int, hostCount int, dateRange DateRange) {
 	if len(os.Args) < 5 {
 		log.Fatalf("Not enough arguments provided; you must include <hostID> <hostCount> <startDate> <endDate>")
 	}
-	hostID, hostIDErr := strconv.Atoi(os.Args[1])
-	hostCount, hostCountErr := strconv.Atoi(os.Args[2])
+	hostID, hostIDErr := strconv.Atoi(os.Args[2])
+	hostCount, hostCountErr := strconv.Atoi(os.Args[3])
 	if hostIDErr != nil || hostCountErr != nil {
 		log.Fatalf("Failed to convert one or more arguments to integers: %v\n", os.Args)
 	}
-	sd, sdErr := time.Parse("2006-01-02", os.Args[3])
-	ed, edErr := time.Parse("2006-01-02", os.Args[4])
+	sd, sdErr := time.Parse("2006-01-02", os.Args[4])
+	ed, edErr := time.Parse("2006-01-02", os.Args[5])
 	if sdErr != nil || edErr != nil {
 		log.Fatalf("Failed to parse start or end date from args: %v\n", os.Args)
 	}
