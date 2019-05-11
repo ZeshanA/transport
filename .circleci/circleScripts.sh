@@ -7,7 +7,7 @@ cd .circleci
 set -e
 
 # List the directory names of your services here:
-SERVICES_TO_TEST="tsvloader livedataloader stopdistance labeller"
+SERVICES_TO_TEST="tsvloader livedataloader stopdistance labeller trainer"
 SERVICES_TO_DEPLOY=""
 
 # Run test or deploy script based on command arg
