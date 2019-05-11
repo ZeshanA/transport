@@ -1,5 +1,5 @@
 # Start with a lightweight Linux distro (alpine) and Golang
-FROM python:3-alpine
+FROM python:3
 
 # SERVICE_NAME contains the name of the service currently being built
 ARG SERVICE_NAME
