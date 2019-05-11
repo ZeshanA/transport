@@ -1,9 +1,11 @@
-from functools import singledispatch
 from typing import List
 
 import logging
+
 import routes
 import sys
+
+from db.db import connect
 
 
 def main():
@@ -19,22 +21,22 @@ def execute_mode():
         train(route)
     elif mode == "all":
         logging.info("Training all routes sequentially")
-        train(routes.all_routes)
+        train_all(routes.all_routes)
     else:
         logging.error("{} is not a valid mode, choose either 'single' or 'all'".format(mode))
         exit()
 
 
-@singledispatch
-# TODO: Implement
-def train(route_ids: List[str]):
-    print("List of route IDs")
+def train(route: str):
+    logging.info("Training on routeID: {}".format(route))
+    conn = connect()
+    # TODO: Pull in all data for this routeID from labelled_journeys
+    conn.close()
 
 
-@train.register
-# TODO: Implement
-def _(route: str):
-    print("Single route ID")
+def train_all(route_ids: List[str]):
+    for route in route_ids:
+        train(route)
 
 
 if __name__ == "__main__":
