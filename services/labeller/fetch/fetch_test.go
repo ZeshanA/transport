@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var expectedQuery = `SELECT \* FROM ([^ ])* WHERE TIMESTAMP BETWEEN '([0-9]){4}-(([0-9]){1}|([0-9]){2})-(([0-9]){1}|([0-9]){2}) 00:00:00' AND '([0-9]){4}-(([0-9]){1}|([0-9]){2})-(([0-9]){1}|([0-9]){2}) 23:59:59'`
+var expectedQuery = `SELECT \* FROM ([^ ])* WHERE TIMESTAMP BETWEEN '([0-9]){4}-(([0-9]){1}|([0-9]){2})-(([0-9]){1}|([0-9]){2}) 04:00:00' AND '([0-9]){4}-(([0-9]){1}|([0-9]){2})-(([0-9]){1}|([0-9]){2}) 03:59:59' ORDER BY TIMESTAMP ASC`
 
 func TestShouldGetDateRange(t *testing.T) {
 	colNames := database.VehicleJourneyTable.Columns
