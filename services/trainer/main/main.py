@@ -1,30 +1,21 @@
-from typing import List
-
 import logging
-
-import routes
 import sys
+from typing import List
 
 from db.db import connect
 
 
 def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
-    execute_mode()
+    route_id = extract_route_id()
+    train(route_id)
 
 
-def execute_mode():
-    mode: str = sys.argv[1]
-    if mode == "single":
-        route: str = sys.argv[2]
-        logging.info("Training only routeID {}".format(route))
-        train(route)
-    elif mode == "all":
-        logging.info("Training all routes sequentially")
-        train_all(routes.all_routes)
-    else:
-        logging.error("{} is not a valid mode, choose either 'single' or 'all'".format(mode))
-        exit()
+def extract_route_id():
+    if len(sys.argv) < 2:
+        logging.critical("No route ID was provided, correct usage: ./trainer <routeID>")
+        sys.exit(1)
+    return sys.argv[1]
 
 
 def train(route: str):
