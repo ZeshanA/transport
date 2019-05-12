@@ -30,8 +30,23 @@ def execute_mode():
 def train(route: str):
     logging.info("Training on routeID: {}".format(route))
     conn = connect()
-    # TODO: Pull in all data for this routeID from labelled_journeys
+    rows = get_rows_for_route_id(route, conn)
+    print(rows)
     conn.close()
+
+
+def get_rows_for_route_id(route_id: str, db_conn):
+    logging.info("Fetching rows for routeID: {}".format(route_id))
+    # Execute query to fetch all rows for the given route ID
+    cur = db_conn.cursor()
+    # TODO: Remove LIMIT 10
+    query = "SELECT * FROM labelled_journey2 WHERE line_ref=%s LIMIT 10;"
+    cur.execute(query, (route_id,))
+    rows = cur.fetchall()
+    # Close cursor and return fetched rows
+    cur.close()
+    logging.info("{} rows successfully fetched".format(len(rows)))
+    return rows
 
 
 def train_all(route_ids: List[str]):
