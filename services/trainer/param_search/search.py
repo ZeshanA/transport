@@ -1,8 +1,14 @@
+import logging
+import os
+import sys
+
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
+
+sys.path.insert(0, os.path.abspath('.'))
 
 from lib.args import extract_cli_args
 from lib.data import COL_COUNT, get_numpy_datasets, merge_np_tuples
@@ -19,10 +25,13 @@ def main():
     # Display results
     print_search_results(result)
     # Save best params
+    logging.info("Saving best parameters...")
     save_json(route_id, result.best_params_, base_path, "bestParams.json")
     # Train final model with the best hyperparameter set
+    logging.info("Training final model...")
     model = train_final_model(result, merge_np_tuples(train, val))
     # Evaluate final performance and save metric in a file
+    logging.info("Saving performance metrics for final model...")
     save_performance_metrics(route_id, model, test, base_path)
     # Save model to disk: disabled for now
     # model.save('models/{}/finalModel.h5'.format(route_id))
@@ -54,6 +63,7 @@ def hyper_param_search(training, validation):
     :param validation: a pair of Numpy arrays in the format (validation_data, validation_labels)
     :return: SciKit.cv_results_ object containing the results of the search
     """
+    logging.info("Starting hyper parameter search...")
     training_data, training_labels = training
 
     # Define the type of model we'll be using
@@ -64,7 +74,7 @@ def hyper_param_search(training, validation):
         'hidden_layer_count': [x for x in range(10, 100)],
         'neuron_count': [x for x in range(256, 1024, 64)],
         'activation_function': ['relu', 'sigmoid', 'tanh'],
-        'epochs': [x for x in range(10, 200, 10)]
+        'epochs': [2]
     }
 
     # Define the parameters for the search itself
@@ -78,6 +88,8 @@ def hyper_param_search(training, validation):
 
     # Perform the search and return the results
     result = random_search.fit(training_data, training_labels, validation_data=validation)
+
+    logging.info("Hyper parameter search completed successfully")
     return result
 
 
@@ -138,4 +150,6 @@ def train_final_model(result, training):
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.INFO)
     main()

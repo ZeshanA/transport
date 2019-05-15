@@ -20,4 +20,5 @@ def extract_cli_args():
     """
     route_id = extract_route_id()
     base_path = sys.argv[2] if len(sys.argv) > 2 else '.'
+    logging.info("route_id = {}, base_path = {}".format(route_id, base_path))
     return route_id, base_path
