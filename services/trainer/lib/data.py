@@ -46,7 +46,6 @@ def get_numpy_datasets(route_id: str):
     mapper = DataFrameMapper(feature_def, default=None)
     train_labels, val_labels, test_labels = train.pop(LABEL_COL), val.pop(LABEL_COL), test.pop(LABEL_COL)
     train_data, val_data, test_data = mapper.fit_transform(train), mapper.fit_transform(val), mapper.fit_transform(test)
-    print(train_data)
     return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
 
 
