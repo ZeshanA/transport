@@ -4,14 +4,14 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
 
-from lib.args import extract_route_id
+from lib.args import extract_cli_args
 from lib.data import COL_COUNT, get_numpy_datasets, merge_np_tuples
 from lib.files import save_json
 
 
 def main():
     # Get route_id from CLI arguments
-    route_id = extract_route_id()
+    route_id, base_path = extract_cli_args()
     # Get train/val/test datasets
     train, val, test = get_numpy_datasets(route_id)
     # Perform hyper parameter search
@@ -19,16 +19,16 @@ def main():
     # Display results
     print_search_results(result)
     # Save best params
-    save_json(route_id, "bestParams.json", result.best_params_)
+    save_json(route_id, result.best_params_, base_path, "bestParams.json")
     # Train final model with the best hyperparameter set
     model = train_final_model(result, merge_np_tuples(train, val))
     # Evaluate final performance and save metric in a file
-    save_performance_metrics(route_id, model, test)
+    save_performance_metrics(route_id, model, test, base_path)
     # Save model to disk: disabled for now
     # model.save('models/{}/finalModel.h5'.format(route_id))
 
 
-def save_performance_metrics(route_id, model, test):
+def save_performance_metrics(route_id, model, test, base_path):
     """
     Evaluates a model using the test data provided and writes the calculated
     metrics to models/{routeID}/finalPerf.json
@@ -44,7 +44,7 @@ def save_performance_metrics(route_id, model, test):
         'mean_squared_error': mean_squared_error(labels, preds),
         'r2_score': r2_score(labels, preds)
     }
-    save_json(route_id, "finalPerf.json", metrics)
+    save_json(route_id, metrics, base_path, "finalPerf.json")
 
 
 def hyper_param_search(training, validation):
