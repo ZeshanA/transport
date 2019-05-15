@@ -7,20 +7,37 @@ from tensorflow.keras import layers
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
 
 from lib.args import extract_route_id
-from lib.data import COL_COUNT, get_numpy_datasets
+from lib.data import COL_COUNT, get_numpy_datasets, merge_np_tuples
+
+
+def train_final_model(result, training):
+    """
+    Trains a new model using the best parameters from a hyperparameter search.
+    :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
+    :param training: a pair of Numpy arrays in the format (training_data, training_labels)
+    :return: a trained Keras model backed by Tensorflow
+    """
+    best_params = result.best_params_
+    model = create_model(best_params['hidden_layer_count'], best_params['neuron_count'],
+                         best_params['activation_function'])
+    training_data, training_labels = training
+    model.fit(x=training_data, y=training_labels, epochs=best_params['epochs'])
+    return model
 
 
 def main():
     # Get route_id from CLI arguments
     route_id = extract_route_id()
     # Get train/val/test datasets
-    train, test, val = get_numpy_datasets(route_id)
+    train, val, test = get_numpy_datasets(route_id)
     # Perform hyper parameter search
     result = hyper_param_search(train, val)
     # Display results
     print_search_results(result)
     # Save best params
     save_best_params(route_id, result)
+    # Train final model with the best hyperparameter set
+    model = train_final_model(result, merge_np_tuples(train, val))
 
 
 def hyper_param_search(training, validation):
@@ -109,9 +126,13 @@ def save_best_params(route_id, result):
     """
     dir = "models/{}/".format(route_id)
     filepath = dir + "bestParams.json"
-    os.makedirs(dir)
+    # Create directory if needed
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    # Delete existing file if needed
     if os.path.exists(filepath):
         os.remove(filepath)
+    # Write best params to file in JSON format
     file = open(filepath, 'w+')
     file.write(json.dumps(result.best_params_))
     file.close()
