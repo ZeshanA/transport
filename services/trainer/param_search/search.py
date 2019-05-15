@@ -1,6 +1,4 @@
-import json
-import os
-
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -8,21 +6,7 @@ from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
 
 from lib.args import extract_route_id
 from lib.data import COL_COUNT, get_numpy_datasets, merge_np_tuples
-
-
-def train_final_model(result, training):
-    """
-    Trains a new model using the best parameters from a hyperparameter search.
-    :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
-    :param training: a pair of Numpy arrays in the format (training_data, training_labels)
-    :return: a trained Keras model backed by Tensorflow
-    """
-    best_params = result.best_params_
-    model = create_model(best_params['hidden_layer_count'], best_params['neuron_count'],
-                         best_params['activation_function'])
-    training_data, training_labels = training
-    model.fit(x=training_data, y=training_labels, epochs=best_params['epochs'])
-    return model
+from lib.files import save_json
 
 
 def main():
@@ -35,9 +19,32 @@ def main():
     # Display results
     print_search_results(result)
     # Save best params
-    save_best_params(route_id, result)
+    save_json(route_id, "bestParams.json", result.best_params_)
     # Train final model with the best hyperparameter set
     model = train_final_model(result, merge_np_tuples(train, val))
+    # Evaluate final performance and save metric in a file
+    save_performance_metrics(route_id, model, test)
+    # Save model to disk: disabled for now
+    # model.save('models/{}/finalModel.h5'.format(route_id))
+
+
+def save_performance_metrics(route_id, model, test):
+    """
+    Evaluates a model using the test data provided and writes the calculated
+    metrics to models/{routeID}/finalPerf.json
+    :param route_id: the route id currently being calculated
+    :param model: the Keras model to evaluate (any model with support for .predict() should work)
+    :param test: a pair of Numpy arrays in the format (testing_data, testing_labels)
+    :return:
+    """
+    data, labels = test
+    preds = model.predict(data)
+    metrics = {
+        'mean_absolute_error': mean_absolute_error(labels, preds),
+        'mean_squared_error': mean_squared_error(labels, preds),
+        'r2_score': r2_score(labels, preds)
+    }
+    save_json(route_id, "finalPerf.json", metrics)
 
 
 def hyper_param_search(training, validation):
@@ -115,27 +122,19 @@ def print_search_results(result):
         print("%f (%f) with: %r" % (mean, stdev, param))
 
 
-def save_best_params(route_id, result):
+def train_final_model(result, training):
     """
-    Saves the best parameters from the hyperparameter search result
-    to models/{routeID}/bestParams.json, creating intermediary folders
-    and overwriting the existing file if necessary.
-    :param route_id: the route id currently being calculated
+    Trains a new model using the best parameters from a hyperparameter search.
     :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
-    :return: void
+    :param training: a pair of Numpy arrays in the format (training_data, training_labels)
+    :return: a trained Keras model backed by Tensorflow
     """
-    dir = "models/{}/".format(route_id)
-    filepath = dir + "bestParams.json"
-    # Create directory if needed
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    # Delete existing file if needed
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    # Write best params to file in JSON format
-    file = open(filepath, 'w+')
-    file.write(json.dumps(result.best_params_))
-    file.close()
+    best_params = result.best_params_
+    model = create_model(best_params['hidden_layer_count'], best_params['neuron_count'],
+                         best_params['activation_function'])
+    training_data, training_labels = training
+    model.fit(x=training_data, y=training_labels, epochs=best_params['epochs'])
+    return model
 
 
 if __name__ == "__main__":
