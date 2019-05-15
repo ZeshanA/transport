@@ -1,3 +1,6 @@
+import json
+import os
+
 from sklearn.model_selection import RandomizedSearchCV
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -13,11 +16,20 @@ def main():
     # Get train/val/test datasets
     train, test, val = get_numpy_datasets(route_id)
     # Perform hyper parameter search
-    hyper_param_search(train, val)
+    result = hyper_param_search(train, val)
+    # Display results
+    print_search_results(result)
+    # Save best params
+    save_best_params(route_id, result)
 
 
-# Perform a randomised grid search
 def hyper_param_search(training, validation):
+    """
+    Performs a randomised grid search using the given training and validation data sets.
+    :param training: a pair of Numpy arrays in the format (training_data, training_labels)
+    :param validation: a pair of Numpy arrays in the format (validation_data, validation_labels)
+    :return: SciKit.cv_results_ object containing the results of the search
+    """
     training_data, training_labels = training
 
     # Define the type of model we'll be using
@@ -40,15 +52,19 @@ def hyper_param_search(training, validation):
                                        cv=2,
                                        verbose=3)
 
-    # Perform the search
+    # Perform the search and return the results
     result = random_search.fit(training_data, training_labels, validation_data=validation)
-
-    # Display results
-    print_search_results(result)
+    return result
 
 
-# Build function used by SciKit to create a Keras classifier
 def create_model(hidden_layer_count, neuron_count, activation_function):
+    """
+    Build function used by SciKit to create a Keras classifier.
+    :param hidden_layer_count: number of intermediary layers in the network (excluding feature layer)
+    :param neuron_count: number of neurons in each layer
+    :param activation_function: the activation function applied by each neuron
+    :return: an untrained Keras model backed by Tensorflow
+    """
     # Start constructing a sequential model
     model = keras.Sequential()
     model.add(layers.Dense(COL_COUNT, input_shape=(COL_COUNT,)))
@@ -69,12 +85,36 @@ def create_model(hidden_layer_count, neuron_count, activation_function):
 
 
 def print_search_results(result):
+    """
+    Prints all scores and parameters in the hyperparameter search result provided.
+    :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
+    :return: void
+    """
     print("Best: %f using %s" % (result.best_score_, result.best_params_))
     means = result.cv_results_['mean_test_score']
     stds = result.cv_results_['std_test_score']
     params = result.cv_results_['params']
     for mean, stdev, param in zip(means, stds, params):
         print("%f (%f) with: %r" % (mean, stdev, param))
+
+
+def save_best_params(route_id, result):
+    """
+    Saves the best parameters from the hyperparameter search result
+    to models/{routeID}/bestParams.json, creating intermediary folders
+    and overwriting the existing file if necessary.
+    :param route_id: the route id currently being calculated
+    :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
+    :return: void
+    """
+    dir = "models/{}/".format(route_id)
+    filepath = dir + "bestParams.json"
+    os.makedirs(dir)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    file = open(filepath, 'w+')
+    file.write(json.dumps(result.best_params_))
+    file.close()
 
 
 if __name__ == "__main__":
