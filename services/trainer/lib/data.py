@@ -1,16 +1,18 @@
 import logging
 
 import pandas as pd
+import sklearn
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
+from sklearn_pandas import gen_features, DataFrameMapper
 
 from db.db import connect
-
 
 LABEL_COL = "time_to_stop"
 NUMERIC_COLS = ["direction_ref", "longitude", "latitude", "distance_from_stop",
                 "day", "month", "year", "hour", "minute", "second", "estimate"]
 TEXT_COLS = ["operator_ref", "progress_rate", "occupancy", "stop_point_ref"]
+COL_COUNT = len(NUMERIC_COLS) + len(TEXT_COLS)
 
 
 # Fetches data for route_id, splits it into (train, test, val) and returns
@@ -33,6 +35,21 @@ def get_datasets(route_id: str, batch_size: int = 32):
     return train_ds, val_ds, test_ds
 
 
+def get_numpy_datasets(route_id: str):
+    df = get_dataframe(route_id)
+    train, test = train_test_split(df, test_size=0.2)
+    train, val = train_test_split(train, test_size=0.2)
+    feature_def = gen_features(
+        columns=TEXT_COLS,
+        classes=[sklearn.preprocessing.LabelEncoder]
+    )
+    mapper = DataFrameMapper(feature_def, default=None)
+    train_labels, val_labels, test_labels = train.pop(LABEL_COL), val.pop(LABEL_COL), test.pop(LABEL_COL)
+    train_data, val_data, test_data = mapper.fit_transform(train), mapper.fit_transform(val), mapper.fit_transform(test)
+    print(train_data)
+    return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
+
+
 # Fetches the data from the DB for the current route_id
 # and returns it in a Pandas dataframe
 def get_dataframe(route_id: str) -> pd.DataFrame:
@@ -47,7 +64,7 @@ def get_dataframe(route_id: str) -> pd.DataFrame:
             COALESCE(EXTRACT(epoch FROM expected_arrival_time - timestamp)::integer, 0) AS estimate,
             time_to_stop
         FROM labelled_journey
-        WHERE line_ref='{}';
+        WHERE line_ref='{}' LIMIT 20;
         """.format(route_id),
         conn
     )
