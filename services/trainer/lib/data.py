@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.model_selection import train_test_split
@@ -78,3 +79,18 @@ def df_to_dataset(dataframe: pd.DataFrame, label_col: str, batch_size: int):
     ds = ds.shuffle(buffer_size=len(dataframe))
     ds = ds.batch(batch_size)
     return ds
+
+
+def merge_np_tuples(a, b):
+    """
+    Takes two tuples containing Numpy arrays and returns a single tuple of the same length,
+    where each index contains the concatenation of the arrays at that index in the two input tuples.
+    example: merge_tuples(([a,b],[c,d]), ([e,f],[g,h])) = ([a,b,e,f], [c,d,g,h])
+    :param a: tuple of numpy arrays
+    :param b: tuple of numpy arrays
+    :return: a tuple
+    """
+    result = []
+    for item_a, item_b in zip(a, b):
+        result.append(np.concatenate((item_a, item_b)))
+    return tuple(result)
