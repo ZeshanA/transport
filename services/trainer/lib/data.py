@@ -47,12 +47,14 @@ def get_numpy_datasets(route_id: str):
     mapper = DataFrameMapper(feature_def, default=None)
     train_labels, val_labels, test_labels = train.pop(LABEL_COL), val.pop(LABEL_COL), test.pop(LABEL_COL)
     train_data, val_data, test_data = mapper.fit_transform(train), mapper.fit_transform(val), mapper.fit_transform(test)
+    logging.info("Sucesfully split and converted data for route_id {}".format(route_id))
     return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
 
 
 # Fetches the data from the DB for the current route_id
 # and returns it in a Pandas dataframe
 def get_dataframe(route_id: str) -> pd.DataFrame:
+    logging.info("Fetching data for route_id {}".format(route_id))
     conn = connect()
     dataframe = pd.read_sql(
         """
@@ -64,10 +66,11 @@ def get_dataframe(route_id: str) -> pd.DataFrame:
             COALESCE(EXTRACT(epoch FROM expected_arrival_time - timestamp)::integer, 0) AS estimate,
             time_to_stop
         FROM labelled_journey
-        WHERE line_ref='{}';
+        WHERE line_ref='{}' LIMIT 10;
         """.format(route_id),
         conn
     )
+    logging.info("Successfully fetched data for route_id {}".format(route_id))
     return dataframe
 
 

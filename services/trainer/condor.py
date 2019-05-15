@@ -1,6 +1,20 @@
-from typing import List
+#!/usr/bin/env python3
+import logging
+import sys
 
-all_routes: List[str] = [
+import subprocess
+
+
+def main():
+    host_id, host_count, base_path = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else '.'
+    task_count = len(all_routes) // host_count
+    first_task_index = host_id * task_count
+    for i in range(first_task_index, first_task_index + task_count):
+        route_id = all_routes[i]
+        subprocess.call(["python", "param_search/search.py", route_id, base_path])
+
+
+all_routes = [
     "MTA NYCT_BX4A",
     "MTA NYCT_M31",
     "MTA NYCT_M35",
@@ -335,3 +349,8 @@ all_routes: List[str] = [
     "MTABC_Q50",
     "MTABC_Q70+"
 ]
+
+if __name__ == "__main__":
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.INFO)
+    main()
