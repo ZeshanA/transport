@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 
-import sklearn
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 from tensorflow import keras
@@ -74,12 +73,12 @@ def hyper_param_search(training, validation):
     param_dist = {
         'hidden_layer_count': [x for x in range(10, 100)],
         'neuron_count': [x for x in range(256, 1024, 64)],
-        'activation_function': ['relu', 'sigmoid', 'tanh'],
-        'epochs': [2]
+        'activation_function': ['relu', 'tanh'],
+        'epochs': [x for x in range(10, 40, 4)],
     }
 
     # Define the parameters for the search itself
-    iteration_count = 1
+    iteration_count = 4
     random_search = RandomizedSearchCV(estimator=model,
                                        param_distributions=param_dist,
                                        n_iter=iteration_count,
