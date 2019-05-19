@@ -5,6 +5,7 @@ from typing import List, Dict
 from flask import Flask, request
 
 from lib.files import save_json
+from lib.logs import init_logging
 from lib.routes import all_routes
 
 app = Flask(__name__)
@@ -30,9 +31,10 @@ def get_route_id():
     route_id = unprocessed_routes.pop()
     currently_processing[host_id] = route_id
     to_do, total = len(unprocessed_routes), len(all_routes)
-    completed_percentage = round((total - to_do) / total, 2)
+    completed = total - to_do
+    completed_percentage = round(completed / total, 3)
     logging.info("Assigned routeID '%s' to hostID '%s'", route_id, host_id)
-    logging.info("%d of %d routes complete (%s%%)", to_do, total, completed_percentage)
+    logging.info("%d of %d routes complete (%s%%)", completed, total, completed_percentage)
     return route_id
 
 
@@ -54,5 +56,5 @@ def complete_route_id():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s', level=logging.INFO)
+    init_logging()
     app.run()

@@ -4,9 +4,10 @@ import sys
 
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
-from tensorflow import keras
-from tensorflow.keras import layers
+
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
+
+from lib.models import create_model
 
 sys.path.insert(0, os.path.abspath('.'))
 
@@ -91,33 +92,6 @@ def hyper_param_search(training, validation):
 
     logging.info("Hyper parameter search completed successfully")
     return result
-
-
-def create_model(hidden_layer_count, neuron_count, activation_function):
-    """
-    Build function used by SciKit to create a Keras classifier.
-    :param hidden_layer_count: number of intermediary layers in the network (excluding feature layer)
-    :param neuron_count: number of neurons in each layer
-    :param activation_function: the activation function applied by each neuron
-    :return: an untrained Keras model backed by Tensorflow
-    """
-    # Start constructing a sequential model
-    model = keras.Sequential()
-    model.add(layers.Dense(COL_COUNT, input_shape=(COL_COUNT,)))
-
-    # Add additional hidden layers as needed
-    for i in range(hidden_layer_count - 1):
-        model.add(layers.Dense(neuron_count, activation=activation_function))
-
-    # Output layer, a single number
-    model.add(layers.Dense(1))
-
-    # Compile model
-    model.compile(loss='mean_squared_error',
-                  optimizer='adam',
-                  metrics=['mean_absolute_error', 'mean_squared_error'])
-
-    return model
 
 
 def print_search_results(result):
