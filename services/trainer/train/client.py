@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import socket
@@ -5,13 +6,39 @@ import sys
 
 import requests
 
+from lib.data import get_numpy_datasets, merge_np_tuples
+from lib.logs import init_logging
+from lib.models import create_model
+
 SERVER_URL = "http://127.0.0.1:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
+OPTIMAL_PARAMS = {
+    'hidden_layer_count': 1,
+    'neuron_count': 1,
+    'activation_function': 'relu',
+    'epochs': 5
+}
 
 
 def main():
     host_id = get_host_id()
-    route_id = get_route_id(host_id)
+    while True:
+        # Fetch next routeID from server
+        route_id = get_route_id(host_id)
+        # Get train/val/test datasets
+        train, val, test = get_numpy_datasets(route_id)
+        # Train model using pre-determined optimal parameters
+        model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
+        break
+
+
+def get_trained_model(params, training):
+    logging.info("Starting model training...")
+    training_data, training_labels = training
+    model = create_model(params['hidden_layer_count'], params['neuron_count'], params['activation_function'])
+    model.fit(x=training_data, y=training_labels, epochs=params['epochs'])
+    logging.info("Successfully completed model training...")
+    return model
 
 
 def get_route_id(host_id):
@@ -21,11 +48,14 @@ def get_route_id(host_id):
     :param host_id: string: the hostID to report to the server
     :return: route_id: string: the next routeID to process
     """
+    logging.info("Fetching next routeID from server...")
     req = requests.get(url=GET_ROUTE_ID_URL, params={'hostID': host_id})
     resp = req.text
     # Exit if there are no more routeIDs to process
     if resp == "Complete":
+        logging.info("No more routeIDs to process, shutting down...")
         sys.exit()
+    logging.info("Processing routeID %s...", resp)
     return resp
 
 
@@ -67,4 +97,5 @@ def generate_host_id():
 
 
 if __name__ == "__main__":
+    init_logging()
     main()
