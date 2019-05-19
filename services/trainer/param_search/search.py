@@ -2,12 +2,11 @@ import logging
 import os
 import sys
 
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RandomizedSearchCV
 
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
 
-from lib.models import create_model
+from lib.models import create_model, save_performance_metrics
 
 sys.path.insert(0, os.path.abspath('.'))
 
@@ -36,25 +35,6 @@ def main():
     save_performance_metrics(route_id, model, test, base_path)
     # Save model to disk: disabled for now
     # model.save('models/{}/finalModel.h5'.format(route_id))
-
-
-def save_performance_metrics(route_id, model, test, base_path):
-    """
-    Evaluates a model using the test data provided and writes the calculated
-    metrics to models/{routeID}/finalPerf.json
-    :param route_id: the route id currently being calculated
-    :param model: the Keras model to evaluate (any model with support for .predict() should work)
-    :param test: a pair of Numpy arrays in the format (testing_data, testing_labels)
-    :return:
-    """
-    data, labels = test
-    preds = model.predict(data)
-    metrics = {
-        'mean_absolute_error': mean_absolute_error(labels, preds),
-        'mean_squared_error': mean_squared_error(labels, preds),
-        'r2_score': r2_score(labels, preds)
-    }
-    save_json(route_id, metrics, base_path, "finalPerf.json")
 
 
 def hyper_param_search(training, validation):

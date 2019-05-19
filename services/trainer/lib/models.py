@@ -1,11 +1,14 @@
+import logging
 import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from tensorflow import keras, feature_column
 from tensorflow.keras import layers
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.data import COL_COUNT
+from lib.files import save_json
 
 
 def create_model(hidden_layer_count, neuron_count, activation_function):
@@ -57,6 +60,31 @@ def get_checkpoint_callback(route_id):
     checkpoint_path = "models/{}/cp.ckpt".format(route_id)
     cp_callback = keras.callbacks.ModelCheckpoint(checkpoint_path)
     return cp_callback
+
+
+def save_performance_metrics(route_id, model, test, base_path):
+    """
+    Evaluates a model using the test data provided and writes the calculated
+    metrics to models/{routeID}/finalPerf.json
+    :param route_id: the route id currently being calculated
+    :param model: the Keras model to evaluate (any model with support for .predict() should work)
+    :param test: a pair of Numpy arrays in the format (testing_data, testing_labels)
+    :return:
+    """
+    metrics = calculate_performance_metrics(route_id, model, test)
+    save_json(route_id, metrics, base_path, "finalPerf.json")
+    logging.info("Successfully saved model performance metrics for routeID %s...", route_id)
+
+
+def calculate_performance_metrics(route_id, model, test):
+    logging.info("Calculating model performance metrics for routeID %s...", route_id)
+    data, labels = test
+    preds = model.predict(data)
+    return {
+        'mean_absolute_error': mean_absolute_error(labels, preds),
+        'mean_squared_error': mean_squared_error(labels, preds),
+        'r2_score': r2_score(labels, preds)
+    }
 
 
 # Plot train error against validation error using a history.
