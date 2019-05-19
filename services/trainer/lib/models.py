@@ -81,6 +81,7 @@ def calculate_performance_metrics(route_id, model, test):
     data, labels = test
     preds = model.predict(data)
     return {
+        'route_id': route_id,
         'mean_absolute_error': mean_absolute_error(labels, preds),
         'mean_squared_error': mean_squared_error(labels, preds),
         'r2_score': r2_score(labels, preds)

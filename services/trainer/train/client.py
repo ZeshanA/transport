@@ -12,6 +12,7 @@ from lib.models import create_model, save_performance_metrics, calculate_perform
 
 SERVER_URL = "http://127.0.0.1:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
+COMPLETE_ROUTE_ID_URL = SERVER_URL + "completeRouteID"
 OPTIMAL_PARAMS = {
     'hidden_layer_count': 1,
     'neuron_count': 1,
@@ -29,8 +30,14 @@ def main():
         train, val, test = get_numpy_datasets(route_id)
         # Train model using pre-determined optimal parameters
         model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
-        metrics = calculate_performance_metrics(route_id, model, test)
-        break
+        # Calculate and upload final model performance metrics
+        upload_performance_metrics(host_id, route_id, model, test)
+
+
+def upload_performance_metrics(host_id, route_id, model, test):
+    metrics = calculate_performance_metrics(route_id, model, test)
+    req = requests.post(url=COMPLETE_ROUTE_ID_URL, params={'hostID': host_id, 'routeID': route_id}, data=metrics)
+    logging.info("Server response after performance metric submission: %s", req.text)
 
 
 def get_trained_model(params, training):
