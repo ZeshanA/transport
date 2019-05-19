@@ -8,7 +8,7 @@ import requests
 
 from lib.data import get_numpy_datasets, merge_np_tuples
 from lib.logs import init_logging
-from lib.models import create_model
+from lib.models import create_model, save_performance_metrics, calculate_performance_metrics
 
 SERVER_URL = "http://127.0.0.1:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
@@ -29,6 +29,7 @@ def main():
         train, val, test = get_numpy_datasets(route_id)
         # Train model using pre-determined optimal parameters
         model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
+        metrics = calculate_performance_metrics(route_id, model, test)
         break
 
 
