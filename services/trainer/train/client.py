@@ -32,6 +32,8 @@ def main():
         model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
         # Calculate and upload final model performance metrics
         upload_performance_metrics(host_id, route_id, model, test)
+        # Save model to disk
+        model.save('models/{}/{}-finalModel.h5'.format(route_id, route_id))
 
 
 def upload_performance_metrics(host_id, route_id, model, test):
