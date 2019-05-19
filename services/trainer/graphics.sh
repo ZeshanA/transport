@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export ROUTE_ID=$1
- export VENV_PATH="/data/za816/trainerEnv"
+export VENV_PATH="/data/za816/trainerEnv"
 echo "Processing ${ROUTE_ID}..."
 
 virtualenv -p /usr/bin/python3 ${VENV_PATH}
