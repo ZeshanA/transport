@@ -32,9 +32,9 @@ def get_route_id():
     currently_processing[host_id] = route_id
     to_do, total = len(unprocessed_routes), len(all_routes)
     completed = total - to_do
-    completed_percentage = round(completed / total, 3)
+    completed_percentage = round(completed / total, 3) * 100
     logging.info("Assigned routeID '%s' to hostID '%s'", route_id, host_id)
-    logging.info("%d of %d routes complete (%s%%)", completed, total, completed_percentage)
+    logging.info("%d of %d routes complete (%f%%)", completed, total, completed_percentage)
     return route_id
 
 
