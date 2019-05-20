@@ -31,9 +31,7 @@ def get_route_id():
         return "Complete"
     route_id = unprocessed_routes.pop()
     currently_processing[host_id] = route_id
-    to_do, total = len(unprocessed_routes), len(all_routes)
-    completed = total - to_do
-    completed_percentage = round(completed / total, 3) * 100
+    completed, total, completed_percentage = calculate_status()
     logging.info("Assigned routeID '%s' to hostID '%s'", route_id, host_id)
     logging.info("%d of %d routes complete (%f%%)", completed, total, completed_percentage)
     return route_id
@@ -54,6 +52,38 @@ def complete_route_id():
     model_performance = json.loads(request.get_json())
     save_json(route_id, model_performance, '.', 'modelPerformance.json')
     return "Marked routeID {} as complete and saved the performance info.".format(route_id)
+
+
+@app.route('/')
+def get_status():
+    """
+    This endpoint prints a basic summary of current execution progress.
+    :return:
+    """
+    completed, total, completed_percentage = calculate_status()
+    response = "{} of {} routes complete ({}%)".format(completed, total, completed_percentage)
+    response += ("Currently processing: " + str(currently_processing))
+    return response
+
+
+@app.route('/health')
+def get_health():
+    """
+    Basic health endpoint to check if the server is alive.
+    :return:
+    """
+    return "Healthy!"
+
+
+def calculate_status():
+    """
+    Calculates what percentage of routes have been processed.
+    :return: tuple(number of routes completed: int, total number of routes: int, percentage completed: float)
+    """
+    to_do, total = len(unprocessed_routes), len(all_routes)
+    completed = total - to_do
+    completed_percentage = round(completed / total, 3) * 100
+    return completed, total, completed_percentage
 
 
 if __name__ == '__main__':
