@@ -8,19 +8,21 @@ import sys
 import requests
 import boto3
 
+sys.path.insert(0, os.path.abspath('.'))
+
 from lib.data import get_numpy_datasets, merge_np_tuples
 from lib.logs import init_logging
 from lib.models import create_model, calculate_performance_metrics
 
-# TODO: Change server URL and optimal parameters
-SERVER_URL = "http://127.0.0.1:5000/"
+# TODO: Change server URL
+SERVER_URL = "http://d.zeshan.me:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
 COMPLETE_ROUTE_ID_URL = SERVER_URL + "completeRouteID"
 OPTIMAL_PARAMS = {
-    'hidden_layer_count': 1,
-    'neuron_count': 1,
+    'hidden_layer_count': 47,
+    'neuron_count': 552,
     'activation_function': 'relu',
-    'epochs': 5
+    'epochs': 18
 }
 
 
@@ -59,9 +61,12 @@ def get_host_id():
 def parse_hostname():
     """
     Returns the shortened hostname (e.g. "graphic09") if currently executing on a DoC PC.
+    Returns the previously set host_id if it exists.
     None otherwise.
     :return:
     """
+    if os.getenv('HOST_ID') is not None:
+        return os.environ['HOST_ID']
     hostname = socket.gethostname()
     doc_domain = ".doc.ic.ac.uk"
     if doc_domain not in hostname:
