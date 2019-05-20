@@ -143,7 +143,7 @@ def save_model_to_disk(route_id, model):
     :param model: pointer to a trained Tensorflow model
     :return: the (relative) filepath that the model was saved at
     """
-    directory = 'models/{}/'.format(route_id)
+    directory = '/data/za816/trained/models/{}/'.format(route_id)
     filepath = '{}/finalModel.h5'.format(directory, route_id)
     os.makedirs(directory, exist_ok=True)
     model.save(filepath)
