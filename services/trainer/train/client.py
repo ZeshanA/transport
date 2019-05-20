@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -8,7 +9,7 @@ import requests
 
 from lib.data import get_numpy_datasets, merge_np_tuples
 from lib.logs import init_logging
-from lib.models import create_model, save_performance_metrics, calculate_performance_metrics
+from lib.models import create_model, calculate_performance_metrics
 
 SERVER_URL = "http://127.0.0.1:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
@@ -33,40 +34,8 @@ def main():
         # Calculate and upload final model performance metrics
         upload_performance_metrics(host_id, route_id, model, test)
         # Save model to disk
-        model.save('models/{}/{}-finalModel.h5'.format(route_id, route_id))
-
-
-def upload_performance_metrics(host_id, route_id, model, test):
-    metrics = calculate_performance_metrics(route_id, model, test)
-    req = requests.post(url=COMPLETE_ROUTE_ID_URL, params={'hostID': host_id, 'routeID': route_id}, data=metrics)
-    logging.info("Server response after performance metric submission: %s", req.text)
-
-
-def get_trained_model(params, training):
-    logging.info("Starting model training...")
-    training_data, training_labels = training
-    model = create_model(params['hidden_layer_count'], params['neuron_count'], params['activation_function'])
-    model.fit(x=training_data, y=training_labels, epochs=params['epochs'])
-    logging.info("Successfully completed model training...")
-    return model
-
-
-def get_route_id(host_id):
-    """
-    Fetches the next routeID to process from the server, exits if the
-    server says all tasks are complete.
-    :param host_id: string: the hostID to report to the server
-    :return: route_id: string: the next routeID to process
-    """
-    logging.info("Fetching next routeID from server...")
-    req = requests.get(url=GET_ROUTE_ID_URL, params={'hostID': host_id})
-    resp = req.text
-    # Exit if there are no more routeIDs to process
-    if resp == "Complete":
-        logging.info("No more routeIDs to process, shutting down...")
-        sys.exit()
-    logging.info("Processing routeID %s...", resp)
-    return resp
+        filepath = save_model_to_disk(route_id, model)
+        break
 
 
 def get_host_id():
@@ -104,6 +73,55 @@ def generate_host_id():
     host_id = "vast" + integer_id
     os.environ['HOST_ID'] = host_id
     return host_id
+
+
+def get_route_id(host_id):
+    """
+    Fetches the next routeID to process from the server, exits if the
+    server says all tasks are complete.
+    :param host_id: string: the hostID to report to the server
+    :return: route_id: string: the next routeID to process
+    """
+    logging.info("Fetching next routeID from server...")
+    req = requests.get(url=GET_ROUTE_ID_URL, params={'hostID': host_id})
+    resp = req.text
+    # Exit if there are no more routeIDs to process
+    if resp == "Complete":
+        logging.info("No more routeIDs to process, shutting down...")
+        sys.exit()
+    logging.info("Processing routeID %s...", resp)
+    return resp
+
+
+def get_trained_model(params, training):
+    logging.info("Starting model training...")
+    training_data, training_labels = training
+    model = create_model(params['hidden_layer_count'], params['neuron_count'], params['activation_function'])
+    model.fit(x=training_data, y=training_labels, epochs=params['epochs'])
+    logging.info("Successfully completed model training...")
+    return model
+
+
+def upload_performance_metrics(host_id, route_id, model, test):
+    metrics = calculate_performance_metrics(route_id, model, test)
+    metrics_json = json.dumps(metrics)
+    req = requests.post(url=COMPLETE_ROUTE_ID_URL, params={'hostID': host_id, 'routeID': route_id}, json=metrics_json)
+    logging.info("Server response after performance metric submission: %s", req.text)
+
+
+def save_model_to_disk(route_id, model):
+    """
+    Saves a trained Tensorflow model to disk. Can be loaded again using Keras'
+    load_model function.
+    :param route_id: string: routeID for the current model
+    :param model: pointer to a trained Tensorflow model
+    :return: the (relative) filepath that the model was saved at
+    """
+    directory = 'finalModels/{}/'.format(route_id)
+    filepath = '{}/{}-finalModel.h5'.format(directory, route_id)
+    os.makedirs(directory, exist_ok=True)
+    model.save(filepath)
+    return filepath
 
 
 if __name__ == "__main__":

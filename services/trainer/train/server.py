@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 from typing import List, Dict
@@ -50,7 +51,7 @@ def complete_route_id():
         logging.warning("Completion request is missing a hostID or a routeID, returning error response")
         return "Please provide a hostID and a routeID in the query string"
     del currently_processing[host_id]
-    model_performance = request.get_json()
+    model_performance = json.loads(request.get_json())
     save_json(route_id, model_performance, '.', 'modelPerformance.json')
     return "Marked routeID {} as complete and saved the performance info.".format(route_id)
 
