@@ -1,10 +1,13 @@
 absl-py==0.7.1
 altgraph==0.16.1
 astor==0.7.1
+boto3==1.9.151
+botocore==1.12.151
 certifi==2019.3.9
 chardet==3.0.4
 Click==7.0
 cycler==0.10.0
+docutils==0.14
 Flask==1.0.3
 future==0.17.1
 gast==0.2.2
@@ -14,6 +17,7 @@ h5py==2.9.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
+jmespath==0.9.4
 joblib==0.13.2
 Keras==2.2.4
 Keras-Applications==1.0.7
@@ -34,6 +38,7 @@ python-dateutil==2.8.0
 pytz==2019.1
 PyYAML==5.1
 requests==2.22.0
+s3transfer==0.2.0
 scikit-learn==0.21.0
 scipy==1.2.1
 six==1.12.0
@@ -44,5 +49,5 @@ tensorflow==2.0.0a0
 tensorflow-estimator==1.13.0
 termcolor==1.1.0
 tf-estimator-nightly==1.14.0.dev2019030115
-urllib3==1.25.2
+urllib3==1.24.3
 Werkzeug==0.15.2
