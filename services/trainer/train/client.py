@@ -28,6 +28,7 @@ OPTIMAL_PARAMS = {
 
 def main():
     host_id = get_host_id()
+    logging.info("The hostID for this machine is %s\n", host_id)
     while True:
         # Fetch next routeID from server
         route_id = get_route_id(host_id)
