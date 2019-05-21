@@ -1,10 +1,15 @@
+import json
+import logging
+import os
 from datetime import datetime
 
+import boto3 as boto3
 import pandas as pd
 import sklearn
 from flask import Flask, request
 from pytz import timezone
 from sklearn_pandas import gen_features, DataFrameMapper
+from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
@@ -15,11 +20,45 @@ COL_COUNT = len(NUMERIC_COLS) + len(TEXT_COLS)
 
 
 @app.route('/', methods=['POST'])
-def get_hw():
+def get_prediction():
     journey = request.get_json()
     route_id = journey['LineRef']
+    model = download_model(route_id)
     feature_sample = convert_journey_to_features(journey)
-    return '{"status": "ok"}'
+    prediction = int(model.predict(feature_sample)[0][0])
+    return json.dumps({
+        "prediction": prediction
+    })
+
+
+def get_storage_details():
+    """
+    Fetches the access keys for cloud object storage from the environment.
+    :return: a tuple of strings (access_key_id, secret_access_key)
+    """
+    key_id = os.environ.get('SPACES_KEY_ID')
+    secret = os.environ.get('SPACES_SECRET_KEY')
+    if not key_id or not secret:
+        logging.critical('SPACES_{KEY_ID/SECRET_KEY} NOT SET')
+        raise KeyError
+    return key_id, secret
+
+
+def download_model(route_id):
+    session = boto3.session.Session()
+    key_id, secret = get_storage_details()
+    client = session.client('s3',
+                            region_name='fra1',
+                            endpoint_url='https://fra1.digitaloceanspaces.com',
+                            aws_access_key_id=key_id,
+                            aws_secret_access_key=secret)
+    filename = '{}-finalModel.h5'.format(route_id)
+    exists = os.path.isfile(filename.format(route_id))
+    if exists:
+        return load_model(filename)
+    with open(filename, 'wb') as f:
+        client.download_fileobj('mtadata', filename, f)
+    return load_model(filename)
 
 
 def convert_journey_to_features(journey):
