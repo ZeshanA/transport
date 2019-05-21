@@ -164,7 +164,7 @@ def upload_model(route_id, filepath):
                             endpoint_url='https://fra1.digitaloceanspaces.com',
                             aws_access_key_id=key_id,
                             aws_secret_access_key=secret)
-    client.upload_file(filepath, 'mtadata', '{}-finalModel.h5'.format(route_id))
+    client.upload_file(filepath, 'mtadata', '{}-finalModel.h5'.format(route_id), ExtraArgs={'ACL':'public-read'})
     logging.info("Successfully uploaded final model for routeID %s to storage...", route_id)
 
 
