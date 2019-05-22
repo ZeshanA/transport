@@ -13,10 +13,7 @@ from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-NUMERIC_COLS = ["direction_ref", "longitude", "latitude", "distance_from_stop",
-                "day", "month", "year", "hour", "minute", "second", "estimate"]
 TEXT_COLS = ["operator_ref", "progress_rate", "occupancy", "stop_point_ref"]
-COL_COUNT = len(NUMERIC_COLS) + len(TEXT_COLS)
 
 
 @app.route('/', methods=['POST'])
@@ -25,7 +22,7 @@ def get_prediction():
     route_id = journey['LineRef']
     model = download_model(route_id)
     feature_sample = convert_journey_to_features(journey)
-    prediction = int(model.predict(feature_sample)[0][0])
+    prediction = predict(model, feature_sample)
     return json.dumps({
         "prediction": prediction
     })
@@ -104,6 +101,10 @@ def parse_datetime(string):
     date_format, est = '%Y-%m-%d %H:%M:%S', timezone('US/Eastern')
     naive = datetime.strptime(string, date_format)
     return est.localize(naive)
+
+
+def predict(model, sample):
+    return int(model.predict(sample)[0][0])
 
 
 if __name__ == '__main__':
