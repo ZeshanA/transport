@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -109,6 +110,31 @@ func LabelledJourneyFrom(mvmt VehicleJourney, timeToStop int) LabelledJourney {
 		Timestamp:             mvmt.Timestamp,
 		TimeToStop:            null.IntFrom(int64(timeToStop)),
 	}
+}
+
+func ScanLabelledJourneyRows(rows *sql.Rows) ([]LabelledJourney, error) {
+	var journeys []LabelledJourney
+	for rows.Next() {
+		journey := LabelledJourney{}
+		err := rows.Scan(
+			&journey.LineRef, &journey.DirectionRef, &journey.OperatorRef,
+			&journey.OriginRef, &journey.DestinationRef,
+			&journey.Longitude, &journey.Latitude, &journey.ProgressRate, &journey.Occupancy, &journey.VehicleRef,
+			&journey.ExpectedArrivalTime, &journey.ExpectedDepartureTime, &journey.DistanceFromStop,
+			&journey.NumberOfStopsAway, &journey.StopPointRef, &journey.Timestamp, &journey.TimeToStop,
+		)
+		if err != nil {
+			log.Printf("ScanLabelledJourneyRows: error whilst scanning row from DB into a struct: %s", err)
+			return nil, err
+		}
+		journeys = append(journeys, journey)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Printf("ScanLabelledJourneyRows: error whilst scanning rows from DB: %s\n", err)
+		return nil, err
+	}
+	return journeys, nil
 }
 
 // LabelledJourneyToInterface converts a slice of LabelledJourney structs into

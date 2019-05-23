@@ -11,10 +11,8 @@ import (
 
 // null.Timestamp
 type Timestamp struct {
-	// TODO: remove the name of the Timestamp field (make it embedded), to remove
-	//       the need to type movement.Timestamp.Timestamp all the time
-	Timestamp database.Timestamp
-	Valid     bool
+	database.Timestamp
+	Valid bool
 }
 
 func TimestampFrom(ts database.Timestamp) Timestamp {
