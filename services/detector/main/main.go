@@ -2,6 +2,7 @@ package main
 
 import (
 	"detector/calc"
+	"detector/fetch"
 	"detector/request"
 	"fmt"
 	"log"
@@ -19,7 +20,6 @@ func main() {
 	defer db.Close()
 	// Extract the journey params from the user's request
 	params := getParams()
-	fmt.Println(params)
 	// Create a bustime client to fetch list of stops
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
 	// Fetch the list of stops for the requested route and direction
@@ -30,6 +30,11 @@ func main() {
 		log.Fatalf("error calculating average time between stops: %s", err)
 	}
 	fmt.Printf("Average time: %d\n", avgTime)
+	predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stopList)
+	if err != nil {
+		log.Fatalf("error calculating predicted time: %s", err)
+	}
+	fmt.Printf("Predicted time: %d\n", predictedTime)
 }
 
 func getParams() request.JourneyParams {

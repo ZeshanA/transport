@@ -16,11 +16,11 @@ type JourneyParams struct {
 
 func (jp JourneyParams) MarshalJSON() ([]byte, error) {
 	templates := `{
-		"routeID": %s,
-		"directionID": %d,
-		"fromStop": %s,
-		"toStop": %s,
-		"arrivalTime": %s
+		"routeID": "%s",
+		"directionID": "%d",
+		"fromStop": "%s",
+		"toStop": "%s",
+		"arrivalTime": "%s"
 	}`
 	str := fmt.Sprintf(templates, jp.RouteID, jp.DirectionID, jp.FromStop, jp.ToStop, jp.ArrivalTime.Format(database.TimeFormat))
 	return []byte(str), nil
