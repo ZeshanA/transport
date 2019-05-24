@@ -26,8 +26,7 @@ func AvgTimeBetweenStops(stopList []bustime.BusStop, jp request.JourneyParams, d
 	splitMvmts := SplitMovementsByVehicleID(mvmts)
 	// Get a list containing how long each 'fromStop' -> 'toStop' journey took in seconds
 	journeyTimes := mvmtsToJourneyTimes(splitMvmts, stopList, jp)
-	// TODO: Switch to median
-	avgJourneyTime := math.SliceMeanRounded(journeyTimes)
+	avgJourneyTime := math.SliceMedian(journeyTimes)
 	return avgJourneyTime, nil
 }
 

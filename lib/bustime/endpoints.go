@@ -17,9 +17,9 @@ const (
 )
 
 type BusStop struct {
-	ID        string
-	Latitude  float64
-	Longitude float64
+	ID        string  `json:"id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
