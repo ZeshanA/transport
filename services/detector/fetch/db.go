@@ -24,7 +24,7 @@ func MovementsInWindow(db *sql.DB, stopList []bustime.BusStop, jp request.Journe
 		AND stop_point_ref=ANY($1) ORDER BY timestamp ASC;
 	`, jp.RouteID, jp.DirectionID, fromHour, toHour)
 	// Remove stops on the route that are before the 'fromStop'
-	trimmedStopList := trimStopList(stopList, jp.FromStop)
+	trimmedStopList := bustime.TrimStopList(stopList, jp.FromStop, true)
 	// Execute query, passing in the trimmedStopList as a Postgres array
 	rows, err := db.Query(query, pq.Array(trimmedStopList))
 	if err != nil {
@@ -38,22 +38,4 @@ func MovementsInWindow(db *sql.DB, stopList []bustime.BusStop, jp request.Journe
 		return nil, err
 	}
 	return journeys, nil
-}
-
-// Takes a list of stops and returns a list of stopIDs containing fromStop and all the stops after
-// fromStop (i.e. removing any stops that are before fromStop)
-func trimStopList(stopList []bustime.BusStop, fromStop string) []string {
-	fromStopIndex := 0
-	for i, stop := range stopList {
-		if stop.ID == fromStop {
-			fromStopIndex = i
-			break
-		}
-	}
-	trimmedList := stopList[fromStopIndex:]
-	stopIDs := make([]string, len(trimmedList))
-	for i, stop := range trimmedList {
-		stopIDs[i] = stop.ID
-	}
-	return stopIDs
 }

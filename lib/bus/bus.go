@@ -53,6 +53,16 @@ type VehicleJourney struct {
 	Timestamp                nulltypes.Timestamp
 }
 
+// VehicleJourneysByVehicleRef takes a slice of VehicleJourney items
+// and returns a map of the same VehicleJourney items, keyed by their VehicleRefs
+func VehicleJourneysByVehicleRef(vjs []VehicleJourney) map[string]VehicleJourney {
+	keyed := map[string]VehicleJourney{}
+	for _, vj := range vjs {
+		keyed[vj.VehicleRef.String] = vj
+	}
+	return keyed
+}
+
 func (vj *VehicleJourney) Value() []interface{} {
 	return []interface{}{
 		vj.LineRef.String, vj.DirectionRef.Int64, vj.TripID.String, vj.PublishedLineName.String, vj.OperatorRef.String,

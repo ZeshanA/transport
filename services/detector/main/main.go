@@ -3,9 +3,10 @@ package main
 import (
 	"detector/calc"
 	"detector/fetch"
+	"detector/monitor"
 	"detector/request"
-	"fmt"
 	"log"
+	"time"
 	"transport/lib/bustime"
 	"transport/lib/database"
 	"transport/lib/iohelper"
@@ -26,10 +27,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("error calculating average time between stops: %s", err)
 	}
-	fmt.Printf("Average time: %d\n", avgTime)
+	log.Printf("Average time: %d\n", avgTime)
 	predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stopList)
 	if err != nil {
 		log.Fatalf("error calculating predicted time: %s", err)
 	}
-	fmt.Printf("Predicted time: %d\n", predictedTime)
+	log.Printf("Predicted time: %d\n", predictedTime)
+	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
+	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
+	complete := make(chan bool)
+	monitor.LiveBuses(avgTime, predictedTime, params, stopList, complete)
+	<-complete
 }

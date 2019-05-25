@@ -32,7 +32,13 @@ func (ts *Timestamp) MarshalJSON() ([]byte, error) {
 
 // UnarshalJSON converts a JSON []byte into a null.Timestamp
 func (ts *Timestamp) UnmarshalJSON(b []byte) error {
-	t, err := time.Parse(database.TimeFormat, string(b))
+	// Remove quote marks
+	str := strings.Replace(string(b), `"`, "", -1)
+	if str == "null" {
+		ts.Valid = false
+		return nil
+	}
+	t, err := time.Parse(database.TimeFormat, str)
 	if err != nil {
 		return err
 	}

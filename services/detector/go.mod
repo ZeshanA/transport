@@ -1,6 +1,7 @@
 module detector
 
 require (
+	github.com/VividCortex/ewma v1.1.1
 	github.com/lib/pq v1.0.0
 	github.com/stretchr/testify v1.3.0
 	github.com/tidwall/gjson v1.2.1
