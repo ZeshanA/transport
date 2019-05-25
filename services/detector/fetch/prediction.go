@@ -31,7 +31,7 @@ func PredictedJourneyTime(params request.JourneyParams, avgTime int, stopList []
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	defer resp.Body.Close()
 
