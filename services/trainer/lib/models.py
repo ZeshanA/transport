@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 from tensorflow import keras, feature_column
-from tensorflow.keras import layers
+from tensorflow.keras import layers, optimizers
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.data import COL_COUNT
@@ -30,9 +30,12 @@ def create_model(hidden_layer_count, neuron_count, activation_function):
     # Output layer, a single number
     model.add(layers.Dense(1))
 
+    # Optimizer
+    sgd = optimizers.SGD(lr=0.005, clipvalue=0.5)
+
     # Compile model
     model.compile(loss='mean_squared_error',
-                  optimizer='adam',
+                  optimizer=sgd,
                   metrics=['mean_absolute_error', 'mean_squared_error'])
 
     return model
