@@ -41,7 +41,7 @@ def get_trained_model(params, training):
     logging.info("Starting model training...")
     training_data, training_labels = training
     model = create_model(params['hidden_layer_count'], params['neuron_count'], params['activation_function'])
-    model.fit(x=training_data, y=training_labels, epochs=params['epochs'], l)
+    model.fit(x=training_data, y=training_labels, epochs=params['epochs'])
     logging.info("Successfully completed model training...")
     return model
 
