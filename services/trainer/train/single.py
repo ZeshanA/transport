@@ -27,7 +27,26 @@ def main():
     model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
     # Calculate and upload final model performance metrics
     metrics = calculate_performance_metrics(route_id, model, test)
+    # Save model to disk
+    filepath = save_model_to_disk(route_id, model)
+    # Upload model to object storage
+    upload_model(route_id, filepath)
     print(metrics)
+
+
+def save_model_to_disk(route_id, model):
+    """
+    Saves a trained Tensorflow model to disk. Can be loaded again using Keras'
+    load_model function.
+    :param route_id: string: routeID for the current model
+    :param model: pointer to a trained Tensorflow model
+    :return: the (relative) filepath that the model was saved at
+    """
+    directory = '/data/za816/trained/models/{}/'.format(route_id)
+    filepath = '{}/finalModel.h5'.format(directory, route_id)
+    os.makedirs(directory, exist_ok=True)
+    model.save(filepath)
+    return filepath
 
 
 def get_trained_model(params, training):
