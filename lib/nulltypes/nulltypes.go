@@ -23,8 +23,8 @@ func TimestampFrom(ts database.Timestamp) Timestamp {
 }
 
 // MarshalJSON converts a null.Timestamp into a JSON []byte
-func (ts *Timestamp) MarshalJSON() ([]byte, error) {
-	if ts.Valid {
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
+	if ts.Valid || !ts.Time.IsZero() {
 		return []byte(fmt.Sprintf(`"%s"`, ts.Timestamp.Format(database.TimeFormat))), nil
 	}
 	return []byte("null"), nil

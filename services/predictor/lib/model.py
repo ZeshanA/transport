@@ -16,6 +16,11 @@ def predict(model, journey):
 
 
 def download_model(route_id):
+    filename = '{}-finalModel.h5'.format(route_id)
+    exists = os.path.isfile(filename.format(route_id))
+    if exists:
+        return load_model(filename)
+    # Model doesn't already exist on disk, download from object storage
     session = boto3.session.Session()
     key_id, secret = get_storage_details()
     client = session.client('s3',
@@ -23,10 +28,6 @@ def download_model(route_id):
                             endpoint_url='https://fra1.digitaloceanspaces.com',
                             aws_access_key_id=key_id,
                             aws_secret_access_key=secret)
-    filename = '{}-finalModel.h5'.format(route_id)
-    exists = os.path.isfile(filename.format(route_id))
-    if exists:
-        return load_model(filename)
     with open(filename, 'wb') as f:
         client.download_fileobj('mtadata', filename, f)
     return load_model(filename)

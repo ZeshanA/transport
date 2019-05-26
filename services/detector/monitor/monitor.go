@@ -24,9 +24,8 @@ type TimedJourney struct {
 
 func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, complete chan bool) {
 	ticker := time.NewTicker(refreshInterval)
-	stopsAfterDest := stringhelper.SliceToSet(bustime.TrimStopList(stopList, params.ToStop, false))
 	movingAverage := getInitialMovingAverage(avgTime, predictedTime)
-	go monitorBuses(ticker, params, stopsAfterDest, complete, movingAverage)
+	go monitorBuses(ticker, params, stopList, complete, movingAverage)
 	<-complete
 }
 
@@ -37,15 +36,32 @@ func getInitialMovingAverage(avgTime int, predictedTime int) ewma.MovingAverage 
 	return movingAvg
 }
 
-func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopsAfterDest map[string]bool, complete chan bool, movingAverageJourneyTime ewma.MovingAverage) {
+func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, complete chan bool, movingAvg ewma.MovingAverage) {
 	waitingToStart, startedJourneys := map[string]time.Time{}, map[string]time.Time{}
+	stopsAfterDest := stringhelper.SliceToSet(bustime.TrimStopList(stopList, params.ToStop, false))
 	for {
 		select {
 		case <-ticker.C:
 			allJourneys, journeysApproachingStop := fetchJourneySets(params)
 			findApproachingVehicles(journeysApproachingStop, waitingToStart)
 			detectStartedJourneys(waitingToStart, startedJourneys, allJourneys, params)
-			updateAverageJourneyTime(startedJourneys, allJourneys, stopsAfterDest, movingAverageJourneyTime)
+			updateAverageJourneyTime(startedJourneys, allJourneys, stopsAfterDest, movingAvg)
+			for vehicleID := range journeysApproachingStop {
+				prediction, err := fetch.SingleMovementPrediction(journey)
+				if err != nil {
+					log.Printf("error fetching predicted journey time: %s", err)
+				}
+				idealArrivalTime := params.ArrivalTime.Add(-time.Duration(movingAvg.Value()) * time.Second)
+				currentVehicleArrivalTime := time.Now().In(database.TimeLoc).Add(time.Duration(prediction) * time.Second)
+				diff := idealArrivalTime.Sub(currentVehicleArrivalTime)
+				log.Printf("We would like a bus arriving at exactly %s", idealArrivalTime)
+				log.Printf("Vehicle with ID %s is estimated to arrive at the source stop in %d seconds, at %s", vehicleID, prediction, currentVehicleArrivalTime.Format(database.TimeFormat))
+				log.Printf("The gap between these two times is %f seconds", diff.Seconds())
+				if idealArrivalTime.After(currentVehicleArrivalTime) && diff < 5*time.Minute {
+					log.Printf("SENDING NOTIFICATION!")
+					complete <- true
+				}
+			}
 			log.Println("Successfully processed live journey data, waiting for the next tick...")
 		case <-complete:
 			ticker.Stop()
@@ -63,7 +79,7 @@ func updateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys 
 		if _, ok := stopsAfterDest[stopID]; ok {
 			duration := journey.Timestamp.Sub(stamp).Seconds()
 			log.Printf(
-				"Vehicle with ID '%s' has completed its journey at %s, with a total duration of %d seconds",
+				"Vehicle with ID '%s' has completed its journey at %s, with a total duration of %f seconds",
 				vehicleRef, stamp.Format(database.TimeFormat), duration,
 			)
 			movingAverageJourneyTime.Add(duration)

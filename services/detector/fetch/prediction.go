@@ -18,11 +18,46 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-const predictionURL = "http://127.0.0.1:5000/predictStopToStop"
+const predictionBaseURL = "http://127.0.0.1:5000"
+const stopToStopURL = predictionBaseURL + "/predictStopToStop"
+const singleMovementURL = predictionBaseURL + "/predictFromMovement"
+
+func SingleMovementPrediction(journey bus.VehicleJourney) (int, error) {
+	jsonStr, err := json.Marshal(journey)
+	if err != nil {
+		log.Printf("error marshalling journey into JSON: %s", err)
+	}
+	req, err := http.NewRequest("POST", singleMovementURL, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.Status != "200 OK" {
+		return 0, fmt.Errorf("error fetching predicted arrival time: received response with status: %s", resp.Status)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("error reading predicted arrival time response: %s", err)
+	}
+	timeStr := gjson.GetBytes(body, "prediction").String()
+	time, err := strconv.Atoi(timeStr)
+	if err != nil {
+		return 0, fmt.Errorf("error reading predicted arrival time response: %s", err)
+	}
+	return time, nil
+}
 
 func PredictedJourneyTime(params request.JourneyParams, avgTime int, stopList []bustime.BusStop) (int, error) {
 	var jsonStr = createJSONRequest(params, avgTime, stopList)
-	req, err := http.NewRequest("POST", predictionURL, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", stopToStopURL, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return 0, err
 	}
@@ -75,10 +110,10 @@ func createSampleMovement(params request.JourneyParams, stopList []bustime.BusSt
 		ProgressRate:   null.StringFrom("normalProgress"),
 		VehicleRef:     null.StringFrom("MTA NYCT_7339"),
 	}
-	json, err := json.Marshal(lj)
+	jsonStr, err := json.Marshal(lj)
 	if err != nil {
-		log.Printf("Error marshalling sample movement: %s", err)
+		log.Printf("error marshalling sample movement: %s", err)
 		return ""
 	}
-	return string(json)
+	return string(jsonStr)
 }
