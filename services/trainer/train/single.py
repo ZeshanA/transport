@@ -18,7 +18,7 @@ OPTIMAL_PARAMS = {
 
 def main():
     # Fetch next routeID from server
-    route_id = sys.argv[2]
+    route_id = sys.argv[1]
     # Get train/val/test datasets
     train, val, test = get_numpy_datasets(route_id)
     # Train model using pre-determined optimal parameters
