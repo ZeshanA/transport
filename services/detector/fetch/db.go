@@ -24,7 +24,7 @@ func MovementsInWindow(db *sql.DB, stopList []bustime.BusStop, jp request.Journe
 		AND stop_point_ref=ANY($1) ORDER BY timestamp ASC;
 	`, jp.RouteID, jp.DirectionID, fromHour, toHour)
 	// Remove stops on the route that are before the 'fromStop'
-	trimmedStopList := bustime.TrimStopList(stopList, jp.FromStop, true)
+	trimmedStopList := bustime.ExtractStops("after", jp.FromStop, true, stopList)
 	// Execute query, passing in the trimmedStopList as a Postgres array
 	rows, err := db.Query(query, pq.Array(trimmedStopList))
 	if err != nil {

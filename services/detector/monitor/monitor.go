@@ -1,6 +1,8 @@
 package monitor
 
 import (
+	"database/sql"
+	"detector/calc"
 	"detector/fetch"
 	"detector/request"
 	"log"
@@ -22,10 +24,10 @@ type TimedJourney struct {
 	DistanceFromArrivalTime time.Duration
 }
 
-func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, complete chan bool) {
+func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan bool) {
 	ticker := time.NewTicker(refreshInterval)
 	movingAverage := getInitialMovingAverage(avgTime, predictedTime)
-	go monitorBuses(ticker, params, stopList, complete, movingAverage)
+	go monitorBuses(ticker, params, stopList, db, complete, movingAverage)
 	<-complete
 }
 
@@ -36,26 +38,37 @@ func getInitialMovingAverage(avgTime int, predictedTime int) ewma.MovingAverage 
 	return movingAvg
 }
 
-func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, complete chan bool, movingAvg ewma.MovingAverage) {
+func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan bool, movingAvg ewma.MovingAverage) {
 	waitingToStart, startedJourneys := map[string]time.Time{}, map[string]time.Time{}
-	stopsAfterDest := stringhelper.SliceToSet(bustime.TrimStopList(stopList, params.ToStop, false))
+	stopsBeforeSource := stringhelper.SliceToSet(bustime.ExtractStops("before", params.FromStop, true, stopList))
+	stopsAfterDest := stringhelper.SliceToSet(bustime.ExtractStops("after", params.ToStop, false, stopList))
 	for {
 		select {
 		case <-ticker.C:
-			allJourneys, journeysApproachingStop := fetchJourneySets(params)
+			allJourneys, journeysBeforeStop, journeysApproachingStop := fetchJourneySets(params, stopsBeforeSource)
 			findApproachingVehicles(journeysApproachingStop, waitingToStart)
 			detectStartedJourneys(waitingToStart, startedJourneys, allJourneys, params)
 			updateAverageJourneyTime(startedJourneys, allJourneys, stopsAfterDest, movingAvg)
-			for vehicleID := range journeysApproachingStop {
-				prediction, err := fetch.SingleMovementPrediction(journey)
+			idealArrivalTime := params.ArrivalTime.Add(-time.Duration(movingAvg.Value()) * time.Second)
+			for vehicleID, journey := range journeysBeforeStop {
+				timeToNextStop, err := fetch.SingleMovementPrediction(journey)
 				if err != nil {
 					log.Printf("error fetching predicted journey time: %s", err)
 				}
-				idealArrivalTime := params.ArrivalTime.Add(-time.Duration(movingAvg.Value()) * time.Second)
-				currentVehicleArrivalTime := time.Now().In(database.TimeLoc).Add(time.Duration(prediction) * time.Second)
+				nxtStopToSourceStopParams := params
+				nxtStopToSourceStopParams.FromStop = journey.StopPointRef.String
+				nxtStopToSourceStopParams.ToStop = params.FromStop
+				nxtStopToSourceStopParams.ArrivalTime = idealArrivalTime
+				avgTime, err := calc.AvgTimeBetweenStops(stopList, nxtStopToSourceStopParams, db)
+				if err != nil {
+					log.Fatalf("error calculating average time between stops: %s", err)
+				}
+				nextStopToSourceStop, err := fetch.PredictedJourneyTime(nxtStopToSourceStopParams, avgTime, stopList)
+				totalTimeUntilSourceStop := timeToNextStop + nextStopToSourceStop
+				currentVehicleArrivalTime := time.Now().In(database.TimeLoc).Add(time.Duration(totalTimeUntilSourceStop) * time.Second)
 				diff := idealArrivalTime.Sub(currentVehicleArrivalTime)
 				log.Printf("We would like a bus arriving at exactly %s", idealArrivalTime)
-				log.Printf("Vehicle with ID %s is estimated to arrive at the source stop in %d seconds, at %s", vehicleID, prediction, currentVehicleArrivalTime.Format(database.TimeFormat))
+				log.Printf("Vehicle with ID %s is estimated to arrive at the source stop in %d seconds, at %s", vehicleID, totalTimeUntilSourceStop, currentVehicleArrivalTime.Format(database.TimeFormat))
 				log.Printf("The gap between these two times is %f seconds", diff.Seconds())
 				if idealArrivalTime.After(currentVehicleArrivalTime) && diff < 5*time.Minute {
 					log.Printf("SENDING NOTIFICATION!")
@@ -109,22 +122,33 @@ func findApproachingVehicles(journeysApproachingStop map[string]bus.VehicleJourn
 	log.Printf("There are currently %d vehicles approaching the source stop\n", len(waitingToStart))
 }
 
-func fetchJourneySets(params request.JourneyParams) (liveJourneys map[string]bus.VehicleJourney, journeysApproachingStop map[string]bus.VehicleJourney) {
+func fetchJourneySets(params request.JourneyParams, stopsBeforeStopID map[string]bool) (allJourneys map[string]bus.VehicleJourney, journeysBeforeStop map[string]bus.VehicleJourney, journeysApproachingStop map[string]bus.VehicleJourney) {
 	log.Printf("Fetching live journeys for paramSet: %v...\n", params)
-	liveJourneys = map[string]bus.VehicleJourney{}
-	liveJourneys, err := fetch.LiveJourneys(params.RouteID, params.DirectionID)
+	allJourneys = map[string]bus.VehicleJourney{}
+	allJourneys, err := fetch.LiveJourneys(params.RouteID, params.DirectionID)
 	if err != nil {
 		log.Fatalf("error fetching live journeys: %s", err)
 	}
-	journeysApproachingStop = extractJourneysApproachingStop(liveJourneys, params.FromStop)
+	journeysBeforeStop = extractJourneysBeforeStop(allJourneys, stopsBeforeStopID)
+	journeysApproachingStop = extractJourneysApproachingStop(allJourneys, params.FromStop)
 	log.Println("Successfully fetched live journeys")
-	return liveJourneys, journeysApproachingStop
+	return allJourneys, journeysBeforeStop, journeysApproachingStop
 }
 
 func extractJourneysApproachingStop(journeys map[string]bus.VehicleJourney, stopID string) map[string]bus.VehicleJourney {
 	matching := map[string]bus.VehicleJourney{}
 	for vehicleID, journey := range journeys {
 		if journey.StopPointRef.String == stopID {
+			matching[vehicleID] = journey
+		}
+	}
+	return matching
+}
+
+func extractJourneysBeforeStop(journeys map[string]bus.VehicleJourney, stopsBeforeStopID map[string]bool) map[string]bus.VehicleJourney {
+	matching := map[string]bus.VehicleJourney{}
+	for vehicleID, journey := range journeys {
+		if _, exists := stopsBeforeStopID[journey.StopPointRef.String]; exists {
 			matching[vehicleID] = journey
 		}
 	}

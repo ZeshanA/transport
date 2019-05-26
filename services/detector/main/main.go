@@ -36,6 +36,6 @@ func main() {
 	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
 	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
 	complete := make(chan bool)
-	monitor.LiveBuses(avgTime, predictedTime, params, stopList, complete)
+	monitor.LiveBuses(avgTime, predictedTime, params, stopList, db, complete)
 	<-complete
 }

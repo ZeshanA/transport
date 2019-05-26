@@ -134,7 +134,7 @@ func getStopDetails(jsonString string) map[string]gjson.Result {
 // Takes a list of stops and returns a list of stopIDs containing all the stops after
 // the given stopID (i.e. removing any stops that are before stopID). If `inclusive`
 // is true, then the given stopID is also included in the list (as the first item).
-func TrimStopList(stopList []BusStop, stopID string, inclusive bool) []string {
+func ExtractStops(stopsToKeep string, stopID string, inclusive bool, stopList []BusStop) []string {
 	fromStopIndex := 0
 	for i, stop := range stopList {
 		if stop.ID == stopID {
@@ -145,7 +145,12 @@ func TrimStopList(stopList []BusStop, stopID string, inclusive bool) []string {
 	if !inclusive {
 		fromStopIndex++
 	}
-	trimmedList := stopList[fromStopIndex:]
+	var trimmedList []BusStop
+	if stopsToKeep == "before" {
+		trimmedList = stopList[:fromStopIndex]
+	} else {
+		trimmedList = stopList[fromStopIndex:]
+	}
 	stopIDs := make([]string, len(trimmedList))
 	for i, stop := range trimmedList {
 		stopIDs[i] = stop.ID
