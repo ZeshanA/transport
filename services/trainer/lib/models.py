@@ -41,7 +41,7 @@ def create_model(hidden_layer_count, neuron_count, activation_function):
                            optimizer=sgd,
                            metrics=['mean_absolute_error', 'mean_squared_error'])
 
-    return model
+    return parallel_model
 
 
 # Returns a list of tensorflow feature columns, converting text_cols into
