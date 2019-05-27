@@ -3,10 +3,12 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import tensorflow as tf
 from tensorflow import keras, feature_column
 from tensorflow.keras import layers, optimizers
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.utils import multi_gpu_model
 
 from lib.data import COL_COUNT
 from lib.files import save_json
@@ -21,23 +23,23 @@ def create_model(hidden_layer_count, neuron_count, activation_function):
     :return: an untrained Keras model backed by Tensorflow
     """
     # Start constructing a sequential model
-    model = keras.Sequential()
-    model.add(BatchNormalization(input_shape=(COL_COUNT,)))
+    with tf.device('/cpu:0'):
+        model = keras.Sequential()
+        model.add(BatchNormalization(input_shape=(COL_COUNT,)))
+        # Add additional hidden layers as needed
+        for i in range(hidden_layer_count - 1):
+            model.add(layers.Dense(neuron_count, activation=activation_function))
+            model.add(BatchNormalization())
 
-    # Add additional hidden layers as needed
-    for i in range(hidden_layer_count - 1):
-        model.add(layers.Dense(neuron_count, activation=activation_function))
-        model.add(BatchNormalization())
+        # Output layer, a single number
+        model.add(layers.Dense(1))
+        sgd = keras.optimizers.SGD(lr=0.005, clipnorm=0.5)
 
-    # Output layer, a single number
-    model.add(layers.Dense(1))
-
-    sgd = keras.optimizers.SGD(lr=0.005, clipnorm=0.5)
-
+    parallel_model = multi_gpu_model(model, gpus=4)
     # Compile model
-    model.compile(loss='mean_squared_error',
-                  optimizer=sgd,
-                  metrics=['mean_absolute_error', 'mean_squared_error'])
+    parallel_model.compile(loss='mean_squared_error',
+                           optimizer=sgd,
+                           metrics=['mean_absolute_error', 'mean_squared_error'])
 
     return model
 
