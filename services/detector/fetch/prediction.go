@@ -24,6 +24,7 @@ const singleMovementURL = predictionBaseURL + "/predictFromMovement"
 
 func SingleMovementPrediction(journey bus.VehicleJourney) (int, error) {
 	jsonStr, err := json.Marshal(journey)
+	fmt.Println(string(jsonStr))
 	if err != nil {
 		log.Printf("error marshalling journey into JSON: %s", err)
 	}

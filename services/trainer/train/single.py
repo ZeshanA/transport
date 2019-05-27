@@ -14,7 +14,7 @@ OPTIMAL_PARAMS = {
     'hidden_layer_count': 47,
     'neuron_count': 552,
     'activation_function': 'relu',
-    'epochs': 50
+    'epochs': 30
 }
 
 
