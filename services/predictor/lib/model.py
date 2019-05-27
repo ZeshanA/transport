@@ -29,5 +29,5 @@ def download_model(route_id):
                             aws_access_key_id=key_id,
                             aws_secret_access_key=secret)
     with open(filename, 'wb') as f:
-        client.download_fileobj('mtadata', filename, f)
+        client.download_fileobj('mtadata2', filename, f)
     return load_model(filename)
