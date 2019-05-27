@@ -27,13 +27,16 @@ def create_model(hidden_layer_count, neuron_count, activation_function):
     # Add additional hidden layers as needed
     for i in range(hidden_layer_count - 1):
         model.add(layers.Dense(neuron_count, activation=activation_function))
+        model.add(BatchNormalization())
 
     # Output layer, a single number
     model.add(layers.Dense(1))
 
+    sgd = keras.optimizers.SGD(lr=0.005, clipnorm=0.5)
+
     # Compile model
     model.compile(loss='mean_squared_error',
-                  optimizer='adam',
+                  optimizer=sgd,
                   metrics=['mean_absolute_error', 'mean_squared_error'])
 
     return model
