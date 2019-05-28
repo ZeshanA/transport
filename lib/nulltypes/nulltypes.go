@@ -11,10 +11,8 @@ import (
 
 // null.Timestamp
 type Timestamp struct {
-	// TODO: remove the name of the Timestamp field (make it embedded), to remove
-	//       the need to type movement.Timestamp.Timestamp all the time
-	Timestamp database.Timestamp
-	Valid     bool
+	database.Timestamp
+	Valid bool
 }
 
 func TimestampFrom(ts database.Timestamp) Timestamp {
@@ -25,8 +23,8 @@ func TimestampFrom(ts database.Timestamp) Timestamp {
 }
 
 // MarshalJSON converts a null.Timestamp into a JSON []byte
-func (ts *Timestamp) MarshalJSON() ([]byte, error) {
-	if ts.Valid {
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
+	if ts.Valid || !ts.Time.IsZero() {
 		return []byte(fmt.Sprintf(`"%s"`, ts.Timestamp.Format(database.TimeFormat))), nil
 	}
 	return []byte("null"), nil
@@ -34,7 +32,13 @@ func (ts *Timestamp) MarshalJSON() ([]byte, error) {
 
 // UnarshalJSON converts a JSON []byte into a null.Timestamp
 func (ts *Timestamp) UnmarshalJSON(b []byte) error {
-	t, err := time.Parse(database.TimeFormat, string(b))
+	// Remove quote marks
+	str := strings.Replace(string(b), `"`, "", -1)
+	if str == "null" {
+		ts.Valid = false
+		return nil
+	}
+	t, err := time.Parse(database.TimeFormat, str)
 	if err != nil {
 		return err
 	}

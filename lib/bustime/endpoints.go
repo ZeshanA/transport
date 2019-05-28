@@ -17,9 +17,9 @@ const (
 )
 
 type BusStop struct {
-	ID        string
-	Latitude  float64
-	Longitude float64
+	ID        string  `json:"id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,4 +129,31 @@ func getStopDetails(jsonString string) map[string]gjson.Result {
 		stopIDsMap[stopID] = stop
 	}
 	return stopIDsMap
+}
+
+// Takes a list of stops and returns a list of stopIDs containing all the stops after
+// the given stopID (i.e. removing any stops that are before stopID). If `inclusive`
+// is true, then the given stopID is also included in the list (as the first item).
+func ExtractStops(stopsToKeep string, stopID string, inclusive bool, stopList []BusStop) []string {
+	fromStopIndex := 0
+	for i, stop := range stopList {
+		if stop.ID == stopID {
+			fromStopIndex = i
+			break
+		}
+	}
+	if !inclusive {
+		fromStopIndex++
+	}
+	var trimmedList []BusStop
+	if stopsToKeep == "before" {
+		trimmedList = stopList[:fromStopIndex]
+	} else {
+		trimmedList = stopList[fromStopIndex:]
+	}
+	stopIDs := make([]string, len(trimmedList))
+	for i, stop := range trimmedList {
+		stopIDs[i] = stop.ID
+	}
+	return stopIDs
 }

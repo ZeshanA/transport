@@ -23,6 +23,8 @@ const (
 	DateFormat   = "2006-01-02"
 )
 
+var TimeLoc, _ = time.LoadLocation("America/New_York")
+
 // DBTable type holds name and column list for each table in the DB
 type DBTable struct {
 	Name    string

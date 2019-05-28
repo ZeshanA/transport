@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -50,6 +51,16 @@ type VehicleJourney struct {
 	NumberOfStopsAway        null.Int
 	StopPointRef             null.String
 	Timestamp                nulltypes.Timestamp
+}
+
+// VehicleJourneysByVehicleRef takes a slice of VehicleJourney items
+// and returns a map of the same VehicleJourney items, keyed by their VehicleRefs
+func VehicleJourneysByVehicleRef(vjs []VehicleJourney) map[string]VehicleJourney {
+	keyed := map[string]VehicleJourney{}
+	for _, vj := range vjs {
+		keyed[vj.VehicleRef.String] = vj
+	}
+	return keyed
 }
 
 func (vj *VehicleJourney) Value() []interface{} {
@@ -109,6 +120,31 @@ func LabelledJourneyFrom(mvmt VehicleJourney, timeToStop int) LabelledJourney {
 		Timestamp:             mvmt.Timestamp,
 		TimeToStop:            null.IntFrom(int64(timeToStop)),
 	}
+}
+
+func ScanLabelledJourneyRows(rows *sql.Rows) ([]LabelledJourney, error) {
+	var journeys []LabelledJourney
+	for rows.Next() {
+		journey := LabelledJourney{}
+		err := rows.Scan(
+			&journey.LineRef, &journey.DirectionRef, &journey.OperatorRef,
+			&journey.OriginRef, &journey.DestinationRef,
+			&journey.Longitude, &journey.Latitude, &journey.ProgressRate, &journey.Occupancy, &journey.VehicleRef,
+			&journey.ExpectedArrivalTime, &journey.ExpectedDepartureTime, &journey.DistanceFromStop,
+			&journey.NumberOfStopsAway, &journey.StopPointRef, &journey.Timestamp, &journey.TimeToStop,
+		)
+		if err != nil {
+			log.Printf("ScanLabelledJourneyRows: error whilst scanning row from DB into a struct: %s", err)
+			return nil, err
+		}
+		journeys = append(journeys, journey)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Printf("ScanLabelledJourneyRows: error whilst scanning rows from DB: %s\n", err)
+		return nil, err
+	}
+	return journeys, nil
 }
 
 // LabelledJourneyToInterface converts a slice of LabelledJourney structs into
