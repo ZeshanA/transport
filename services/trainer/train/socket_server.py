@@ -5,12 +5,13 @@ import websockets
 
 from lib.logs import init_logging
 from lib.network import ClientSet
-from train.events import START_REGISTRATION
-from train.handlers import host_registration
+import train.events as events
+from train.handlers import host_registration, route_request
 
 connected_clients = ClientSet()
 handlers = {
-    START_REGISTRATION: host_registration
+    events.START_REGISTRATION: host_registration,
+    events.ROUTE_REQUEST: route_request
 }
 
 
@@ -33,7 +34,9 @@ async def consumer_handler(websocket, path):
         async for message in websocket:
             await consumer(websocket, message, path)
     finally:
-        print(f"Connection closed for Host ID: {connected_clients.get_host_id(websocket)}")
+        host_id = connected_clients.get_host_id(websocket)
+        connected_clients.remove(host_id=host_id)
+        print(f"Connection closed for Host ID: {host_id}")
 
 
 async def consumer(websocket, message, path):
