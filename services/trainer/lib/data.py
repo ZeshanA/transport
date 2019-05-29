@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from sklearn_pandas import gen_features, DataFrameMapper
 
-from db.db import connect
+from lib.db import connect
 
 LABEL_COL = "time_to_stop"
 NUMERIC_COLS = ["direction_ref", "longitude", "latitude", "distance_from_stop",
@@ -36,7 +36,7 @@ def get_datasets(route_id: str, batch_size: int = 32):
     return train_ds, val_ds, test_ds
 
 
-def get_numpy_datasets(route_id: str):
+def get_numpy_datasets(route_id: str, validation_set_required: bool = True):
     df = get_dataframe(route_id)
     train, test = train_test_split(df, test_size=0.2)
     train, val = train_test_split(train, test_size=0.2)
@@ -47,8 +47,11 @@ def get_numpy_datasets(route_id: str):
     mapper = DataFrameMapper(feature_def, default=None)
     train_labels, val_labels, test_labels = train.pop(LABEL_COL), val.pop(LABEL_COL), test.pop(LABEL_COL)
     train_data, val_data, test_data = mapper.fit_transform(train), mapper.fit_transform(val), mapper.fit_transform(test)
-    logging.info("Sucesfully split and converted data for route_id {}".format(route_id))
-    return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
+    train, val, test = (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
+    logging.info("Sucessfully split and converted data for route_id {}".format(route_id))
+    if not validation_set_required:
+        return merge_np_tuples(train, val), test
+    return train, val, test
 
 
 # Fetches the data from the DB for the current route_id

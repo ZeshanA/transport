@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import random
@@ -6,42 +5,42 @@ import socket
 import sys
 
 import requests
-import boto3
+
+from neural_networks.model import NNModel
 
 sys.path.insert(0, os.path.abspath('.'))
 
-from lib.data import get_numpy_datasets, merge_np_tuples
-from lib.logs import init_logging
-from lib.models import create_model, calculate_performance_metrics
+from lib.data import get_numpy_datasets
+from lib.logs import init_logging, print_separator
 
 # TODO: Change server URL
-SERVER_URL = "http://d.zeshan.me:5000/"
+# SERVER_URL = "http://d.zeshan.me:5000/"
+SERVER_URL = "http://127.0.0.1:5000/"
 GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
 COMPLETE_ROUTE_ID_URL = SERVER_URL + "completeRouteID"
-OPTIMAL_PARAMS = {
-    'hidden_layer_count': 47,
-    'neuron_count': 552,
-    'activation_function': 'relu',
-    'epochs': 18
+
+MODEL_TYPES = {
+    'neural_network': NNModel
 }
 
 
 def main():
-    host_id = get_host_id()
+    host_id, model_type_id = get_host_id(), get_model_type()
     logging.info("The hostID for this machine is %s\n", host_id)
+    model_class = MODEL_TYPES[model_type_id]
     while True:
         # Fetch next routeID from server
         route_id = get_route_id(host_id)
         # Get train/val/test datasets
-        train, val, test = get_numpy_datasets(route_id)
-        # Train model using pre-determined optimal parameters
-        model = get_trained_model(OPTIMAL_PARAMS, merge_np_tuples(train, val))
+        train, test = get_numpy_datasets(route_id, False)
+        # Create the requested model
+        model = model_class(route_id)
+        # Train the model
+        model.train(train)
         # Calculate and upload final model performance metrics
-        upload_performance_metrics(host_id, route_id, model, test)
-        # Save model to disk
-        filepath = save_model_to_disk(route_id, model)
+        model.upload_performance_metrics(COMPLETE_ROUTE_ID_URL, host_id, test)
         # Upload model to object storage
-        upload_model(route_id, filepath)
+        model.upload_model()
         # Print ASCII divider for clarity in console
         print_separator()
 
@@ -86,6 +85,20 @@ def generate_host_id():
     return host_id
 
 
+def get_model_type():
+    """
+    :return: a string identifying the type of model to be trained, e.g. "neural_network"
+    """
+    if len(sys.argv) < 2:
+        raise ValueError(
+            """
+            Please pass in the type of model you wish to train as a command line parameter.
+            You can pick from the following values: {}
+            """.format(list(MODEL_TYPES.keys()))
+        )
+    return sys.argv[1]
+
+
 def get_route_id(host_id):
     """
     Fetches the next routeID to process from the server, exits if the
@@ -102,90 +115,6 @@ def get_route_id(host_id):
         sys.exit()
     logging.info("Processing routeID %s...", resp)
     return resp
-
-
-def get_trained_model(params, training):
-    """
-    Creates a model based on the given parameters, trains it on the provided training data
-    and returns a pointer to the fully trained model.
-    :param params: a dict containing the parameters that the model should be trained using
-    :param training: a tuple of Numpy arrays (training_data, training_labels)
-    :return: a pointer to a trained Tensorflow model
-    """
-    logging.info("Starting model training...")
-    training_data, training_labels = training
-    model = create_model(params['hidden_layer_count'], params['neuron_count'], params['activation_function'])
-    model.fit(x=training_data, y=training_labels, epochs=params['epochs'])
-    logging.info("Successfully completed model training...")
-    return model
-
-
-def upload_performance_metrics(host_id, route_id, model, test):
-    """
-    Uploads performance metrics for the given model to the server.
-    :param host_id: the unique ID representing the current PC to the server
-    :param route_id: the routeID that the model corresponds to
-    :param model: a trained Tensorflow model for the given routeID
-    :param test: a tuple containing examples not yet seen by the model: (testing_data, testing_labels)
-    :return:
-    """
-    metrics = calculate_performance_metrics(route_id, model, test)
-    metrics_json = json.dumps(metrics)
-    req = requests.post(url=COMPLETE_ROUTE_ID_URL, params={'hostID': host_id, 'routeID': route_id}, json=metrics_json)
-    logging.info("Server response after performance metric submission: %s", req.text)
-
-
-def save_model_to_disk(route_id, model):
-    """
-    Saves a trained Tensorflow model to disk. Can be loaded again using Keras'
-    load_model function.
-    :param route_id: string: routeID for the current model
-    :param model: pointer to a trained Tensorflow model
-    :return: the (relative) filepath that the model was saved at
-    """
-    directory = '/data/za816/trained/models/{}/'.format(route_id)
-    filepath = '{}/finalModel.h5'.format(directory, route_id)
-    os.makedirs(directory, exist_ok=True)
-    model.save(filepath)
-    return filepath
-
-
-def upload_model(route_id, filepath):
-    """
-    Uploads the .h5 file stored at the given filepath to cloud object storage.
-    :param route_id: string: the routeID that the model corresponds to
-    :param filepath: string: the path to the .h5 file containing the trained Tensorflow model
-    """
-    logging.info("Uploading final model for routeID %s to storage...", route_id)
-    session = boto3.session.Session()
-    key_id, secret = get_storage_details()
-    client = session.client('s3',
-                            region_name='fra1',
-                            endpoint_url='https://fra1.digitaloceanspaces.com',
-                            aws_access_key_id=key_id,
-                            aws_secret_access_key=secret)
-    client.upload_file(filepath, 'mtadata', '{}-finalModel.h5'.format(route_id), ExtraArgs={'ACL':'public-read'})
-    logging.info("Successfully uploaded final model for routeID %s to storage...", route_id)
-
-
-def get_storage_details():
-    """
-    Fetches the access keys for cloud object storage from the environment.
-    :return: a tuple of strings (access_key_id, secret_access_key)
-    """
-    key_id = os.environ.get('SPACES_KEY_ID')
-    secret = os.environ.get('SPACES_SECRET_KEY')
-    if not key_id or not secret:
-        logging.critical('SPACES_{KEY_ID/SECRET_KEY} NOT SET')
-        raise KeyError
-    return key_id, secret
-
-
-def print_separator():
-    """
-    Prints an ASCII divider to separate different executions in the console
-    """
-    print("\n\n===================================================================================================\n\n")
 
 
 if __name__ == "__main__":

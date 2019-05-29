@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow import keras
+# noinspection PyUnresolvedReferences
 from tensorflow.keras import layers
 
 from lib.data import COL_COUNT
@@ -21,7 +22,7 @@ class NNModel(Model):
         }
         super().__init__(route_id, optimal_params)
 
-    def create_model(self):
+    def __create_model__(self):
         # Start constructing a sequential model
         model = keras.Sequential()
         model.add(layers.Dense(COL_COUNT, input_shape=(COL_COUNT,)))
@@ -47,7 +48,7 @@ class NNModel(Model):
         logging.info("Successfully completed model training...")
 
     def calculate_performance_metrics(self, test):
-        logging.info("Calculating model performance metrics for routeID %s...", route_id)
+        logging.info("Calculating model performance metrics for routeID %s...", self.route_id)
         data, labels = test
         preds = self.model.predict(data)
         return {
@@ -57,9 +58,15 @@ class NNModel(Model):
             'r2_score': r2_score(labels, preds)
         }
 
-    # Plot train error against validation error using a history.
-    # `history` is the result of calling model.fit()
+    def __save_model__(self, filepath):
+        self.model.save(filepath)
+
     def plot_history(self):
+        """
+        Plot train error against validation error using a history.
+        `history` is the result of calling model.fit()
+        :return:
+        """
         history = self.history
         hist = pd.DataFrame(history.history)
         hist['epoch'] = history.epoch
