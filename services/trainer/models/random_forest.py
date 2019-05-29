@@ -1,7 +1,7 @@
 import logging
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.externals import joblib
+import joblib
 
 from lib.models import Model
 
