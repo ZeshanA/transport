@@ -8,8 +8,8 @@ import requests
 
 sys.path.insert(0, os.path.abspath('.'))
 
-from neural_networks.model import NNModel
-from random_forest.model import RandomForestModel
+from models.neural_network import NNModel
+from models.random_forest import RandomForestModel
 from lib.data import get_numpy_datasets
 from lib.logs import init_logging, print_separator
 
