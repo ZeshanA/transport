@@ -6,10 +6,10 @@ import sys
 
 import requests
 
-from neural_networks.model import NNModel
-
 sys.path.insert(0, os.path.abspath('.'))
 
+from neural_networks.model import NNModel
+from random_forest.model import RandomForestModel
 from lib.data import get_numpy_datasets
 from lib.logs import init_logging, print_separator
 
@@ -20,7 +20,8 @@ GET_ROUTE_ID_URL = SERVER_URL + "getRouteID"
 COMPLETE_ROUTE_ID_URL = SERVER_URL + "completeRouteID"
 
 MODEL_TYPES = {
-    'neural_network': NNModel
+    'neural_network': NNModel,
+    'random_forest': RandomForestModel
 }
 
 

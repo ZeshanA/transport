@@ -2,7 +2,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow import keras
 # noinspection PyUnresolvedReferences
 from tensorflow.keras import layers
@@ -46,17 +45,6 @@ class NNModel(Model):
         training_data, training_labels = training
         self.history = self.model.fit(x=training_data, y=training_labels, epochs=self.params['epochs'])
         logging.info("Successfully completed model training...")
-
-    def calculate_performance_metrics(self, test):
-        logging.info("Calculating model performance metrics for routeID %s...", self.route_id)
-        data, labels = test
-        preds = self.model.predict(data)
-        return {
-            'route_id': self.route_id,
-            'mean_absolute_error': mean_absolute_error(labels, preds),
-            'mean_squared_error': mean_squared_error(labels, preds),
-            'r2_score': r2_score(labels, preds)
-        }
 
     def __save_model__(self, filepath):
         self.model.save(filepath)

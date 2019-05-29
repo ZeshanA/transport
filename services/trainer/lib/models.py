@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import boto3
 import requests
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.files import save_json
 from lib.storage import get_storage_details
@@ -26,10 +27,6 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def calculate_performance_metrics(self, test):
-        pass
-
-    @abstractmethod
     def __save_model__(self, filepath):
         pass
 
@@ -47,6 +44,17 @@ class Model(ABC):
         os.makedirs(directory, exist_ok=True)
         self.__save_model__(filepath)
         return filepath
+
+    def calculate_performance_metrics(self, test):
+        logging.info("Calculating model performance metrics for routeID %s...", self.route_id)
+        data, labels = test
+        preds = self.model.predict(data)
+        return {
+            'route_id': self.route_id,
+            'mean_absolute_error': mean_absolute_error(labels, preds),
+            'mean_squared_error': mean_squared_error(labels, preds),
+            'r2_score': r2_score(labels, preds)
+        }
 
     def save_performance_metrics(self, test, base_path):
         """
