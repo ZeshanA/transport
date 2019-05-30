@@ -1,10 +1,9 @@
 import collections
 import logging
-import random
 
 from lib.network import ClientSet, send_json
 from lib.routes import all_routes
-import train.events as events
+from train.events import events
 
 # unprocessed_routes = collections.deque(random.sample(all_routes.copy(), len(all_routes)))
 unprocessed_routes = collections.deque(all_routes[:3])

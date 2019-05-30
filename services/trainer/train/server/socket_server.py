@@ -6,8 +6,8 @@ import websockets
 
 from lib.logs import init_logging
 from lib.network import ClientSet
-import train.events as events
-from train.handlers import host_registration, route_request
+from train.events import events
+from train.server.handlers import host_registration, route_request
 
 connected_clients = ClientSet()
 handlers = {

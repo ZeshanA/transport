@@ -1,6 +1,6 @@
+from lib.hosts import get_host_id
 from lib.network import send_json
-from train import events
-from train.client import get_host_id
+from train.events import events
 
 
 async def register_host_id(websocket):

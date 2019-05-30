@@ -3,8 +3,8 @@ import sys
 import time
 
 from lib.network import recv_json
-from train import events
-from train.client_requests import request_route
+from train.events import events
+from train.client.requests import request_route
 
 
 async def response_consumer(websocket):
