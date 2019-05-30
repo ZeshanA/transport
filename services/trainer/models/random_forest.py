@@ -1,8 +1,7 @@
 import logging
-import multiprocessing
 
-from sklearn.ensemble import RandomForestRegressor
 import joblib
+from sklearn.ensemble import RandomForestRegressor
 
 from lib.models import Model
 
@@ -16,7 +15,7 @@ class RandomForestModel(Model):
         logging.info("Creating model...")
         model = RandomForestRegressor(
             n_estimators=self.params['n_estimators'],
-            n_jobs=multiprocessing.cpu_count()
+            n_jobs=-1
         )
         self.model = model
 
