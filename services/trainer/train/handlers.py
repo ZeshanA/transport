@@ -6,7 +6,8 @@ from lib.network import ClientSet, send_json
 from lib.routes import all_routes
 import train.events as events
 
-unprocessed_routes = collections.deque(random.sample(all_routes.copy(), len(all_routes)))
+# unprocessed_routes = collections.deque(random.sample(all_routes.copy(), len(all_routes)))
+unprocessed_routes = collections.deque(all_routes[:3])
 
 
 async def host_registration(websocket, client_set: ClientSet, message, path):
