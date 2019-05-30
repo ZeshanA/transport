@@ -1,5 +1,4 @@
 import asyncio
-import threading
 
 from lib.args import get_model_type
 from lib.data import get_numpy_datasets
