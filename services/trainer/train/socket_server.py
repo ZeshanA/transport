@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 
 import websockets
 
@@ -36,7 +37,7 @@ async def consumer_handler(websocket, path):
     finally:
         host_id = connected_clients.get_host_id(websocket)
         connected_clients.remove(host_id=host_id)
-        print(f"Connection closed for Host ID: {host_id}")
+        logging.info(f"Connection closed for Host ID: {host_id}")
 
 
 async def consumer(websocket, message, path):
