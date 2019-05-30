@@ -3,8 +3,8 @@ import asyncio
 import websockets
 
 from lib.logs import init_logging
-from train.client_handlers import response_consumer
-from train.client_requests import register_host_id
+from train.client.handlers import response_consumer
+from train.client.requests import register_host_id
 
 WEBSOCKET_SERVER = 'ws://localhost:8765'
 
