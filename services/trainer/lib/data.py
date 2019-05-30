@@ -69,7 +69,7 @@ def get_dataframe(route_id: str) -> pd.DataFrame:
             COALESCE(EXTRACT(epoch FROM expected_arrival_time - timestamp)::integer, 0) AS estimate,
             time_to_stop
         FROM labelled_journey
-        WHERE line_ref='{}' LIMIT 10;
+        WHERE line_ref='{}';
         """.format(route_id),
         conn
     )
