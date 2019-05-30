@@ -13,6 +13,10 @@
             text-align: center;
         }
 
+        .fa-spin {
+            margin-right: 6px;
+        }
+
         .topIcon {
             font-size: 80px;
             display: block;
@@ -113,10 +117,12 @@
         <strong>{{ assigned|length }}</strong> clients currently connected
     </h2>
     <table cellspacing=0>
-        <tr class="headerRow">
-            <th>Route ID</th>
-            <th>Host ID</th>
-        </tr>
+        {% if assigned|length > 0 %}
+            <tr class="headerRow">
+                <th>Route ID</th>
+                <th>Host ID</th>
+            </tr>
+        {% endif %}
         {% for route_id, host_id in assigned.items() %}
             <tr>
                 <td>{{ host_id|e }}</td>
