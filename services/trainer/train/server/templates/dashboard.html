@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training Dashboard</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #edf1f5;
+            color: #293845;
+            font-family: "Source Sans Pro", sans-serif;
+            text-align: center;
+        }
+
+        section.numeric {
+            width: 80%;
+            margin: 0 auto;
+            padding: 50px 50px;
+            border-bottom: solid 1px rgba(41, 56, 69, 0.1);
+        }
+
+        .modelType {
+            width: 80%;
+            margin: 0 auto;
+            padding: 50px;
+            font-weight: normal;
+            border-bottom: solid 1px rgba(41, 56, 69, 0.1);
+        }
+
+        .percentage {
+            margin-top: 0;
+            margin-bottom: 0;
+            font-size: 4em;
+        }
+
+        .count {
+            margin-top: 10px;
+            margin-bottom: 0;
+            font-size: 2em;
+            font-weight: normal;
+        }
+
+        section.assignment {
+            padding: 50px;
+        }
+
+        h2.assignment {
+            font-weight: normal;
+            margin-bottom: 40px;
+        }
+
+        table {
+            width: 280px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .headerRow {
+            background-color: rgba(41, 56, 69, 1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        th {
+            font-weight: 600;
+        }
+
+        th, td {
+            padding: 20px;
+            margin-right: -4px;
+            border-bottom: solid 1px rgba(41, 56, 69, 0.1);
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<h2 class="modelType">Currently Training <strong>{{ model_type }}</strong> Models</h2>
+<section class="numeric">
+    <h2 class="percentage">
+        {{ completed_percentage }}% complete
+    </h2>
+    <h2 class="count">
+        <strong class="complete">{{ completed }}</strong> of <strong>{{ total }}</strong> routes finished
+    </h2>
+</section>
+
+<section class="assignment">
+    <h2 class="assignment"><strong>{{ assigned|length }}</strong> clients currently connected</h2>
+    <table cellspacing=0>
+        <tr class="headerRow">
+            <th>Route ID</th>
+            <th>Host ID</th>
+        </tr>
+        {% for route_id, host_id in assigned.items() %}
+            <tr>
+                <td>{{ host_id|e }}</td>
+                <td>{{ route_id|e }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</section>
+</body>
+</html>

@@ -14,10 +14,10 @@ class NNModel(Model):
 
     def __init__(self, route_id):
         optimal_params = {
-            'hidden_layer_count': 47,
-            'neuron_count': 552,
+            'hidden_layer_count': 1,
+            'neuron_count': 1,
             'activation_function': 'relu',
-            'epochs': 18
+            'epochs': 1
         }
         super().__init__(route_id, optimal_params)
 
