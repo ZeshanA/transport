@@ -1,10 +1,8 @@
-import json
 import logging
 import os
 from abc import ABC, abstractmethod
 
 import boto3
-import requests
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.files import save_json
@@ -67,20 +65,6 @@ class Model(ABC):
         metrics = self.calculate_performance_metrics(test)
         save_json(self.route_id, metrics, base_path, "finalPerf.json")
         logging.info("Successfully saved model performance metrics for routeID %s...", self.route_id)
-
-    def upload_performance_metrics(self, url, host_id, test_set):
-        """
-        Uploads performance metrics for the given model to the server.
-        :param url: the url of the orchestration server
-        :param host_id: the unique ID representing the current PC to the server
-        :param test_set: a tuple containing examples not yet seen by the model: (testing_data, testing_labels)
-        :return:
-        """
-        metrics = self.calculate_performance_metrics(test_set)
-        metrics_json = json.dumps(metrics)
-        req = requests.post(url=url, params={'hostID': host_id, 'routeID': self.route_id},
-                            json=metrics_json)
-        logging.info("Server response after performance metric submission: %s", req.text)
 
     def upload_model(self):
         """
