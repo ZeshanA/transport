@@ -47,6 +47,11 @@ class ClientSet:
         logging.info(f"Removing routeID '{route_id}' from hostID '{host_id}'")
         del self.route_ids_by_host_id[host_id]
 
+    def connected_hosts_count(self):
+        return len(self.host_ids_by_socket)
+
+    def current_state(self):
+        return self.route_ids_by_host_id
 
 async def send_json(websocket, event: str, msg: Dict = None):
     """

@@ -7,6 +7,7 @@ import websockets
 from lib.logs import init_logging
 from lib.network import ClientSet
 from train.events import events
+from train.server import dashboard
 from train.server.handlers import host_registration, route_request, metrics_upload, unprocessed_routes, route_complete
 
 # Set of currently connected clients, accessible by hostID,
@@ -22,9 +23,13 @@ handlers = {
 }
 
 
-def main():
-    # Start the websocket server and ensure it runs continuously
-    start_server = websockets.serve(consumer_handler, '0.0.0.0', 8765)
+def start():
+    """
+    Start the websocket server and ensure it runs continuously.
+    """
+    addr, port = '0.0.0.0', 8765
+    logging.info(f"Started WebSocket server on {addr}:{port}")
+    start_server = websockets.serve(consumer_handler, addr, port)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 
@@ -68,4 +73,5 @@ async def consumer(websocket, message, path):
 
 if __name__ == '__main__':
     init_logging()
-    main()
+    dashboard.start(connected_clients)
+    start()

@@ -6,17 +6,16 @@ from lib.files import save_json
 from lib.network import ClientSet, send_json
 from lib.routes import all_routes
 from train.events import events
+import train.server.config as config
 
 unprocessed_routes = collections.deque(random.sample(all_routes.copy(), len(all_routes)))
-model_type = None
 
 
 async def host_registration(websocket, client_set: ClientSet, message, *_):
     """
     Register a host to the client set and send a registration success event.
     """
-    global model_type
-    host_id, model_type = message['hostID'], message['modelType']
+    host_id, config.model_type = message['hostID'], message['modelType']
     logging.info(f"Received initial registration request from hostID '{host_id}'")
     client_set.add(host_id, websocket)
     await send_json(websocket, events.REGISTRATION_SUCCESS)
@@ -41,10 +40,9 @@ async def metrics_upload(websocket, client_set: ClientSet, msg, *_):
     """
     Save the performance metrics sent by the client to disk.
     """
-    global model_type
     metrics, route_id = msg['metrics'], msg['metrics']['route_id']
     logging.info(f"Received performance metrics for routeID '{route_id}'")
-    save_json(route_id, metrics, model_type, 'modelPerformance.json')
+    save_json(route_id, metrics, config.model_type, 'modelPerformance.json')
 
 
 async def route_complete(websocket, client_set: ClientSet, *_):
