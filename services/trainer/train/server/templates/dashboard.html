@@ -4,12 +4,28 @@
     <meta charset="UTF-8">
     <title>Training Dashboard</title>
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6fe84bef60.js"></script>
     <style>
         body {
             background-color: #edf1f5;
             color: #293845;
             font-family: "Source Sans Pro", sans-serif;
             text-align: center;
+        }
+
+        .topIcon {
+            font-size: 80px;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .midIcon {
+            margin-right: 5px;
+            font-size: 0.85em;
+        }
+
+        .bottomIcon {
+            margin-right: 8px;
         }
 
         section.numeric {
@@ -76,9 +92,14 @@
     </style>
 </head>
 <body>
-<h2 class="modelType">Currently Training <strong>{{ model_type }}</strong> Models</h2>
+<h2 class="modelType">
+    <i class="fal fa-bus topIcon"></i>
+    <i class="fas fa-bullseye-arrow fa-spin"></i>
+    Currently Training <strong>{{ model_type }}</strong> Models
+</h2>
 <section class="numeric">
     <h2 class="percentage">
+        <i class="far fa-check-circle midIcon"></i>
         {{ completed_percentage }}% complete
     </h2>
     <h2 class="count">
@@ -87,7 +108,10 @@
 </section>
 
 <section class="assignment">
-    <h2 class="assignment"><strong>{{ assigned|length }}</strong> clients currently connected</h2>
+    <h2 class="assignment">
+        <i class="far fa-laptop-code bottomIcon"></i>
+        <strong>{{ assigned|length }}</strong> clients currently connected
+    </h2>
     <table cellspacing=0>
         <tr class="headerRow">
             <th>Route ID</th>
