@@ -7,12 +7,18 @@ import websockets
 from lib.logs import init_logging
 from lib.network import ClientSet
 from train.events import events
-from train.server.handlers import host_registration, route_request
+from train.server.handlers import host_registration, route_request, metrics_upload, unprocessed_routes, route_complete
 
+# Set of currently connected clients, accessible by hostID,
+# their live websocket object, or the routeID they're currently assigned to.
 connected_clients = ClientSet()
+
+# Dict of async handler functions for each event type
 handlers = {
     events.START_REGISTRATION: host_registration,
-    events.ROUTE_REQUEST: route_request
+    events.ROUTE_REQUEST: route_request,
+    events.METRICS_UPLOAD: metrics_upload,
+    events.ROUTE_COMPLETE: route_complete
 }
 
 
@@ -34,10 +40,21 @@ async def consumer_handler(websocket, path):
         # Send messages to the consumer as they come in
         async for message in websocket:
             await consumer(websocket, message, path)
+    except websockets.ConnectionClosed:
+        # Closed/failed connections are okay: the finally block will perform clean up and ensure
+        # any incomplete routes are still trained, no need to raise an exception here.
+        pass
     finally:
+        # Client has disconnected (gracefully or abruptly)
         host_id = connected_clients.get_host_id(websocket)
+        route_id = connected_clients.get_route_id(host_id)
+        # If the client hadn't finished processing its routeID, add the routeID back to the queue
+        if route_id is not None:
+            logging.warning(f"{host_id} did not finish training for {route_id}, adding it back to the pool")
+            unprocessed_routes.append(route_id)
+        # Remove the client from the connected set
         connected_clients.remove(host_id=host_id)
-        logging.info(f"Connection closed for Host ID: {host_id}")
+        logging.info(f"Connection closed by hostID '{host_id}'")
 
 
 async def consumer(websocket, message, path):
