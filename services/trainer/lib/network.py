@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Dict
 
 
@@ -14,6 +15,9 @@ class ClientSet:
     def remove(self, host_id=None, socket=None):
         if socket:
             host_id = self.host_ids_by_socket[socket]
+        if not socket:
+            socket = self.sockets_by_host_id[host_id]
+        logging.info(f"Deleting hostID: {host_id}")
         del self.host_ids_by_socket[socket]
         del self.route_ids_by_host_id[host_id]
         del self.sockets_by_host_id[host_id]
