@@ -31,7 +31,6 @@ async def assign_route(websocket, msg):
     # TODO: Perform the training task in a new thread
     time.sleep(0.5)
     await request_route(websocket)
-    await response_consumer(websocket)
 
 
 async def training_complete(*_):
