@@ -3,17 +3,11 @@ import sys
 from lib.args import get_model_type
 from lib.data import get_numpy_datasets
 from lib.logs import init_logging
-from models.neural_network import NNModel
-from models.random_forest import RandomForestModel
-
-MODEL_TYPES = {
-    'neural_network': NNModel,
-    'random_forest': RandomForestModel
-}
+from models import model_types
 
 
 def train_model():
-    model_class, route_id = MODEL_TYPES[get_model_type()], sys.argv[2]
+    model_class, route_id = model_types[get_model_type()], sys.argv[2]
     # Get train/val/test datasets
     train, test = get_numpy_datasets(route_id, False)
     # Create the requested model

@@ -3,19 +3,13 @@ import asyncio
 from lib.args import get_model_type
 from lib.data import get_numpy_datasets
 from lib.logs import print_separator
-from models.neural_network import NNModel
-from models.random_forest import RandomForestModel
+from models import model_types
 from train.client.requests import upload_performance_metrics, complete_route
-
-MODEL_TYPES = {
-    'neural_network': NNModel,
-    'random_forest': RandomForestModel
-}
 
 
 async def train_route_id(websocket, route_id):
     loop = asyncio.get_event_loop()
-    model_class = MODEL_TYPES[get_model_type()]
+    model_class = model_types[get_model_type()]
     # Get train/val/test datasets
     train, test = await loop.run_in_executor(None, get_numpy_datasets, route_id, False)
     # Create the requested model
