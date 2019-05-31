@@ -3,7 +3,7 @@ import os
 from abc import ABC, abstractmethod
 
 import boto3
-import joblib
+from sklearn.externals import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.files import save_json
@@ -90,6 +90,7 @@ class Model(ABC):
 
 
 class SKModel(Model, ABC):
+    # TODO: Try adding 'dask' parallelisation
     def train(self, training):
         data, labels = training
         logging.info("Training model...")

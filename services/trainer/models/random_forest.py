@@ -1,12 +1,13 @@
 import logging
 
 from sklearn.ensemble import RandomForestRegressor
-import numpy as np
+from skopt.space import Integer
+
 from lib.models import SKModel
 
 
 class RandomForestModel(SKModel):
-    param_dist = {'n_estimators': np.arange(5, 200, 5)}
+    param_dist = [Integer(5, 200, name='n_estimators')]
     default_params = {'n_estimators': 200}
 
     @staticmethod
@@ -14,5 +15,5 @@ class RandomForestModel(SKModel):
         logging.info("Creating model...")
         return RandomForestRegressor(
             n_estimators=n_estimators,
-            n_jobs=-1
+            n_jobs=1
         )

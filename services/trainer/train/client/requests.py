@@ -26,11 +26,11 @@ async def upload_performance_metrics(websocket, metrics):
     await send_json(websocket, events.METRICS_UPLOAD, {'metrics': metrics})
 
 
-async def upload_best_parameter_set(websocket, params):
+async def upload_best_parameter_set(websocket, result):
     """
     Uploads performance metrics for the current model to the websocket.
     """
-    await send_json(websocket, events.PARAMETER_SET_UPLOAD, {'params': params})
+    await send_json(websocket, events.PARAMETER_SET_UPLOAD, result)
 
 
 async def complete_route(websocket, route_id):

@@ -1,7 +1,12 @@
+import asyncio
 import logging
+import multiprocessing
 import sys
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import gc
+from joblib.externals.loky import get_reusable_executor
 
 from lib.network import recv_json
 from train.client.config import current_task_name
@@ -29,10 +34,12 @@ async def registration_success(websocket, msg):
 
 
 async def assign_route(websocket, msg):
+    loop = asyncio.get_event_loop()
     route_id = msg['routeID']
     logging.info(f"Received new Route ID: {route_id}")
-    # Perform the request task
-    await tasks[current_task_name](websocket, route_id)
+    # Perform the requested task
+    with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        await loop.run_in_executor(executor, tasks[current_task_name], websocket, route_id)
     gc.collect()
     # Request another route
     await request_route(websocket)

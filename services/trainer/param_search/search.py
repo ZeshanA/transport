@@ -1,58 +1,49 @@
 import logging
 from typing import Type
 
-from keras.wrappers.scikit_learn import KerasRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import RandomizedSearchCV
+import numpy as np
+from sklearn.model_selection import cross_val_score
+from skopt import gp_minimize
+from skopt.utils import use_named_args
 
 from lib.models import Model
 
 
-def hyper_param_search(model_class: Type[Model], training, validation):
+def hyper_param_search(model_class: Type[Model], training):
     """
     Performs a randomised grid search using the given training and validation data sets.
     :param model_class: the Class object (not an instance) for the model being trained
     :param training: a pair of Numpy arrays in the format (training_data, training_labels)
-    :param validation: a pair of Numpy arrays in the format (validation_data, validation_labels)
     :return: SciKit.cv_results_ object containing the results of the search
     """
     logging.info("Starting hyper parameter search...")
     training_data, training_labels = training
 
-    # Define the type of model we'll be using
-    model = KerasRegressor(build_fn=model_class.create_model)
+    # Create an empty instance of the requested model class
+    model = model_class.create_model()
 
-    # Get iterable ranges for each of our hyperparameters
-    param_dist = model_class.param_dist
+    # Create objective function to be optimised
+    @use_named_args(model_class.param_dist)
+    def objective(**params):
+        model.set_params(**params)
+        return -np.mean(
+            cross_val_score(model, training_data, training_labels, cv=2, n_jobs=1,
+                            scoring='neg_mean_absolute_error')
+        )
 
-    if not param_dist:
-        return None
-
-    # Define the parameters for the search itself
-    iteration_count = 4
-    random_search = RandomizedSearchCV(RandomForestRegressor(),
-                                       param_distributions=param_dist,
-                                       n_iter=iteration_count,
-                                       n_jobs=-1,
-                                       cv=2,
-                                       verbose=3)
-
-    # Perform the search and return the results
-    result = random_search.fit(training_data, training_labels)
-
-    logging.info("Hyper parameter search completed successfully")
-    return result
+    # Run Bayesian optimization hyper parameter search using Gaussian Processes
+    result = gp_minimize(objective, model_class.param_dist, verbose=True)
+    return {
+        'params': get_named_params(model_class.param_dist, result),
+        'mean_absolute_error': result.fun
+    }
 
 
-def print_search_results(result):
-    """
-    Prints all scores and parameters in the hyperparameter search result provided.
-    :param result: the result of the hyperparameter search (the output of hyper_param_search/search.fit)
-    :return: void
-    """
-    print("Best: %f using %s" % (result.best_score_, result.best_params_))
-    means = result.cv_results_['mean_test_score']
-    stds = result.cv_results_['std_test_score']
-    params = result.cv_results_['params']
-    for mean, stdev, param in zip(means, stds, params):
-        print("%f (%f) with: %r" % (mean, stdev, param))
+def get_named_params(param_dist, result):
+    logging.info(f"Best score: {result.fun}")
+
+    named_params = {}
+    for i, param in enumerate(result.x):
+        named_params[param_dist[i].name] = param
+
+    logging.info(f'Best Params: {named_params}')
