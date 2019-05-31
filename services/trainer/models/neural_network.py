@@ -12,14 +12,14 @@ from lib.models import Model
 
 class NNModel(Model):
 
-    def __init__(self, route_id):
-        optimal_params = {
+    def __init__(self, route_id, custom_params):
+        self.params = {
             'hidden_layer_count': 1,
             'neuron_count': 1,
             'activation_function': 'relu',
             'epochs': 1
         }
-        super().__init__(route_id, optimal_params)
+        super().__init__(route_id, custom_params)
 
     def __create_model__(self):
         # Start constructing a sequential model

@@ -1,15 +1,15 @@
 import logging
 
-import joblib
 from sklearn.ensemble import RandomForestRegressor
 
-from lib.models import Model
+from lib.models import SKModel
 
 
-class RandomForestModel(Model):
+class RandomForestModel(SKModel):
 
-    def __init__(self, route_id):
-        super().__init__(route_id, {'n_estimators': 200})
+    def __init__(self, route_id, custom_params):
+        self.params = {'n_estimators': 200}
+        super().__init__(route_id, custom_params)
 
     def __create_model__(self):
         logging.info("Creating model...")
@@ -18,12 +18,3 @@ class RandomForestModel(Model):
             n_jobs=-1
         )
         self.model = model
-
-    def train(self, training):
-        data, labels = training
-        logging.info("Training model...")
-        self.model.fit(data, labels)
-        logging.info("Model successfully trained...")
-
-    def __save_model__(self, filepath):
-        joblib.dump(self.model, filepath)

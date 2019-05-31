@@ -1,9 +1,9 @@
 import logging
 import os
-import time
 from abc import ABC, abstractmethod
 
 import boto3
+import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from lib.files import save_json
@@ -12,7 +12,11 @@ from lib.storage import get_storage_details
 
 class Model(ABC):
     def __init__(self, route_id, params):
-        self.route_id, self.params = route_id, params
+        if params:
+            # Only override the default params for a model if an actual
+            # non-null set of parameters has been passed in
+            self.params = params
+        self.route_id = route_id
         self.model, self.history = None, None
         self.model_name = type(self).__name__
         self.__create_model__()
@@ -83,3 +87,14 @@ class Model(ABC):
         client.upload_file(filepath, 'mtadata3', '{}-{}-finalModel.h5'.format(self.model_name, self.route_id),
                            ExtraArgs={'ACL': 'public-read'})
         logging.info("Successfully uploaded final model for routeID %s to storage...", self.route_id)
+
+
+class SKModel(Model, ABC):
+    def train(self, training):
+        data, labels = training
+        logging.info("Training model...")
+        self.model.fit(data, labels)
+        logging.info("Model successfully trained...")
+
+    def __save_model__(self, filepath):
+        joblib.dump(self.model, filepath)
