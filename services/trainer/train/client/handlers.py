@@ -1,12 +1,12 @@
 import logging
 import sys
-import time
 
 import gc
 
 from lib.network import recv_json
-from train.client.model_interface import train_route_id
+from train.client.config import current_task_name
 from train.client.requests import request_route
+from train.client.tasks import tasks
 from train.events import events
 
 
@@ -31,8 +31,8 @@ async def registration_success(websocket, msg):
 async def assign_route(websocket, msg):
     route_id = msg['routeID']
     logging.info(f"Received new Route ID: {route_id}")
-    # Perform the training task
-    await train_route_id(websocket, route_id)
+    # Perform the request task
+    await tasks[current_task_name](websocket, route_id)
     gc.collect()
     # Request another route
     await request_route(websocket)

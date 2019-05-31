@@ -11,18 +11,18 @@ from lib.storage import get_storage_details
 
 
 class Model(ABC):
-    def __init__(self, route_id, params):
-        if params:
-            # Only override the default params for a model if an actual
-            # non-null set of parameters has been passed in
-            self.params = params
-        self.route_id = route_id
-        self.model, self.history = None, None
-        self.model_name = type(self).__name__
-        self.__create_model__()
+    param_dist = {}
+    default_params = {}
 
+    def __init__(self, route_id, **params):
+        self.route_id = route_id
+        self.history = None
+        self.model_name = type(self).__name__
+        self.model = self.create_model(**params)
+
+    @staticmethod
     @abstractmethod
-    def __create_model__(self):
+    def create_model(**kwargs):
         pass
 
     @abstractmethod

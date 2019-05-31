@@ -11,6 +11,12 @@ from lib.models import Model
 
 
 class NNModel(Model):
+    param_dist = {
+        'hidden_layer_count': [x for x in range(10, 100)],
+        'neuron_count': [x for x in range(256, 1024, 64)],
+        'activation_function': ['relu', 'tanh'],
+        'epochs': [x for x in range(10, 40, 4)],
+    }
 
     def __init__(self, route_id, custom_params):
         self.params = {
@@ -21,14 +27,15 @@ class NNModel(Model):
         }
         super().__init__(route_id, custom_params)
 
-    def __create_model__(self):
+    @staticmethod
+    def create_model(params):
         # Start constructing a sequential model
         model = keras.Sequential()
         model.add(layers.Dense(COL_COUNT, input_shape=(COL_COUNT,)))
 
         # Add additional hidden layers as needed
-        for i in range(self.params['hidden_layer_count'] - 1):
-            model.add(layers.Dense(self.params['neuron_count'], activation=self.params['activation_function']))
+        for i in range(params['hidden_layer_count'] - 1):
+            model.add(layers.Dense(params['neuron_count'], activation=params['activation_function']))
 
         # Output layer, a single number
         model.add(layers.Dense(1))
@@ -38,7 +45,7 @@ class NNModel(Model):
                       optimizer='adam',
                       metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        self.model = model
+        return model
 
     def train(self, training):
         logging.info("Starting model training...")

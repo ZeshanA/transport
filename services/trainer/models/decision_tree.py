@@ -6,12 +6,13 @@ from lib.models import SKModel
 
 
 class DecisionTreeModel(SKModel):
+    param_dist = {}
 
     def __init__(self, route_id, custom_params):
         self.params = {}
         super().__init__(route_id, custom_params)
 
-    def __create_model__(self):
+    @staticmethod
+    def create_model(self):
         logging.info("Creating model...")
-        model = DecisionTreeRegressor()
-        self.model = model
+        return DecisionTreeRegressor()

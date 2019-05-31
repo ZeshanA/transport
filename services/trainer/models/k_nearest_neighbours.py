@@ -6,12 +6,14 @@ from lib.models import SKModel
 
 
 class KNNModel(SKModel):
+    param_dist = {'n_neighbors': [x for x in range(2, 50, 2)]}
 
     def __init__(self, route_id, custom_params):
         self.params = {'n_neighbors': 10}
         super().__init__(route_id, custom_params)
 
-    def __create_model__(self):
+    @staticmethod
+    def create_model(n_neighbors):
         logging.info("Creating model...")
-        model = KNeighborsRegressor(kwargs=self.params)
-        self.model = model
+        return KNeighborsRegressor(n_neighbors=n_neighbors)
+
