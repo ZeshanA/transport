@@ -1,19 +1,19 @@
 import logging
 
 import joblib
-from sklearn import svm
+from sklearn.neighbors import KNeighborsRegressor
 
 from lib.models import Model
 
 
-class SVMModel(Model):
+class KNNModel(Model):
 
     def __init__(self, route_id):
-        super().__init__(route_id, {'C': 50, 'epsilon': 5})
+        super().__init__(route_id, {'n_neigbours': 10})
 
     def __create_model__(self):
         logging.info("Creating model...")
-        model = svm.SVR(C=self.params['C'], epsilon=self.params['epsilon'])
+        model = KNeighborsRegressor(kwargs=self.params)
         self.model = model
 
     def train(self, training):
