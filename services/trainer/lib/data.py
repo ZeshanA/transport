@@ -1,5 +1,6 @@
 import logging
 
+import gc
 import numpy as np
 import pandas as pd
 import sklearn
@@ -39,6 +40,7 @@ def get_datasets(route_id: str, batch_size: int = 32):
 def get_numpy_datasets(route_id: str, validation_set_required: bool = True):
     df = get_dataframe(route_id)
     train, test = train_test_split(df, test_size=0.2)
+    gc.collect()  # Attempt to reduce memory consumption from dataframe
     train, val = train_test_split(train, test_size=0.2)
     feature_def = gen_features(
         columns=TEXT_COLS,

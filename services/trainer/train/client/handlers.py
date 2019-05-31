@@ -2,6 +2,8 @@ import logging
 import sys
 import time
 
+import gc
+
 from lib.network import recv_json
 from train.client.model_interface import train_route_id
 from train.client.requests import request_route
@@ -31,6 +33,7 @@ async def assign_route(websocket, msg):
     logging.info(f"Received new Route ID: {route_id}")
     # Perform the training task
     await train_route_id(websocket, route_id)
+    gc.collect()
     # Request another route
     await request_route(websocket)
     # Tell the consumer to handle the next routeID response
