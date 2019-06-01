@@ -9,23 +9,22 @@ from param_search.search import hyper_param_search
 from train.client.requests import upload_performance_metrics, complete_route, upload_best_parameter_set
 
 
-async def train_route_id(websocket, route_id, train=None, test=None):
-    loop = asyncio.get_event_loop()
+def train_route_id(websocket, route_id, train=None, test=None):
     model_class = model_types[config.get_model_type()]
     # Get train/val/test datasets if not provided
     if not train or not test:
-        train, test = await loop.run_in_executor(None, get_numpy_datasets, route_id, False)
+        train, test = get_numpy_datasets(route_id, False)
     # Create the requested model
     model = model_class(route_id)
     # Train the model
-    await loop.run_in_executor(None, model.train, train)
+    model.train(train)
     # Calculate and upload final model performance metrics
-    metrics = await loop.run_in_executor(None, model.calculate_performance_metrics, test)
-    await upload_performance_metrics(websocket, metrics)
+    metrics = model.calculate_performance_metrics(test)
+    asyncio.run(upload_performance_metrics(websocket, metrics))
     # Upload model to object storage
-    await loop.run_in_executor(None, model.upload_model)
+    model.upload_model()
     # Mark model training as complete
-    await complete_route(websocket, route_id)
+    asyncio.run(complete_route(websocket, route_id))
     # Print ASCII divider for clarity in console
     print_separator()
 
@@ -41,7 +40,7 @@ def param_search(websocket, route_id):
     # Train final model with the best hyperparameter set
     logging.info("Training final model...")
     # Train and upload the final model
-    asyncio.run(train_route_id(websocket, route_id, train=train, test=test))
+    train_route_id(websocket, route_id, train=train, test=test)
 
 
 tasks = {

@@ -2,11 +2,9 @@ import asyncio
 import logging
 import multiprocessing
 import sys
-from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 
 import gc
-from joblib.externals.loky import get_reusable_executor
 
 from lib.network import recv_json
 from train.client.config import current_task_name
