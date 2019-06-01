@@ -12,7 +12,7 @@ class ClientSet:
         self.host_ids_by_socket = {}
 
     def add(self, host_id, socket):
-        logging.info("Registered hostID '{}'".format(host_id))
+        logging.info(f"Registered hostID '{host_id}'")
         self.sockets_by_host_id[host_id], self.host_ids_by_socket[socket] = socket, host_id
 
     def remove(self, host_id=None, socket=None):
@@ -20,7 +20,7 @@ class ClientSet:
             host_id = self.host_ids_by_socket[socket]
         if not socket:
             socket = self.sockets_by_host_id[host_id]
-        logging.info("Deleting hostID '{}'".format(host_id))
+        logging.info(f"Deleting hostID '{host_id}'")
         self.host_ids_by_socket.pop(socket, None)
         self.route_ids_by_host_id.pop(host_id, None)
         self.sockets_by_host_id.pop(host_id, None)
@@ -39,14 +39,14 @@ class ClientSet:
     def set_route_id(self, host_id=None, socket=None, route_id=None):
         if socket:
             host_id = self.host_ids_by_socket[socket]
-        logging.info("Assigning routeID '{}' to hostID '{}'".format(route_id, host_id))
+        logging.info(f"Assigning routeID '{route_id}' to hostID '{host_id}'")
         self.route_ids_by_host_id[host_id] = route_id
 
     def clear_route_id(self, host_id=None, socket=None):
         if socket:
             host_id = self.host_ids_by_socket[socket]
         route_id = self.route_ids_by_host_id[host_id]
-        logging.info("Removing routeID '{}' from hostID '{}'".format(route_id, host_id))
+        logging.info(f"Removing routeID '{route_id}' from hostID '{host_id}'")
         del self.route_ids_by_host_id[host_id]
 
     def connected_hosts_count(self):

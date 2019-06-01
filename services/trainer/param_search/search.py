@@ -41,12 +41,12 @@ def hyper_param_search(model_class: Type[Model], training):
 
 
 def get_named_params(param_dist, result):
-    logging.info("Best score: {}".format(result.fun))
+    logging.info(f"Best score: {result.fun}")
 
     named_params = {}
     for i, param in enumerate(result.x):
         named_params[param_dist[i].name] = param
 
-    logging.info('Best Params: {}'.format(named_params))
+    logging.info(f'Best Params: {named_params}')
 
     return named_params

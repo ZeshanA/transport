@@ -30,7 +30,7 @@ def start():
     Start the websocket server and ensure it runs continuously.
     """
     addr, port = '0.0.0.0', 8765
-    logging.info("Started WebSocket server on {}:{}".format(addr, port))
+    logging.info(f"Started WebSocket server on {addr}:{port}")
     start_server = websockets.serve(consumer_handler, addr, port)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
@@ -57,11 +57,11 @@ async def consumer_handler(websocket, path):
         route_id = connected_clients.get_route_id(host_id)
         # If the client hadn't finished processing its routeID, add the routeID back to the queue
         if route_id is not None:
-            logging.warning("{} did not finish training for {}, adding it back to the pool".format(host_id, route_id))
+            logging.warning(f"{host_id} did not finish training for {route_id}, adding it back to the pool")
             unprocessed_routes.append(route_id)
         # Remove the client from the connected set
         connected_clients.remove(host_id=host_id)
-        logging.info("Connection closed by hostID '{}'".format(host_id))
+        logging.info(f"Connection closed by hostID '{host_id}'")
 
 
 async def consumer(websocket, message, path):

@@ -34,7 +34,7 @@ async def registration_success(websocket, msg):
 async def assign_route(websocket, msg):
     loop = asyncio.get_event_loop()
     route_id = msg['routeID']
-    logging.info("Received new Route ID: {}".format(route_id))
+    logging.info(f"Received new Route ID: {route_id}")
     # Perform the requested task
     with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         await loop.run_in_executor(executor, tasks[current_task_name], websocket, route_id)
