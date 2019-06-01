@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 export MODEL_TYPE=$2
-export VENV_PATH="${HOME}/.env/transport/trainer"
+export VENV_PATH="/data/za816/.env/transport/trainer"
 export PYTHONPATH="."
 
+virtualenv -p "${HOME}/.pyenv/versions/3.7.3/bin/python3" ${VENV_PATH}
 source "${VENV_PATH}/bin/activate"
 source "${HOME}/.bashrc"
 python3 --version
