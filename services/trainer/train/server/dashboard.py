@@ -52,7 +52,7 @@ def calculate_status():
 
 def trim_host_ids(current_state):
     result, max_length = {}, 12
-    for host_id, route_id in current_state:
+    for host_id, route_id in current_state.items():
         trimmed_host_id = host_id[:max_length]
         result[trimmed_host_id] = route_id
     return result
