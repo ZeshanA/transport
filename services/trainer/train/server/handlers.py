@@ -18,7 +18,7 @@ async def host_registration(websocket, client_set: ClientSet, message, *_):
     """
     host_id, config.model_type = message['hostID'], message['modelType']
     # Make host ID unique to allow multiple instances on the same host
-    host_id += uuid4()
+    host_id += "-" + str(uuid4())
     logging.info(f"Received initial registration request from hostID '{host_id}'")
     client_set.add(host_id, websocket)
     await send_json(websocket, events.REGISTRATION_SUCCESS)
