@@ -1,6 +1,8 @@
 import json
 import os
 
+from lib.network import default_json_encoder
+
 
 def save_json(route_id, object, base_path, filename):
     """
@@ -22,5 +24,5 @@ def save_json(route_id, object, base_path, filename):
         os.remove(filepath)
     # Write best params to file in JSON format
     file = open(filepath, 'w+')
-    file.write(json.dumps(object))
+    file.write(json.dumps(object, default=default_json_encoder))
     file.close()

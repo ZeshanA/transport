@@ -2,6 +2,8 @@ import json
 import logging
 from typing import Dict
 
+import numpy
+
 
 class ClientSet:
     def __init__(self):
@@ -53,6 +55,7 @@ class ClientSet:
     def current_state(self):
         return self.route_ids_by_host_id
 
+
 async def send_json(websocket, event: str, msg: Dict = None):
     """
     Send a JSON event with optional additional fields via the given websocket connection.
@@ -64,10 +67,15 @@ async def send_json(websocket, event: str, msg: Dict = None):
     if msg is None:
         msg = {}
     msg['event'] = event
-    json_msg = json.dumps(msg)
+    json_msg = json.dumps(msg, default=default_json_encoder)
     await websocket.send(json_msg)
 
 
 async def recv_json(websocket):
     response = await websocket.recv()
     return json.loads(response)
+
+
+def default_json_encoder(o):
+    if isinstance(o, numpy.int64): return int(o)
+    raise TypeError

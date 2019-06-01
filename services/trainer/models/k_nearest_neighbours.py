@@ -7,7 +7,7 @@ from lib.models import SKModel
 
 
 class KNNModel(SKModel):
-    param_dist = [Integer(2, 50, name='n_neighbors')]
+    param_dist = [Integer(5, 1000, name='n_neighbors')]
     default_params = {'n_neighbors': 10}
 
     @staticmethod

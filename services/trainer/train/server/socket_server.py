@@ -8,7 +8,8 @@ from lib.logs import init_logging
 from lib.network import ClientSet
 from train.events import events
 from train.server import dashboard
-from train.server.handlers import host_registration, route_request, metrics_upload, unprocessed_routes, route_complete
+from train.server.handlers import \
+    host_registration, route_request, metrics_upload, unprocessed_routes, route_complete, params_upload
 
 # Set of currently connected clients, accessible by hostID,
 # their live websocket object, or the routeID they're currently assigned to.
@@ -19,6 +20,7 @@ handlers = {
     events.START_REGISTRATION: host_registration,
     events.ROUTE_REQUEST: route_request,
     events.METRICS_UPLOAD: metrics_upload,
+    events.PARAMETER_SET_UPLOAD: params_upload,
     events.ROUTE_COMPLETE: route_complete
 }
 

@@ -36,11 +36,12 @@ def param_search(websocket, route_id):
     train, test = get_numpy_datasets(route_id, validation_set_required=False)
     # Perform hyper parameter search
     result = hyper_param_search(model_class, train)
-    # Upload best params
-    upload_best_parameter_set(websocket, result)
+    # Upload best parameters
+    asyncio.run(upload_best_parameter_set(websocket, {'routeID': route_id, **result}))
     # Train final model with the best hyperparameter set
     logging.info("Training final model...")
-    train_route_id(websocket, route_id, train=train, test=test)
+    # Train and upload the final model
+    asyncio.run(train_route_id(websocket, route_id, train=train, test=test))
 
 
 tasks = {

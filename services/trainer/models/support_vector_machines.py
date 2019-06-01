@@ -1,23 +1,19 @@
 import logging
 
-import numpy as np
 from sklearn import svm
+from skopt.space import Real
 
 from lib.models import SKModel
 
 
 class SVMModel(SKModel):
-    param_dist = {
-        'C': [c for c in np.arange(0.5, 50, 0.5)],
-        'epsilon': [e for e in np.arange(0.01, 10, 0.02)]
-    }
-
-    def __init__(self, route_id, custom_params):
-        self.params = {'C': 50, 'epsilon': 5}
-        super().__init__(route_id, custom_params)
+    param_dist = [
+        Real(0.01, 50, name='C'),
+        Real(0.001, 10, name='epsilon')
+    ]
+    default_params = {'C': 50, 'epsilon': 5}
 
     @staticmethod
-    def create_model(params):
+    def create_model(c=default_params['C'], epsilon=default_params['epsilon']):
         logging.info("Creating model...")
-        model = svm.SVR(C=params['C'], epsilon=params['epsilon'])
-        return model
+        return svm.SVR(C=c, epsilon=epsilon)

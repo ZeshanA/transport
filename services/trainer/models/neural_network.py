@@ -2,6 +2,7 @@ import logging
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from skopt.space import Integer, Categorical
 from tensorflow import keras
 # noinspection PyUnresolvedReferences
 from tensorflow.keras import layers
@@ -11,31 +12,33 @@ from lib.models import Model
 
 
 class NNModel(Model):
-    param_dist = {
-        'hidden_layer_count': [x for x in range(10, 100)],
-        'neuron_count': [x for x in range(256, 1024, 64)],
-        'activation_function': ['relu', 'tanh'],
-        'epochs': [x for x in range(10, 40, 4)],
+    param_dist = [
+        Integer(10, 100, name='hidden_layer_count'),
+        Integer(256, 1024, name='neuron_count'),
+        Categorical(['relu', 'tanh'], name='activation_function'),
+        Integer(10, 40, name='epochs')
+    ]
+    default_params = {
+        'hidden_layer_count': 47,
+        'neuron_count': 552,
+        'activation_function': 'relu',
+        'epochs': 18
     }
 
-    def __init__(self, route_id, custom_params):
-        self.params = {
-            'hidden_layer_count': 1,
-            'neuron_count': 1,
-            'activation_function': 'relu',
-            'epochs': 1
-        }
-        super().__init__(route_id, custom_params)
-
     @staticmethod
-    def create_model(params):
+    def create_model(
+            hidden_layer_count=default_params['hidden_layer_count'],
+            neuron_count=default_params['neuron_count'],
+            activation_function=default_params['activation_function'],
+            epochs=default_params['epochs']
+    ):
         # Start constructing a sequential model
         model = keras.Sequential()
         model.add(layers.Dense(COL_COUNT, input_shape=(COL_COUNT,)))
 
         # Add additional hidden layers as needed
-        for i in range(params['hidden_layer_count'] - 1):
-            model.add(layers.Dense(params['neuron_count'], activation=params['activation_function']))
+        for i in range(hidden_layer_count - 1):
+            model.add(layers.Dense(neuron_count, activation=activation_function))
 
         # Output layer, a single number
         model.add(layers.Dense(1))

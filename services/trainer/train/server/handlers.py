@@ -45,6 +45,15 @@ async def metrics_upload(websocket, client_set: ClientSet, msg, *_):
     save_json(route_id, metrics, config.model_type, 'modelPerformance.json')
 
 
+async def params_upload(websocket, client_set: ClientSet, msg, *_):
+    """
+    Save the performance metrics sent by the client to disk.
+    """
+    route_id = msg['routeID']
+    logging.info(f"Received parameter set for routeID '{route_id}'")
+    save_json(route_id, msg, config.model_type, 'bestParams.json')
+
+
 async def route_complete(websocket, client_set: ClientSet, *_):
     """
     Clear the completed route from being assigned to the hostID, that made the completion request.

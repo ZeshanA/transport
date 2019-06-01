@@ -11,10 +11,10 @@ from lib.models import Model
 
 def hyper_param_search(model_class: Type[Model], training):
     """
-    Performs a randomised grid search using the given training and validation data sets.
+    Performs a Bayesian hyperparameter search using the given training and validation data sets.
     :param model_class: the Class object (not an instance) for the model being trained
     :param training: a pair of Numpy arrays in the format (training_data, training_labels)
-    :return: SciKit.cv_results_ object containing the results of the search
+    :return: scipy.optimize.OptimizeResult object containing the results of the search
     """
     logging.info("Starting hyper parameter search...")
     training_data, training_labels = training
@@ -32,7 +32,7 @@ def hyper_param_search(model_class: Type[Model], training):
         )
 
     # Run Bayesian optimization hyper parameter search using Gaussian Processes
-    result = gp_minimize(objective, model_class.param_dist, verbose=True)
+    result = gp_minimize(objective, model_class.param_dist, n_calls=20, verbose=True)
     return {
         'params': get_named_params(model_class.param_dist, result),
         'mean_absolute_error': result.fun
@@ -47,3 +47,5 @@ def get_named_params(param_dist, result):
         named_params[param_dist[i].name] = param
 
     logging.info(f'Best Params: {named_params}')
+
+    return named_params
