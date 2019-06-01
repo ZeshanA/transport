@@ -1,6 +1,7 @@
 import collections
 import logging
 import random
+from uuid import uuid4
 
 import train.server.config as config
 from lib.files import save_json
@@ -16,6 +17,8 @@ async def host_registration(websocket, client_set: ClientSet, message, *_):
     Register a host to the client set and send a registration success event.
     """
     host_id, config.model_type = message['hostID'], message['modelType']
+    # Make host ID unique to allow multiple instances on the same host
+    host_id += uuid4()
     logging.info(f"Received initial registration request from hostID '{host_id}'")
     client_set.add(host_id, websocket)
     await send_json(websocket, events.REGISTRATION_SUCCESS)
