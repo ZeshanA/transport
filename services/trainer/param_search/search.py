@@ -4,6 +4,7 @@ from typing import Type
 import numpy as np
 from sklearn.model_selection import cross_val_score
 from skopt import gp_minimize
+from skopt.callbacks import DeltaYStopper
 from skopt.utils import use_named_args
 
 from lib.models import Model
@@ -32,7 +33,7 @@ def hyper_param_search(model_class: Type[Model], training):
         )
 
     # Run Bayesian optimization hyper parameter search using Gaussian Processes
-    result = gp_minimize(objective, model_class.param_dist, n_calls=100, verbose=True)
+    result = gp_minimize(objective, model_class.param_dist, callback=DeltaYStopper(5, 10), n_calls=100, verbose=True)
     return {
         'params': get_named_params(model_class.param_dist, result),
         'mean_absolute_error': result.fun
