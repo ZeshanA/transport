@@ -13,7 +13,7 @@
             text-align: center;
         }
 
-        .fa-spin {
+        .subIcon {
             margin-right: 6px;
         }
 
@@ -98,8 +98,12 @@
 <body>
 <h2 class="modelType">
     <i class="fal fa-bus topIcon"></i>
-    <i class="fas fa-bullseye-arrow fa-spin"></i>
-    Currently Training <strong>{{ model_type }}</strong> Models
+    <i class="fas subIcon {% if assigned|length > 0 %}fa-bullseye-arrow fa-spin{% else %}fa-times-hexagon{% endif %}"></i>
+    {% if assigned|length > 0 %}
+        Currently Training <strong>{{ model_type }}</strong> Models
+    {% else %}
+        Not Currently Training
+    {% endif %}
 </h2>
 <section class="numeric">
     <h2 class="percentage">
