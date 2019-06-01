@@ -4,8 +4,8 @@ export MODEL_TYPE=$2
 export VENV_PATH="${HOME}/.env/transport/trainer"
 export PYTHONPATH="."
 
-source ${HOME}/.bashrc
 source "${VENV_PATH}/bin/activate"
+source "${HOME}/.bashrc"
 python3 --version
 pip3 install -r requirements.txt
 
