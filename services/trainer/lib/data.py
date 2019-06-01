@@ -33,7 +33,7 @@ def get_datasets(route_id: str, batch_size: int = 32):
     train_ds = df_to_dataset(train, LABEL_COL, batch_size=batch_size)
     val_ds = df_to_dataset(val, LABEL_COL, batch_size=batch_size)
     test_ds = df_to_dataset(test, LABEL_COL, batch_size=batch_size)
-    logging.info("Succesfully fetched, split and converted data for route_id: {}".format(route_id))
+    logging.info("Successfully fetched, split and converted data for route_id: {}".format(route_id))
     return train_ds, val_ds, test_ds
 
 
@@ -50,7 +50,7 @@ def get_numpy_datasets(route_id: str, validation_set_required: bool = True):
     train_labels, val_labels, test_labels = train.pop(LABEL_COL), val.pop(LABEL_COL), test.pop(LABEL_COL)
     train_data, val_data, test_data = mapper.fit_transform(train), mapper.fit_transform(val), mapper.fit_transform(test)
     train, val, test = (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
-    logging.info("Sucessfully split and converted data for route_id {}".format(route_id))
+    logging.info("Successfully split and converted data for route_id {}".format(route_id))
     if not validation_set_required:
         return merge_np_tuples(train, val), test
     return train, val, test
@@ -66,8 +66,12 @@ def get_dataframe(route_id: str) -> pd.DataFrame:
         SELECT 
             direction_ref, operator_ref, longitude, latitude, progress_rate,
             COALESCE(occupancy, '') AS occupancy, distance_from_stop, stop_point_ref,
-            EXTRACT(day from timestamp) AS day, EXTRACT(month from timestamp) AS month, EXTRACT(year from timestamp) AS year,
-            EXTRACT(hour from timestamp) AS hour, EXTRACT(minute from timestamp) as minute, EXTRACT(second from timestamp) as second,
+            EXTRACT(day from timestamp) AS day,
+            EXTRACT(month from timestamp) AS month, 
+            EXTRACT(year from timestamp) AS year,
+            EXTRACT(hour from timestamp) AS hour,
+            EXTRACT(minute from timestamp) as minute,
+            EXTRACT(second from timestamp) as second,
             COALESCE(EXTRACT(epoch FROM expected_arrival_time - timestamp)::integer, 0) AS estimate,
             time_to_stop
         FROM labelled_journey

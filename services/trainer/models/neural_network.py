@@ -53,7 +53,7 @@ class NNModel(Model):
     def train(self, training):
         logging.info("Starting model training...")
         training_data, training_labels = training
-        self.history = self.model.fit(x=training_data, y=training_labels, epochs=self.params['epochs'])
+        self.history = self.model.fit(x=training_data, y=training_labels, epochs=self.default_params['epochs'])
         logging.info("Successfully completed model training...")
 
     def __save_model__(self, filepath):

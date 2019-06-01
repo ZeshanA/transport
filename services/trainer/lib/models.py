@@ -35,13 +35,9 @@ class Model(ABC):
 
     def save_model_to_disk(self):
         """
-        Saves a trained Tensorflow model to disk. Can be loaded again using Keras'
-        load_model function.
-        :param route_id: string: routeID for the current model
-        :param model: pointer to a trained Tensorflow model
+        Saves a trained model to disk, using the subclass __save_model__ method.
         :return: the (relative) filepath that the model was saved at
         """
-
         directory = '/data/za816/trained/{}/{}/'.format(self.model_name, self.route_id)
         filepath = '{}/finalModel.h5'.format(directory, self.route_id)
         os.makedirs(directory, exist_ok=True)

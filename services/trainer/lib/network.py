@@ -77,5 +77,6 @@ async def recv_json(websocket):
 
 
 def default_json_encoder(o):
-    if isinstance(o, numpy.int64): return int(o)
+    if isinstance(o, numpy.int64):
+        return int(o)
     raise TypeError
