@@ -16,7 +16,7 @@ async def host_registration(websocket, client_set: ClientSet, message, *_):
     Register a host to the client set and send a registration success event.
     """
     host_id, config.model_type = message['hostID'], message['modelType']
-    logging.info(f"Received initial registration request from hostID '{host_id}'")
+    logging.info("Received initial registration request from hostID '{}'".format(host_id))
     client_set.add(host_id, websocket)
     await send_json(websocket, events.REGISTRATION_SUCCESS)
 
@@ -41,7 +41,7 @@ async def metrics_upload(websocket, client_set: ClientSet, msg, *_):
     Save the performance metrics sent by the client to disk.
     """
     metrics, route_id = msg['metrics'], msg['metrics']['route_id']
-    logging.info(f"Received performance metrics for routeID '{route_id}'")
+    logging.info("Received performance metrics for routeID '{}'".format(route_id))
     save_json(route_id, metrics, config.model_type, 'modelPerformance.json')
 
 
@@ -50,7 +50,7 @@ async def params_upload(websocket, client_set: ClientSet, msg, *_):
     Save the performance metrics sent by the client to disk.
     """
     route_id = msg['routeID']
-    logging.info(f"Received parameter set for routeID '{route_id}'")
+    logging.info("Received parameter set for routeID '{}'".format(route_id))
     save_json(route_id, msg, config.model_type, 'bestParams.json')
 
 
@@ -59,6 +59,6 @@ async def route_complete(websocket, client_set: ClientSet, *_):
     Clear the completed route from being assigned to the hostID, that made the completion request.
     """
     host_id, route_id = client_set.get_host_id(websocket), client_set.get_route_id(socket=websocket)
-    logging.info(f"'{host_id}' marked routeID '{route_id}' as completed")
+    logging.info("'{}' marked routeID '{}' as completed".format(host_id, route_id))
     # Mark the routeID as completed by removing it from the host/socket
     client_set.clear_route_id(socket=websocket)
