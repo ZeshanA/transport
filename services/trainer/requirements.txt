@@ -8,10 +8,6 @@ chardet==3.0.4
 Click==7.0
 cloudpickle==1.1.1
 cycler==0.10.0
-dask==1.2.2
-dask-glm==0.2.0
-dask-ml==0.13.0
-distributed==1.28.1
 docutils==0.14
 Flask==1.0.3
 future==0.17.1
@@ -43,7 +39,6 @@ packaging==19.0
 pandas==0.24.2
 pefile==2019.4.18
 protobuf==3.7.1
-psutil==5.6.2
 psycopg2-binary==2.8.2
 pyparsing==2.4.0
 python-dateutil==2.8.0
