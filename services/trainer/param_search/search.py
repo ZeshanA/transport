@@ -32,7 +32,7 @@ def hyper_param_search(model_class: Type[Model], training):
         )
 
     # Run Bayesian optimization hyper parameter search using Gaussian Processes
-    result = gp_minimize(objective, model_class.param_dist, n_calls=20, verbose=True)
+    result = gp_minimize(objective, model_class.param_dist, n_calls=100, verbose=True)
     return {
         'params': get_named_params(model_class.param_dist, result),
         'mean_absolute_error': result.fun

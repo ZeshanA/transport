@@ -9,13 +9,13 @@ from param_search.search import hyper_param_search
 from train.client.requests import upload_performance_metrics, complete_route, upload_best_parameter_set
 
 
-def train_route_id(websocket, route_id, train=None, test=None):
+def train_route_id(websocket, route_id, model_params=None, train=None, test=None):
     model_class = model_types[config.get_model_type()]
     # Get train/val/test datasets if not provided
     if not train or not test:
         train, test = get_numpy_datasets(route_id, False)
     # Create the requested model
-    model = model_class(route_id)
+    model = model_class(route_id, **model_params)
     # Train the model
     model.train(train)
     # Calculate and upload final model performance metrics
@@ -40,7 +40,7 @@ def param_search(websocket, route_id):
     # Train final model with the best hyperparameter set
     logging.info("Training final model...")
     # Train and upload the final model
-    train_route_id(websocket, route_id, train=train, test=test)
+    train_route_id(websocket, route_id, model_params=result['params'], train=train, test=test)
 
 
 tasks = {
