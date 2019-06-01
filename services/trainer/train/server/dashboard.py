@@ -23,10 +23,16 @@ def get_status():
     return render_template('dashboard.html',
                            model_type=format_model_type(config.model_type),
                            completed=completed, total=total, completed_percentage=completed_percentage,
-                           assigned=clients.current_state())
+                           assigned=trim_host_ids(clients.current_state()))
 
 
 def format_model_type(mt):
+    """
+    Converts the model type identifier into a human-readable string.
+    e.g. "random_forest" -> "random forest"
+    :param mt: string: the model type ID
+    :return: a human-readable version with underscores stripped and capitalised words
+    """
     components = mt.split('_')
     formatted_components = list(map(lambda word: word.capitalize(), components))
     return ' '.join(formatted_components)
@@ -42,6 +48,14 @@ def calculate_status():
     completed = total - unassigned - connected_count
     completed_percentage = '{number:.{digits}f}'.format(number=completed / total, digits=2)
     return completed, total, completed_percentage
+
+
+def trim_host_ids(current_state):
+    result, max_length = {}, 12
+    for host_id, route_id in current_state:
+        trimmed_host_id = host_id[:max_length]
+        result[trimmed_host_id] = route_id
+    return result
 
 
 def start(connected_clients: ClientSet):

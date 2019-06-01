@@ -1,6 +1,7 @@
 import collections
 import logging
 import random
+from uuid import uuid4
 
 from lib.files import save_json
 from lib.network import ClientSet, send_json
@@ -59,6 +60,8 @@ async def route_complete(websocket, client_set: ClientSet, *_):
     Clear the completed route from being assigned to the hostID, that made the completion request.
     """
     host_id, route_id = client_set.get_host_id(websocket), client_set.get_route_id(socket=websocket)
+    # Add unique ID to hostID to allow multiple instances of client running on the same host
+    host_id += uuid4()
     logging.info(f"'{host_id}' marked routeID '{route_id}' as completed")
     # Mark the routeID as completed by removing it from the host/socket
     client_set.clear_route_id(socket=websocket)
