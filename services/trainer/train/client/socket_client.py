@@ -6,7 +6,7 @@ from lib.logs import init_logging
 from train.client.handlers import response_consumer
 from train.client.requests import register_host_id
 
-WEBSOCKET_SERVER = 'ws://127.0.0.1:8765'
+WEBSOCKET_SERVER = 'ws://d.zeshan.me:8765'
 
 
 async def run_client():
