@@ -5,15 +5,22 @@ export VENV_PATH="/data/za816/.env/transport/trainer"
 export PYTHONPATH="."
 
 # Copy pyenv installation over to /data/ to avoid quota
+echo "Copying pyenv install to data directory..."
 mkdir -p "/data/za816/.pyenv" && cp -R -n "${HOME}/.pyenv" "/data/za816"
+echo "Copying pyenv complete..."
+
 # Create new virtualenv using the interpreter copied dover
 virtualenv -p "/data/za816/.pyenv/versions/3.7.3/bin/python3" ${VENV_PATH}
+
 # Activate new virtualenv
 source "${VENV_PATH}/bin/activate"
+
 # Load in environment variables from .bashrc
 source "${HOME}/.bashrc"
+
 # Print python3 version
 python3 --version
+
 # Install dependencies inside virtualenv
 pip3 install -r requirements.txt
 
