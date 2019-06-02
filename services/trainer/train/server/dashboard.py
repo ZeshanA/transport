@@ -46,7 +46,7 @@ def calculate_status():
     connected_count = clients.connected_hosts_count()
     unassigned, total = len(unprocessed_routes), len(all_routes)
     completed = total - unassigned - connected_count
-    completed_percentage = '{number:.{digits}f}'.format(number=completed / total, digits=2)
+    completed_percentage = '{number:.{digits}f}'.format(number=(completed / total) * 100, digits=2)
     return completed, total, completed_percentage
 
 
