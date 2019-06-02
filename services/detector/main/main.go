@@ -6,6 +6,7 @@ import (
 	"detector/monitor"
 	"detector/request"
 	"log"
+	"os"
 	"time"
 	"transport/lib/bustime"
 	"transport/lib/database"
@@ -13,6 +14,23 @@ import (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatalf("Please pass evaluation mode (-e) or server mode (-s) as a CLI argument")
+	}
+	mode := os.Args[1]
+	if mode == "-e" {
+		evaluation()
+	} else {
+		server()
+	}
+}
+
+func evaluation() {
+	log.Println("Evaluation mode")
+}
+
+func server() {
+	log.Println("Server mode")
 	// Open a DB connection and schedule it to be closed after the program returns
 	db := database.OpenDBConnection()
 	defer db.Close()

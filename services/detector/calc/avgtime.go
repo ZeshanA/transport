@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"detector/fetch"
 	"detector/request"
+	"log"
 	"transport/lib/bus"
 	"transport/lib/bustime"
 	"transport/lib/math"
@@ -17,6 +18,7 @@ type Journey struct {
 // Get the average time taken for vehicles to travel between the two stops
 // around the requested arrival time
 func AvgTimeBetweenStops(stopList []bustime.BusStop, jp request.JourneyParams, db *sql.DB) (int, error) {
+	log.Printf("Calculating average time between requested stops")
 	// Fetch movements that match the requested parameters
 	mvmts, err := fetch.MovementsInWindow(db, stopList, jp)
 	if err != nil {

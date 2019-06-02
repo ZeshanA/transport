@@ -16,6 +16,7 @@ const arrivalWindow = 2 * time.Hour
 
 func MovementsInWindow(db *sql.DB, stopList []bustime.BusStop, jp request.JourneyParams) ([]bus.LabelledJourney, error) {
 	fromHour, toHour := jp.ArrivalTime.Add(-arrivalWindow).Hour(), jp.ArrivalTime.Add(arrivalWindow).Hour()
+	log.Printf("Fetching movements in window: %d to %d", fromHour, toHour)
 	// TODO: Speed up this query
 	query := fmt.Sprintf(`
 		SELECT * FROM labelled_journey
@@ -37,5 +38,6 @@ func MovementsInWindow(db *sql.DB, stopList []bustime.BusStop, jp request.Journe
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Succesfully fetched movements")
 	return journeys, nil
 }
