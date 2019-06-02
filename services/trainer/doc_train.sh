@@ -2,8 +2,7 @@
 
 export MODEL_TYPE=$2
 export VENV_PATH="/data/za816/.env/transport/trainer"
-export PIP_TARGET="/data/za816/local"
-export PYTHONPATH="."
+export PYTHONPATH=".:/data/za816/local"
 
 # Copy pyenv installation over to /data/ to avoid quota
 if [[ ! -d "/data/za816/.pyenv" ]]; then
@@ -27,7 +26,7 @@ source "${HOME}/.bashrc"
 python3 --version
 
 # Install dependencies inside virtualenv
-pip3 install -r requirements.txt
+pip3 install --target=/data/za816/local -r requirements.txt
 
 # Boot crash-resilient client
 echo "Setup complete, booting train.client to produce ${MODEL_TYPE} models..."
