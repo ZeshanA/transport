@@ -6,16 +6,14 @@ export PYTHONPATH=".:/data/za816/local"
 export HOME="/homes/za816"
 
 # Copy pyenv installation over to /data/ to avoid quota
-if [[ ! -d "/data/za816/.pyenv" ]]; then
-    echo "Copying pyenv install to data directory..."
-    mkdir -p "/data/za816/.pyenv" && cp -R -n "${HOME}/.pyenv" "/data/za816"
-    echo "Copying pyenv complete..."
-fi
+echo "Copying pyenv install to data directory..."
+rm -rf /data/za816/.pyenv/
+mkdir -p "/data/za816/.pyenv" && cp -R -n "${HOME}/.pyenv" "/data/za816"
+echo "Copying pyenv complete..."
 
 # Create new virtualenv using the interpreter copied over
-if [[ ! -d "${VENV_PATH}" ]]; then
-    virtualenv -p "/data/za816/.pyenv/versions/3.7.3/bin/python3" ${VENV_PATH}
-fi
+rm -rf ${VENV_PATH}
+virtualenv -p "/data/za816/.pyenv/versions/3.7.3/bin/python3" ${VENV_PATH}
 
 # Activate new virtualenv
 source "${VENV_PATH}/bin/activate"
