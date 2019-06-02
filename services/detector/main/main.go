@@ -2,6 +2,7 @@ package main
 
 import (
 	"detector/calc"
+	"detector/eval"
 	"detector/fetch"
 	"detector/monitor"
 	"detector/request"
@@ -19,14 +20,10 @@ func main() {
 	}
 	mode := os.Args[1]
 	if mode == "-e" {
-		evaluation()
+		eval.Evaluate()
 	} else {
 		server()
 	}
-}
-
-func evaluation() {
-	log.Println("Evaluation mode")
 }
 
 func server() {
