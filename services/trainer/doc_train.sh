@@ -5,14 +5,14 @@ export VENV_PATH="/data/za816/.env/transport/trainer"
 export PYTHONPATH="."
 
 # Copy pyenv installation over to /data/ to avoid quota
-if [! -d "/data/za816/.pyenv"]; then
+if [[ ! -d "/data/za816/.pyenv" ]]; then
     echo "Copying pyenv install to data directory..."
     mkdir -p "/data/za816/.pyenv" && cp -R -n "${HOME}/.pyenv" "/data/za816"
     echo "Copying pyenv complete..."
 fi
 
 # Create new virtualenv using the interpreter copied over
-if [! -d "${VENV_PATH}"]; then
+if [[ ! -d "${VENV_PATH}" ]]; then
     virtualenv -p "/data/za816/.pyenv/versions/3.7.3/bin/python3" ${VENV_PATH}
 fi
 
