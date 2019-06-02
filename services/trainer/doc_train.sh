@@ -2,6 +2,7 @@
 
 export MODEL_TYPE=$2
 export VENV_PATH="/data/za816/.env/transport/trainer"
+export PIP_TARGET="/data/za816/local"
 export PYTHONPATH="."
 
 # Copy pyenv installation over to /data/ to avoid quota
