@@ -10,7 +10,7 @@
 universe        = vanilla
 
 # This defines the path of the executable we want to run.
-executable      = condor.sh
+executable      = doc_train.sh
 
 # This specifies where data sent to STDOUT by the executable should be
 # directed to.
@@ -36,11 +36,11 @@ error           = out/err/labeller.$(Process).out
 log             = out/events.log
 
 # Set environment variables
-environment = "TRANSPORT_DB_USERNAME={REDACTED} TRANSPORT_DB_PASSWORD={REDACTED} MTA_API_KEY={REDACTED}"
+environment = "TRANSPORT_DB_USERNAME={}"
 
 # This specifies what commandline arguments should be passed to the executable.
-arguments       = $(Process) 33
+arguments       = -p random_forest
 
 # This specifies that the specification, as parsed up to this point, should be
 # submitted 5 times.  (If the number is omitted, the number '1' is assumed.)
-queue 33
+queue 150
