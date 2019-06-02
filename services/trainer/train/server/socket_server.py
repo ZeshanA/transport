@@ -47,9 +47,10 @@ async def consumer_handler(websocket, path):
         # Send messages to the consumer as they come in
         async for message in websocket:
             await consumer(websocket, message, path)
-    except websockets.ConnectionClosed:
+    except websockets.ConnectionClosed as e:
         # Closed/failed connections are okay: the finally block will perform clean up and ensure
         # any incomplete routes are still trained, no need to raise an exception here.
+        print(e)
         pass
     finally:
         # Client has disconnected (gracefully or abruptly)
