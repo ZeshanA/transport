@@ -94,4 +94,4 @@ class SKModel(Model, ABC):
         logging.info("Model successfully trained...")
 
     def __save_model__(self, filepath):
-        joblib.dump(self.model, filepath)
+        joblib.dump(self.model, filepath, compress=True)
