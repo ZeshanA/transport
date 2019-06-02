@@ -3,6 +3,7 @@
 export MODEL_TYPE=$2
 export VENV_PATH="/data/za816/.env/transport/trainer"
 export PYTHONPATH=".:/data/za816/local"
+export HOME="/homes/za816"
 
 # Copy pyenv installation over to /data/ to avoid quota
 if [[ ! -d "/data/za816/.pyenv" ]]; then
