@@ -50,7 +50,7 @@ func server() {
 	log.Printf("Predicted time: %d\n", predictedTime)
 	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
 	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
-	complete := make(chan bool)
+	complete := make(chan string)
 	monitor.LiveBuses(avgTime, predictedTime, params, stopList, db, complete)
 	<-complete
 }

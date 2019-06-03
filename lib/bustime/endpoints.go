@@ -25,7 +25,7 @@ type BusStop struct {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Agencies
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func (client *client) GetAgencies() []string {
+func (client *Client) GetAgencies() []string {
 	URLWithKey := fmt.Sprintf("%s/%s?%s", client.baseURL, agenciesEndpoint, client.MandatoryParams)
 	jsonResponse := network.GetRequestBody(URLWithKey)
 	return jsonhelper.ExtractNested(jsonResponse, "data.list.#.agencyId")
@@ -34,7 +34,7 @@ func (client *client) GetAgencies() []string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routes
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func (client *client) GetRoutes(agencyIDs ...string) []string {
+func (client *Client) GetRoutes(agencyIDs ...string) []string {
 	var routeIDs []string
 	for _, agencyID := range agencyIDs {
 		URLWithKey := fmt.Sprintf("%s/%s/%s.json?%s", client.baseURL, routesEndpoint, agencyID, client.MandatoryParams)
@@ -51,7 +51,7 @@ func (client *client) GetRoutes(agencyIDs ...string) []string {
 
 // GetStops takes a collection of routeIDs and returns a map of
 // the form: routeID -> directionID -> []stopID
-func (client *client) GetStops(routeIDs ...string) map[string]map[int][]BusStop {
+func (client *Client) GetStops(routeIDs ...string) map[string]map[int][]BusStop {
 	mapOfStops := map[string]map[int][]BusStop{}
 	// Create mutex to protect map from concurrent writes and
 	// channel to mark routeID as completed
@@ -67,7 +67,7 @@ func (client *client) GetStops(routeIDs ...string) map[string]map[int][]BusStop 
 	return mapOfStops
 }
 
-func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusStop, routeID string, mux *sync.Mutex, done chan string) {
+func (client *Client) populateStopsForRoute(mapOfStops map[string]map[int][]BusStop, routeID string, mux *sync.Mutex, done chan string) {
 	log.Printf("Fetching stops for route ID: %s\n", routeID)
 	// Initialise inner map for this routeID
 	mux.Lock()
@@ -93,7 +93,7 @@ func (client *client) populateStopsForRoute(mapOfStops map[string]map[int][]BusS
 	done <- routeID
 }
 
-func (client *client) populateDirectionWithStops(
+func (client *Client) populateDirectionWithStops(
 	mapOfStops map[string]map[int][]BusStop,
 	stopDetails map[string]gjson.Result, routeID string, direction gjson.Result, mux *sync.Mutex,
 ) {
