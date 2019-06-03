@@ -5,6 +5,7 @@ import (
 	"detector/calc"
 	"detector/fetch"
 	"detector/request"
+	"fmt"
 	"log"
 	"time"
 	"transport/lib/bus"
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	refreshInterval = 30 * time.Second
+	RefreshInterval = 30 * time.Second
 )
 
 type TimedJourney struct {
@@ -24,31 +25,31 @@ type TimedJourney struct {
 	DistanceFromArrivalTime time.Duration
 }
 
-func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan bool) {
-	ticker := time.NewTicker(refreshInterval)
-	movingAverage := getInitialMovingAverage(avgTime, predictedTime)
+func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan string) {
+	ticker := time.NewTicker(RefreshInterval)
+	movingAverage := GetInitialMovingAverage(avgTime, predictedTime)
 	go monitorBuses(ticker, params, stopList, db, complete, movingAverage)
 	<-complete
 }
 
-func getInitialMovingAverage(avgTime int, predictedTime int) ewma.MovingAverage {
+func GetInitialMovingAverage(avgTime int, predictedTime int) ewma.MovingAverage {
 	movingAvg := ewma.NewMovingAverage()
 	movingAvg.Add(float64(avgTime))
 	movingAvg.Add(float64(predictedTime))
 	return movingAvg
 }
 
-func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan bool, movingAvg ewma.MovingAverage) {
+func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan string, movingAvg ewma.MovingAverage) {
 	waitingToStart, startedJourneys := map[string]time.Time{}, map[string]time.Time{}
 	stopsBeforeSource := stringhelper.SliceToSet(bustime.ExtractStops("before", params.FromStop, true, stopList))
 	stopsAfterDest := stringhelper.SliceToSet(bustime.ExtractStops("after", params.ToStop, false, stopList))
 	for {
 		select {
 		case <-ticker.C:
-			allJourneys, journeysBeforeStop, journeysApproachingStop := fetchJourneySets(params, stopsBeforeSource)
-			findApproachingVehicles(journeysApproachingStop, waitingToStart)
-			detectStartedJourneys(waitingToStart, startedJourneys, allJourneys, params)
-			updateAverageJourneyTime(startedJourneys, allJourneys, stopsAfterDest, movingAvg)
+			allJourneys, journeysBeforeStop, journeysApproachingStop := FetchJourneySets(params, stopsBeforeSource)
+			FindApproachingVehicles(journeysApproachingStop, waitingToStart)
+			DetectStartedJourneys(waitingToStart, startedJourneys, allJourneys, params)
+			UpdateAverageJourneyTime(startedJourneys, allJourneys, stopsAfterDest, movingAvg)
 			idealArrivalTime := params.ArrivalTime.Add(-time.Duration(movingAvg.Value()) * time.Second)
 			for vehicleID, journey := range journeysBeforeStop {
 				timeToNextStop, err := fetch.SingleMovementPrediction(journey)
@@ -72,7 +73,7 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 				log.Printf("The gap between these two times is %f seconds", diff.Seconds())
 				if idealArrivalTime.After(currentVehicleArrivalTime) && diff < 5*time.Minute {
 					log.Printf("SENDING NOTIFICATION!")
-					complete <- true
+					complete <- vehicleID
 				}
 			}
 			log.Println("Successfully processed live journey data, waiting for the next tick...")
@@ -83,7 +84,7 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 	}
 }
 
-func updateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys map[string]bus.VehicleJourney,
+func UpdateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys map[string]bus.VehicleJourney,
 	stopsAfterDest map[string]bool, movingAverageJourneyTime ewma.MovingAverage) {
 	log.Println("Updating moving averages using any vehicles that have completed the route segment...")
 	for vehicleRef, stamp := range startedJourneys {
@@ -93,7 +94,7 @@ func updateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys 
 			duration := journey.Timestamp.Sub(stamp).Seconds()
 			log.Printf(
 				"Vehicle with ID '%s' has completed its journey at %s, with a total duration of %f seconds",
-				vehicleRef, stamp.Format(database.TimeFormat), duration,
+				vehicleRef, journey.Timestamp.Format(database.TimeFormat), duration,
 			)
 			movingAverageJourneyTime.Add(duration)
 			delete(startedJourneys, vehicleRef)
@@ -102,7 +103,7 @@ func updateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys 
 	}
 }
 
-func detectStartedJourneys(waitingToStart map[string]time.Time, journeyStarted map[string]time.Time, liveJourneys map[string]bus.VehicleJourney, params request.JourneyParams) {
+func DetectStartedJourneys(waitingToStart map[string]time.Time, journeyStarted map[string]time.Time, liveJourneys map[string]bus.VehicleJourney, params request.JourneyParams) {
 	log.Println("Recording journey start times for any vehicles that have now moved onto our route segment...")
 	for vehicleRef, stamp := range waitingToStart {
 		if liveJourneys[vehicleRef].StopPointRef.String != params.FromStop {
@@ -114,15 +115,17 @@ func detectStartedJourneys(waitingToStart map[string]time.Time, journeyStarted m
 	log.Println("Successfully recorded journey start times")
 }
 
-func findApproachingVehicles(journeysApproachingStop map[string]bus.VehicleJourney, waitingToStart map[string]time.Time) {
+func FindApproachingVehicles(journeysApproachingStop map[string]bus.VehicleJourney, waitingToStart map[string]time.Time) {
 	log.Println("Finding vehicles approaching the source stop...")
 	for vehicleRef, journey := range journeysApproachingStop {
+		fmt.Println("SETTING STAMP TO:")
+		fmt.Println(journey.Timestamp.Time.Format(database.TimeFormat))
 		waitingToStart[vehicleRef] = journey.Timestamp.Time
 	}
 	log.Printf("There are currently %d vehicles approaching the source stop\n", len(waitingToStart))
 }
 
-func fetchJourneySets(params request.JourneyParams, stopsBeforeStopID map[string]bool) (allJourneys map[string]bus.VehicleJourney, journeysBeforeStop map[string]bus.VehicleJourney, journeysApproachingStop map[string]bus.VehicleJourney) {
+func FetchJourneySets(params request.JourneyParams, stopsBeforeStopID map[string]bool) (allJourneys map[string]bus.VehicleJourney, journeysBeforeStop map[string]bus.VehicleJourney, journeysApproachingStop map[string]bus.VehicleJourney) {
 	log.Printf("Fetching live journeys for paramSet: %v...\n", params)
 	allJourneys = map[string]bus.VehicleJourney{}
 	allJourneys, err := fetch.LiveJourneys(params.RouteID, params.DirectionID)

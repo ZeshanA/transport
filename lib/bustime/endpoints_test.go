@@ -18,7 +18,7 @@ func TestClient_GetAgencies(t *testing.T) {
 	ts := testhelper.ServeMock(response)
 	defer ts.Close()
 
-	// Create bustime.client
+	// Create bustime.Client
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	// We expect the following slice of agency ID strings
@@ -35,7 +35,7 @@ func TestClient_GetAgenciesEmptyResponse(t *testing.T) {
 	ts := testhelper.ServeMock(response)
 	defer ts.Close()
 
-	// Create bustime.client
+	// Create bustime.Client
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	// We expect nil (no slice should have been allocated, as there were no agency IDs returned)
@@ -61,7 +61,7 @@ func TestClient_GetRoutesWithURL(t *testing.T) {
 	ts := testhelper.ServeMultiResponseMock(responses, testhelper.ExtractJSONFilepath)
 	defer ts.Close()
 
-	// Create bustime.client
+	// Create bustime.Client
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	expected := []string{"MTA NYCT_BX4A", "MTA NYCT_M31", "MTABC_BX4A", "MTABC_M31"}
@@ -78,7 +78,7 @@ func TestClient_GetRoutesWithURLEmpty(t *testing.T) {
 	ts := testhelper.ServeMock(response)
 	defer ts.Close()
 
-	// Create bustime.client
+	// Create bustime.Client
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	var expected []string
@@ -97,7 +97,7 @@ func TestClient_GetStops(t *testing.T) {
 	ts := testhelper.ServeMultiResponseMock(stopsResponses, testhelper.ExtractJSONFilepath)
 	defer ts.Close()
 
-	// Create bustime.client
+	// Create bustime.Client
 	client := bustime.NewClient("TEST", bustime.CustomBaseURLOption(ts.URL))
 
 	expected := stopsExpectedOutput

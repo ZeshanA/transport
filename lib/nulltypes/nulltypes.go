@@ -38,7 +38,7 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 		ts.Valid = false
 		return nil
 	}
-	t, err := time.Parse(database.TimeFormat, str)
+	t, err := time.ParseInLocation(database.TimeFormat, str, database.TimeLoc)
 	if err != nil {
 		return err
 	}

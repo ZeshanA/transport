@@ -111,6 +111,16 @@ var (
 	}
 )
 
+var NotificationEvalTable = DBTable{
+	Name: "notification_eval",
+	Columns: []string{
+		"route_id", "direction_id",
+		"from_stop_id", "to_stop_id",
+		"desired_arrival_time", "actual_arrival_time",
+		"off_by",
+	},
+}
+
 // OpenDBConnection connects you to the MTAData DB in Azure, using
 // username and password combination fetched from the environment
 func OpenDBConnection() *sql.DB {
