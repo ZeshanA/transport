@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"detector/calc"
+	"detector/fetch"
 	"detector/monitor"
 	"detector/request"
 	"fmt"
@@ -25,33 +27,29 @@ func Evaluate() {
 	defer db.Close()
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
 	// Generate random set of parameters
-	//params := generateRandomParams(bt)
-	params := request.GetParams()
+	params := generateRandomParams(bt)
 
 	// Fetch the list of stops for the requested route and direction
 	stops := bt.GetStops(params.RouteID)[params.RouteID][params.DirectionID]
 	fmt.Println(stops)
-	//// Get average time to travel between stops
-	////avgTime, err := calc.AvgTimeBetweenStops(stops, params, db)
-	//avgTime := 621
-	//var err error = nil
-	//if err != nil {
-	//	log.Fatalf("error calculating average time between stops: %s", err)
-	//}
-	//log.Printf("Average time: %d\n", avgTime)
-	//predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stops)
-	//if err != nil {
-	//	log.Fatalf("error calculating predicted time: %s", err)
-	//}
-	//log.Printf("Predicted time: %d\n", predictedTime)
-	//log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
-	//log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
-	//complete := make(chan string)
-	//monitor.LiveBuses(avgTime, predictedTime, params, stops, db, complete)
-	//vehicleID := <-complete
-	//fmt.Println(vehicleID)
+	// Get average time to travel between stops
+	avgTime, err := calc.AvgTimeBetweenStops(stops, params, db)
+	if err != nil {
+		log.Fatalf("error calculating average time between stops: %s", err)
+	}
+	log.Printf("Average time: %d\n", avgTime)
+	predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stops)
+	if err != nil {
+		log.Fatalf("error calculating predicted time: %s", err)
+	}
+	log.Printf("Predicted time: %d\n", predictedTime)
+	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
+	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
+	complete := make(chan string)
+	monitor.LiveBuses(avgTime, predictedTime, params, stops, db, complete)
+	vehicleID := <-complete
+	fmt.Println(vehicleID)
 	// Now time how long it takes the vehicleID to get to its stop
-	vehicleID := "MTA NYCT_5587"
 	ticker := time.NewTicker(1 * time.Second)
 	timeTaken := make(chan float64)
 
