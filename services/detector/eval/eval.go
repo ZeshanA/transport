@@ -1,13 +1,14 @@
 package eval
 
 import (
-	"detector/calc"
+	"database/sql"
 	"detector/fetch"
 	"detector/monitor"
 	"detector/request"
 	"fmt"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 	"transport/lib/bus"
 	"transport/lib/bustime"
@@ -21,38 +22,54 @@ import (
 )
 
 func Evaluate() {
-	log.Println("Evaluation mode")
+	log.Println("Evaluation mode...")
 	// Open a DB connection and schedule it to be closed after the program returns
 	db := database.OpenDBConnection()
 	defer db.Close()
+	// Create a new BusTime client to handle metadata requests
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
-	// Generate random set of parameters
-	params := generateRandomParams(bt)
+	// Extract the number of journeys to evaluate
+	numJourneys := 50
+	var wg sync.WaitGroup
+	wg.Add(numJourneys)
+	log.Printf("Evaluating %d journeys...", numJourneys)
+	for i := 0; i < numJourneys; i++ {
+		params := generateRandomParams(bt)
+		go performJourneyEvaluation(params, bt, db, wg)
+	}
+	wg.Wait()
+}
 
+func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, db *sql.DB, wg sync.WaitGroup) {
+	defer wg.Done()
 	// Fetch the list of stops for the requested route and direction
 	stops := bt.GetStops(params.RouteID)[params.RouteID][params.DirectionID]
-	fmt.Println(stops)
 	// Get average time to travel between stops
-	avgTime, err := calc.AvgTimeBetweenStops(stops, params, db)
+	//avgTime, err := calc.AvgTimeBetweenStops(stops, params, db)
+	avgTime := 672
+	var err error = nil
 	if err != nil {
 		log.Fatalf("error calculating average time between stops: %s", err)
 	}
 	log.Printf("Average time: %d\n", avgTime)
-	predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stops)
+	log.Printf("Fetching predicted journey time...")
+	//predictedTime, err := fetch.PredictedJourneyTime(params, avgTime, stops)
+	predictedTime := 700
 	if err != nil {
 		log.Fatalf("error calculating predicted time: %s", err)
 	}
 	log.Printf("Predicted time: %d\n", predictedTime)
+	// Print current time and arrival time
 	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
 	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
+	// Monitor live buses until we find a suitable vehicleID
 	complete := make(chan string)
 	monitor.LiveBuses(avgTime, predictedTime, params, stops, db, complete)
 	vehicleID := <-complete
-	fmt.Println(vehicleID)
-	// Now time how long it takes the vehicleID to get to its stop
+	fmt.Printf("Suitable VehicleID found! Take the bus with ID %s\n", vehicleID)
+	// Now time how long it actually takes the vehicleID to get to its stop
 	ticker := time.NewTicker(1 * time.Second)
 	timeTaken := make(chan float64)
-
 	waitingToStart, startedJourneys := map[string]time.Time{}, map[string]time.Time{}
 	stopsBeforeSource := stringhelper.SliceToSet(bustime.ExtractStops("before", params.FromStop, true, stops))
 	stopsAfterDest := stringhelper.SliceToSet(bustime.ExtractStops("after", params.ToStop, false, stops))
@@ -128,27 +145,36 @@ func NotificationEvalToInterface(entries []NotificationEval) []interface{} {
 }
 
 func generateRandomParams(bt *bustime.Client) request.JourneyParams {
-	// Get list of all routeIDs
-	routeIDs := bt.GetRoutes("MTA NYCT", "MTABC")
-	// Initialise global pseudo-RNG
-	rand.Seed(time.Now().Unix())
-	// Select a random routeID and directionID
-	randomRouteID := routeIDs[rand.Intn(len(routeIDs))]
-	possibleDirections := 2
-	randomDirectionID := rand.Intn(possibleDirections)
-	// Fetch stops for the given routeID and directionID
-	stops := bt.GetStops(randomRouteID)[randomRouteID][randomDirectionID]
-	// Select a random source stop (excluding the final stop on the route, as there are
-	// no possible journeys in that case)
-	sourceStopIndex := rand.Intn(len(stops) - 1)
-	sourceStop := stops[sourceStopIndex].ID
-	destStop := stops[math.RandInRange(sourceStopIndex+1, len(stops))].ID
+	log.Println("Generating random parameter set...")
+	rj, err := fetch.RawJourneys()
+	if err != nil {
+		log.Fatalf("error fetching raw journeys: %v", err)
+	}
+	rjArr := rj.Array()
+	params := request.JourneyParams{}
+	var stops []bustime.BusStop
+	for {
+		// Select a random journey from the list of currently active ones
+		randomMvmt := rjArr[rand.Intn(len(rjArr))]
+		routeID := randomMvmt.Get("LineRef").String()
+		directionID := int(randomMvmt.Get("DirectionRef").Int())
+		nextStop := randomMvmt.Get("StopPointRef").String()
+		stops = bt.GetStops(routeID)[routeID][directionID]
+		isLastStop := stops[len(stops)-1].ID == nextStop
+		// If we're going to the last stop, no further journeys are possible - try again
+		if isLastStop {
+			continue
+		}
+		params.RouteID, params.DirectionID, params.FromStop = routeID, directionID, nextStop
+		break
+	}
+	// Pick random destination stop
+	stopsAfterSource := bustime.ExtractStops("after", params.FromStop, false, stops)
+	destStop := stops[rand.Intn(len(stopsAfterSource)-1)]
+	params.ToStop = destStop.ID
 	// Pick random arrival time
 	delay := time.Duration(math.RandInRange(1, 5)) * time.Hour
-	arrivalTime := time.Now().In(database.TimeLoc).Add(delay)
-	return request.JourneyParams{
-		RouteID: randomRouteID, DirectionID: randomDirectionID,
-		FromStop: sourceStop, ToStop: destStop,
-		ArrivalTime: arrivalTime,
-	}
+	params.ArrivalTime = time.Now().In(database.TimeLoc).Add(delay)
+	log.Printf("Selected random parameter set: %s", params.String())
+	return params
 }
