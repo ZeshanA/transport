@@ -8,10 +8,10 @@ from lib.models import SKModel
 
 class SVMModel(SKModel):
     param_dist = [
-        Real(0.01, 50, name='C'),
-        Real(0.001, 10, name='epsilon')
+        Real(-3, 2, name='C'),
+        Real(-3, 2, name='epsilon')
     ]
-    default_params = {'C': 50, 'epsilon': 5}
+    default_params = {'C': 1, 'epsilon': 0.1}
 
     @staticmethod
     def create_model(c=default_params['C'], epsilon=default_params['epsilon']):
