@@ -39,7 +39,7 @@ log             = out/events.log
 environment = "TRANSPORT_DB_USERNAME={}"
 
 # This specifies what commandline arguments should be passed to the executable.
-arguments       = -p random_forest
+arguments       = -p support_vector_machine
 
 # This specifies that the specification, as parsed up to this point, should be
 # submitted 5 times.  (If the number is omitted, the number '1' is assumed.)
