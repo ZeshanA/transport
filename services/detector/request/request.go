@@ -2,6 +2,7 @@ package request
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	"transport/lib/database"
 )
@@ -24,6 +25,14 @@ func (jp JourneyParams) MarshalJSON() ([]byte, error) {
 	}`
 	str := fmt.Sprintf(templates, jp.RouteID, jp.DirectionID, jp.FromStop, jp.ToStop, jp.ArrivalTime.Format(database.TimeFormat))
 	return []byte(str), nil
+}
+
+func (jp JourneyParams) String() string {
+	b, _ := jp.MarshalJSON()
+	s := string(b)
+	removeTabs := strings.Replace(s, "\t", "", -1)
+	removeNewLines := strings.Replace(removeTabs, "\n", " ", -1)
+	return string(removeNewLines)
 }
 
 func GetParams() JourneyParams {
