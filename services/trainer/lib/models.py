@@ -82,6 +82,7 @@ class Model(ABC):
                                 aws_secret_access_key=secret)
         client.upload_file(filepath, 'mtadata3', '{}-{}-finalModel.h5'.format(self.model_name, self.route_id),
                            ExtraArgs={'ACL': 'public-read'})
+        os.remove(filepath)
         logging.info("Successfully uploaded final model for routeID %s to storage...", self.route_id)
 
 
