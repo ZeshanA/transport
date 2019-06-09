@@ -38,7 +38,7 @@ class Model(ABC):
         Saves a trained model to disk, using the subclass __save_model__ method.
         :return: the (relative) filepath that the model was saved at
         """
-        directory = '/data/za816/trained/{}/{}/'.format(self.model_name, self.route_id)
+        directory = '/vol/bitbucket/za816/trained/{}/{}/'.format(self.model_name, self.route_id)
         filepath = '{}/finalModel.h5'.format(directory, self.route_id)
         os.makedirs(directory, exist_ok=True)
         self.__save_model__(filepath)
