@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.model_selection import train_test_split
-import tensorflow as tf
 from sklearn_pandas import gen_features, DataFrameMapper
 
 from lib.db import connect
@@ -15,26 +14,6 @@ NUMERIC_COLS = ["direction_ref", "longitude", "latitude", "distance_from_stop",
                 "day", "month", "year", "hour", "minute", "second", "estimate"]
 TEXT_COLS = ["operator_ref", "progress_rate", "occupancy", "stop_point_ref"]
 COL_COUNT = len(NUMERIC_COLS) + len(TEXT_COLS)
-
-
-# Fetches data for route_id, splits it into (train, test, val) and returns
-# each set as a tf.data.Dataset
-def get_datasets(route_id: str, batch_size: int = 32):
-    logging.info('Fetching data for route_id: {}'.format(route_id))
-    dataframe = get_dataframe(route_id)
-
-    pd.set_option('display.max_columns', 500)
-    print(dataframe[dataframe.isnull().T.any().T])
-
-    # Split into train/val/test sets
-    train, test = train_test_split(dataframe, test_size=0.2)
-    train, val = train_test_split(train, test_size=0.2)
-    # Convert each set into tf.data format
-    train_ds = df_to_dataset(train, LABEL_COL, batch_size=batch_size)
-    val_ds = df_to_dataset(val, LABEL_COL, batch_size=batch_size)
-    test_ds = df_to_dataset(test, LABEL_COL, batch_size=batch_size)
-    logging.info("Successfully fetched, split and converted data for route_id: {}".format(route_id))
-    return train_ds, val_ds, test_ds
 
 
 def get_numpy_datasets(route_id: str, validation_set_required: bool = True):
@@ -81,16 +60,6 @@ def get_dataframe(route_id: str) -> pd.DataFrame:
     )
     logging.info("Successfully fetched data for route_id {}".format(route_id))
     return dataframe
-
-
-# Converts a pandas dataframe to tf.data format
-def df_to_dataset(dataframe: pd.DataFrame, label_col: str, batch_size: int):
-    dataframe = dataframe.copy()
-    labels = dataframe.pop(label_col)
-    ds = tf.data.Dataset.from_tensor_slices((dict(dataframe), labels))
-    ds = ds.shuffle(buffer_size=len(dataframe))
-    ds = ds.batch(batch_size)
-    return ds
 
 
 def merge_np_tuples(a, b):
