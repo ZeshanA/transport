@@ -1,19 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import _ from "lodash";
 import "./index.module.scss";
+import { Suggest } from "@blueprintjs/select";
+import { MenuItem } from "@blueprintjs/core";
 
 export const RouteSelector = () => {
   const [routes, setRoutes] = useState([]);
   useEffect(() => FetchDataEffect(routes, setRoutes), [routes]);
   return (
-    <select>
-      {_.map(routes, (routeObj, routeID) => (
-        <option key={routeID}>{routeID}</option>
-      ))}
-    </select>
+    <Suggest
+      inputValueRenderer={x => x}
+      items={Object.keys(routes)}
+      itemRenderer={renderRouteID}
+      itemPredicate={doesQueryMatchRouteID}
+      onItemSelect={item => console.log(item)}
+    />
   );
 };
+
+const doesQueryMatchRouteID = (query, routeID) =>
+  routeID.toLowerCase().indexOf(query.toLowerCase()) >= 0;
+
+const renderRouteID = (routeID, { handleClick }) => (
+  <MenuItem key={routeID} text={routeID} onClick={handleClick} />
+);
 
 const FetchDataEffect = (routes, setRoutes) => {
   if (routes.length !== 0) {
