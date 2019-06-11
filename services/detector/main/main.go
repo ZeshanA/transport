@@ -1,6 +1,7 @@
 package main
 
 import (
+	"detector/api"
 	"detector/calc"
 	"detector/eval"
 	"detector/fetch"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	api.Start()
 	if len(os.Args) < 2 {
 		log.Fatalf("Please pass evaluation mode (-e) or server mode (-s) as a CLI argument")
 	}
@@ -22,7 +24,7 @@ func main() {
 	if mode == "-e" {
 		eval.Evaluate()
 	} else {
-		server()
+		// server()
 	}
 }
 
