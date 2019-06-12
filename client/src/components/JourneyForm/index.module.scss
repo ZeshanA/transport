@@ -1,0 +1,34 @@
+.form {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 35px 40px !important;
+  :global(.bp3-form-group) {
+    margin-bottom: 30px;
+    display: block;
+  }
+}
+
+$elementHeight: 50px;
+
+.formInput {
+  :global(.bp3-popover-target) {
+    width: 100%;
+  }
+
+  :global(label.bp3-label) {
+    margin-bottom: 10px !important;
+  }
+
+  :global(.bp3-input) {
+    height: $elementHeight;
+  }
+}
+
+.submitButton {
+  width: 100%;
+  height: $elementHeight;
+
+  .icon {
+    margin-right: 7px;
+  }
+}
