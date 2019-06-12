@@ -18,6 +18,7 @@ const (
 
 type BusStop struct {
 	ID        string  `json:"id"`
+	Name      string  `json:"name"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
@@ -111,7 +112,8 @@ func (client *Client) populateDirectionWithStops(
 	for i, id := range stopIDs {
 		curStopDetails := stopDetails[id]
 		lat, lon := curStopDetails.Get("lat").Float(), curStopDetails.Get("lon").Float()
-		stopStruct := BusStop{ID: id, Latitude: lat, Longitude: lon}
+		name := curStopDetails.Get("name").String()
+		stopStruct := BusStop{ID: id, Name: name, Latitude: lat, Longitude: lon}
 		mux.Lock()
 		mapOfStops[routeID][directionID][i] = stopStruct
 		mux.Unlock()
@@ -120,7 +122,7 @@ func (client *Client) populateDirectionWithStops(
 
 // Constructs a map of stopID -> stopDetails from the JSON.
 // The stop details are in an array in the JSON, converting to a map
-// keyed by stopID allows for O(1) extraction of lat/lon values given a stopID.
+// keyed by stopID allows for O(1) extraction of metadata values given a stopID.
 func getStopDetails(jsonString string) map[string]gjson.Result {
 	stopIDsMap := map[string]gjson.Result{}
 	stops := gjson.Get(jsonString, "data.references.stops").Array()

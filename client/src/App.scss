@@ -1,10 +1,36 @@
 $BGColor: #edf1f5;
-$PrimaryTextColor: #293845;
+$primaryTextColor: #293845;
+$secondaryTextColor: #3c505f;
 
 body {
   background: $BGColor;
-  color: $PrimaryTextColor;
+  color: $primaryTextColor;
   font-family: "Source Sans Pro", sans-serif;
+}
+
+$navbarHeight: 60px;
+
+.navbar {
+  width: 100%;
+  margin-bottom: 40px;
+  height: $navbarHeight;
+  background: white;
+  color: $secondaryTextColor;
+  border-bottom: solid 1px lighten($primaryTextColor, 60%);
+  // box-shadow: 0 5px 10px rgba($PrimaryTextColor, 0.05);
+
+  .icon {
+    margin-right: 10px;
+  }
+  h1 {
+    padding-top: 15px;
+    margin: 0;
+    font: {
+      size: 1.5em;
+      weight: 600;
+    }
+    text-align: center;
+  }
 }
 
 .heading {
