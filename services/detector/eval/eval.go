@@ -5,6 +5,7 @@ import (
 	"detector/fetch"
 	"detector/monitor"
 	"detector/request"
+	"detector/response"
 	"fmt"
 	"log"
 	"math/rand"
@@ -63,9 +64,10 @@ func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, 
 	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
 	log.Printf("Arrival time is: %s", params.ArrivalTime.In(database.TimeLoc).Format(database.TimeFormat))
 	// Monitor live buses until we find a suitable vehicleID
-	complete := make(chan string)
+	complete := make(chan response.Notification)
 	monitor.LiveBuses(avgTime, predictedTime, params, stops, db, complete)
-	vehicleID := <-complete
+	notif := <-complete
+	vehicleID := notif.VehicleID
 	fmt.Printf("Suitable VehicleID found! Take the bus with ID %s\n", vehicleID)
 	// Now time how long it actually takes the vehicleID to get to its stop
 	ticker := time.NewTicker(1 * time.Second)
@@ -98,7 +100,7 @@ func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, 
 		}
 	}()
 	actualJourneyTime := <-timeTaken
-	expectedAt := params.ArrivalTime
+	expectedAt := params.ArrivalTime.Time
 	arrivedAt := startTime.Add(time.Duration(actualJourneyTime) * time.Second)
 	offBy := int(arrivedAt.Sub(expectedAt) / time.Second)
 	fmt.Printf(
@@ -111,7 +113,7 @@ func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, 
 	entries := []NotificationEval{{
 		params.RouteID, params.DirectionID,
 		params.FromStop, params.ToStop,
-		nulltypes.TimestampFrom(database.Timestamp{Time: params.ArrivalTime}),
+		nulltypes.TimestampFrom(params.ArrivalTime),
 		nulltypes.TimestampFrom(database.Timestamp{Time: arrivedAt}),
 		offBy,
 	}}
@@ -174,7 +176,7 @@ func generateRandomParams(bt *bustime.Client) request.JourneyParams {
 	params.ToStop = destStop.ID
 	// Pick random arrival time
 	delay := time.Duration(math.RandInRange(1, 5)) * time.Hour
-	params.ArrivalTime = time.Now().In(database.TimeLoc).Add(delay)
+	params.ArrivalTime = database.Timestamp{Time: time.Now().In(database.TimeLoc).Add(delay)}
 	log.Printf("Selected random parameter set: %s", params.String())
 	return params
 }

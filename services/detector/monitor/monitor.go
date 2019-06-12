@@ -5,6 +5,7 @@ import (
 	"detector/calc"
 	"detector/fetch"
 	"detector/request"
+	"detector/response"
 	"fmt"
 	"log"
 	"time"
@@ -25,7 +26,7 @@ type TimedJourney struct {
 	DistanceFromArrivalTime time.Duration
 }
 
-func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan string) {
+func LiveBuses(avgTime int, predictedTime int, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan response.Notification) {
 	ticker := time.NewTicker(RefreshInterval)
 	movingAverage := GetInitialMovingAverage(avgTime, predictedTime)
 	go monitorBuses(ticker, params, stopList, db, complete, movingAverage)
@@ -39,7 +40,7 @@ func GetInitialMovingAverage(avgTime int, predictedTime int) ewma.MovingAverage 
 	return movingAvg
 }
 
-func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan string, movingAvg ewma.MovingAverage) {
+func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []bustime.BusStop, db *sql.DB, complete chan response.Notification, movingAvg ewma.MovingAverage) {
 	waitingToStart, startedJourneys := map[string]time.Time{}, map[string]time.Time{}
 	stopsBeforeSource := stringhelper.SliceToSet(bustime.ExtractStops("before", params.FromStop, true, stopList))
 	stopsAfterDest := stringhelper.SliceToSet(bustime.ExtractStops("after", params.ToStop, false, stopList))
@@ -59,7 +60,7 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 				nxtStopToSourceStopParams := params
 				nxtStopToSourceStopParams.FromStop = journey.StopPointRef.String
 				nxtStopToSourceStopParams.ToStop = params.FromStop
-				nxtStopToSourceStopParams.ArrivalTime = idealArrivalTime
+				nxtStopToSourceStopParams.ArrivalTime = database.Timestamp{Time: idealArrivalTime}
 				avgTime, err := calc.AvgTimeBetweenStops(stopList, nxtStopToSourceStopParams, db)
 				if err != nil {
 					log.Fatalf("error calculating average time between stops: %s", err)
@@ -72,8 +73,11 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 				log.Printf("Vehicle with ID %s is estimated to arrive at the source stop in %d seconds, at %s", vehicleID, totalTimeUntilSourceStop, currentVehicleArrivalTime.Format(database.TimeFormat))
 				log.Printf("The gap between these two times is %f seconds", diff.Seconds())
 				if idealArrivalTime.After(currentVehicleArrivalTime) && diff < 5*time.Minute {
-					log.Printf("SENDING NOTIFICATION!")
-					complete <- vehicleID
+					complete <- response.Notification{
+						VehicleID:            vehicleID,
+						OptimalDepartureTime: database.Timestamp{Time: currentVehicleArrivalTime},
+						PredictedArrivalTime: database.Timestamp{Time: idealArrivalTime.Add(time.Duration(movingAvg.Value()) * time.Second)},
+					}
 				}
 			}
 			log.Println("Successfully processed live journey data, waiting for the next tick...")
