@@ -38,11 +38,14 @@ type Timestamp struct {
 }
 
 // Custom parsing of incoming timestamps
-func (t *Timestamp) UnmarshalJSON(b []byte) error {
+func (t *Timestamp) UnmarshalJSON(b []byte) (err error) {
 	noQuotes := strings.Replace(string(b), "\"", "", 2)
 	parsed, err := time.Parse(time.RFC3339, noQuotes)
 	if err != nil {
-		log.Printf("error whilst parsing Timestamp: %v", err)
+		parsed, err = time.Parse(TimeFormat, noQuotes)
+		if err != nil {
+			log.Printf("error whilst parsing Timestamp: %v", err)
+		}
 	}
 	*t = Timestamp{parsed}
 	return nil

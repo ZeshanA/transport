@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -74,4 +75,10 @@ func GetRequestBody(requestURL string) string {
 	}
 
 	return string(rawData)
+}
+
+func WriteError(msg string, err error, w http.ResponseWriter) {
+	formatted := fmt.Sprintf(msg, err)
+	log.Println(formatted)
+	w.Write([]byte(formatted))
 }

@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Card,
-  MenuItem,
-  Elevation,
-  FormGroup
-} from "@blueprintjs/core";
+import { Card, MenuItem, Elevation, FormGroup } from "@blueprintjs/core";
+import { DateInput } from "@blueprintjs/datetime";
 import { Suggest } from "@blueprintjs/select";
 import _ from "lodash";
+
+import { SubscribeButton } from "../SubscribeButton";
+
 import styles from "./index.module.scss";
+import { displayDate } from "../../lib/date";
 
 const readableRouteID = routeID => routeID.split("_")[1];
 
@@ -27,8 +26,8 @@ export const JourneyForm = ({ routes }) => {
   const formattedRoutes = formatRoutes(routes);
   let stopsForRoute = getStopsForRoute(journey, formattedRoutes);
   return (
-    <Card elevation={Elevation.TWO} className={styles.form}>
-      <form>
+    <Card elevation={Elevation.TWO} className={styles.formCard}>
+      <form className={styles.form}>
         <FormGroup
           className={styles.formInput}
           label="Route"
@@ -61,7 +60,6 @@ export const JourneyForm = ({ routes }) => {
           <SuggestionInput
             inputProps={{ placeholder: "Select a source stop..." }}
             items={stopsForRoute}
-            itemRenderer={renderStopOption}
             onItemSelect={fromStop => changeJourney({ fromStop })}
             itemPredicate={doesQueryMatchStop}
             selectedItem={journey.fromStop}
@@ -81,10 +79,24 @@ export const JourneyForm = ({ routes }) => {
             selectedItem={journey.toStop}
           />
         </FormGroup>
-        <Button className={styles.submitButton}>
-          <i className={`${styles.icon} far fa-bell`} />
-          Notify Me!
-        </Button>
+        <FormGroup
+          className={`${styles.formInput} ${styles.wideInput}`}
+          label="Desired Arrival Time"
+          labelInfo="(required)"
+        >
+          <DateInput
+            placeholder="Select when you'd like to arrive..."
+            formatDate={displayDate}
+            parseDate={Date.parse}
+            defaultValue={new Date()}
+            minDate={new Date()}
+            timePrecision="minute"
+          />
+        </FormGroup>
+        <SubscribeButton
+          className={`${styles.formInput} ${styles.wideInput}`}
+          journey={{ journey }}
+        />
       </form>
     </Card>
   );

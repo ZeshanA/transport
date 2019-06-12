@@ -1,34 +1,35 @@
-.form {
-  max-width: 400px;
+.formCard {
+  max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
-  padding: 35px 40px !important;
-  :global(.bp3-form-group) {
-    margin-bottom: 30px;
-    display: block;
-  }
+  padding: 35px 40px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 50fr 50fr;
+  gap: 30px;
 }
 
 $elementHeight: 50px;
 
 .formInput {
-  :global(.bp3-popover-target) {
+  margin: 0;
+  label {
+    margin-bottom: 10px;
+    font-weight: 600;
+    span {
+      font-weight: 400;
+    }
+  }
+  span {
     width: 100%;
   }
-
-  :global(label.bp3-label) {
-    margin-bottom: 10px !important;
-  }
-
-  :global(.bp3-input) {
+  input {
     height: $elementHeight;
   }
 }
 
-.submitButton {
-  width: 100%;
-  height: $elementHeight;
-
-  .icon {
-    margin-right: 7px;
-  }
+.wideInput {
+  grid-column: span 2;
 }
