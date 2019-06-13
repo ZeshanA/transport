@@ -1,0 +1,21 @@
+.heading {
+  margin: 0 0 5px 0;
+}
+
+.alert {
+  padding: 30px;
+  box-sizing: content-box;
+
+  :global(.bp3-icon) {
+    padding-top: 20px;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+.busMessage {
+  line-height: 135%;
+  font-size: 18px;
+}

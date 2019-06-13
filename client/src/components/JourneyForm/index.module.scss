@@ -1,5 +1,4 @@
 .formCard {
-  max-width: 1000px;
   width: 100%;
   margin: 0 auto;
   padding: 35px 40px;
@@ -16,8 +15,12 @@ $elementHeight: 50px;
 .formInput {
   margin: 0;
   label {
-    margin-bottom: 10px;
-    font-weight: 600;
+    margin-bottom: 12px !important;
+    font: {
+      size: 16px;
+      weight: 600;
+    }
+    display: block;
     span {
       font-weight: 400;
     }

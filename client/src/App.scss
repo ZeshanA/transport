@@ -8,6 +8,16 @@ body {
   font-family: "Source Sans Pro", sans-serif;
 }
 
+.container {
+  width: 90%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
 $navbarHeight: 60px;
 
 .navbar {
@@ -17,11 +27,7 @@ $navbarHeight: 60px;
   background: white;
   color: $secondaryTextColor;
   border-bottom: solid 1px lighten($primaryTextColor, 60%);
-  // box-shadow: 0 5px 10px rgba($PrimaryTextColor, 0.05);
 
-  .icon {
-    margin-right: 10px;
-  }
   h1 {
     padding-top: 15px;
     margin: 0;
@@ -34,10 +40,6 @@ $navbarHeight: 60px;
 }
 
 .heading {
-  text-align: center;
-}
-
-.container {
-  width: 90%;
-  margin: 0 auto;
+  text-align: left;
+  font-weight: 600;
 }
