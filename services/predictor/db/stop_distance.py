@@ -14,7 +14,7 @@ def get_stop_distance(routeID, directionID, fromStop, toStop):
     row = cur.fetchone()
     conn.commit()
     cur.close()
-    if len(row) == 0:
+    if not row or len(row) == 0:
         cur = conn.cursor()
         cur.execute(
             "SELECT AVG(distance) FROM stop_distance WHERE route_id=%s GROUP BY route_id;",
@@ -23,7 +23,7 @@ def get_stop_distance(routeID, directionID, fromStop, toStop):
         row = cur.fetchone()
         conn.commit()
         cur.close()
-        if len(row) == 0:
+        if not row or len(row) == 0:
             conn.close()
             return AVG_DISTANCE
     conn.close()

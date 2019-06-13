@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/mux v1.7.2
 	github.com/lib/pq v1.0.0
 	github.com/pusher/pusher-http-go v4.0.0+incompatible
+	github.com/rs/cors v1.6.0
 	github.com/stretchr/testify v1.3.0
 	github.com/tidwall/gjson v1.2.1
 	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8 // indirect
