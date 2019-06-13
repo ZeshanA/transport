@@ -40,15 +40,19 @@ type Timestamp struct {
 // Custom parsing of incoming timestamps
 func (t *Timestamp) UnmarshalJSON(b []byte) (err error) {
 	noQuotes := strings.Replace(string(b), "\"", "", 2)
-	parsed, err := time.Parse(time.RFC3339, noQuotes)
+	parsed, err := time.ParseInLocation(time.RFC3339, noQuotes, TimeLoc)
 	if err != nil {
-		parsed, err = time.Parse(TimeFormat, noQuotes)
+		parsed, err = time.ParseInLocation(TimeFormat, noQuotes, TimeLoc)
 		if err != nil {
 			log.Printf("error whilst parsing Timestamp: %v", err)
 		}
 	}
 	*t = Timestamp{parsed}
 	return nil
+}
+
+func (t Timestamp) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, t.Format(TimeFormat))), nil
 }
 
 // VehicleJourneyTable contains historical movements + live vehicle movements

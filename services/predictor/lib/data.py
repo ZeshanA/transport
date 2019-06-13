@@ -22,7 +22,7 @@ def journey_to_dataframe(journey):
     timestamp = parse_datetime(journey['Timestamp'])
     eat = journey['ExpectedArrivalTime']
     if eat is None:
-        estimate = None
+        estimate = 240
     else:
         eat = parse_datetime(eat)
         estimate = (eat - timestamp).total_seconds()

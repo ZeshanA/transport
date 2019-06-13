@@ -19,9 +19,9 @@ var client = pusher.Client{
 const departureNotification = "departureNotification"
 
 type Notification struct {
-	VehicleID            string
-	OptimalDepartureTime database.Timestamp
-	PredictedArrivalTime database.Timestamp
+	VehicleID            string             `json:"vehicleID"`
+	OptimalDepartureTime database.Timestamp `json:"optimalDepartureTime"`
+	PredictedArrivalTime database.Timestamp `json:"predictedArrivalTime"`
 }
 
 func SendNotification(params request.JourneyParams, notification Notification) {
