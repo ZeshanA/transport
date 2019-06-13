@@ -4,8 +4,17 @@
   box-sizing: border-box;
   height: 50px;
   text-align: center;
+  font: {
+    weight: 600;
+  }
 
   .icon {
     margin-right: 7px;
+  }
+}
+
+:global {
+  .bp3-toast-container {
+    margin-top: 60px;
   }
 }
