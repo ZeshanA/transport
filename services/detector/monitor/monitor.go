@@ -72,7 +72,7 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 				log.Printf("We would like a bus arriving at exactly %s", idealArrivalTime)
 				log.Printf("Vehicle with ID %s is estimated to arrive at the source stop in %d seconds, at %s", vehicleID, totalTimeUntilSourceStop, currentVehicleArrivalTime.Format(database.TimeFormat))
 				log.Printf("The gap between these two times is %f seconds", diff.Seconds())
-				if idealArrivalTime.After(currentVehicleArrivalTime) && diff < 5*time.Minute {
+				if diff < 5*time.Minute {
 					complete <- response.Notification{
 						VehicleID:            vehicleID,
 						OptimalDepartureTime: database.Timestamp{Time: currentVehicleArrivalTime},
@@ -91,11 +91,11 @@ func monitorBuses(ticker *time.Ticker, params request.JourneyParams, stopList []
 func UpdateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys map[string]bus.VehicleJourney,
 	stopsAfterDest map[string]bool, movingAverageJourneyTime ewma.MovingAverage) {
 	log.Println("Updating moving averages using any vehicles that have completed the route segment...")
-	for vehicleRef, stamp := range startedJourneys {
+	for vehicleRef, startTimestamp := range startedJourneys {
 		journey := allJourneys[vehicleRef]
 		stopID := journey.StopPointRef.String
 		if _, ok := stopsAfterDest[stopID]; ok {
-			duration := journey.Timestamp.Sub(stamp).Seconds()
+			duration := journey.Timestamp.Sub(startTimestamp).Seconds()
 			log.Printf(
 				"Vehicle with ID '%s' has completed its journey at %s, with a total duration of %f seconds",
 				vehicleRef, journey.Timestamp.Format(database.TimeFormat), duration,
@@ -107,12 +107,12 @@ func UpdateAverageJourneyTime(startedJourneys map[string]time.Time, allJourneys 
 	}
 }
 
-func DetectStartedJourneys(waitingToStart map[string]time.Time, journeyStarted map[string]time.Time, liveJourneys map[string]bus.VehicleJourney, params request.JourneyParams) {
+func DetectStartedJourneys(waitingToStart map[string]time.Time, startedJourneys map[string]time.Time, liveJourneys map[string]bus.VehicleJourney, params request.JourneyParams) {
 	log.Println("Recording journey start times for any vehicles that have now moved onto our route segment...")
 	for vehicleRef, stamp := range waitingToStart {
 		if liveJourneys[vehicleRef].StopPointRef.String != params.FromStop {
 			log.Printf("Vehicle with ID '%s' has started its journey at %s", vehicleRef, stamp.Format(database.TimeFormat))
-			journeyStarted[vehicleRef] = stamp
+			startedJourneys[vehicleRef] = stamp
 			delete(waitingToStart, vehicleRef)
 		}
 	}
