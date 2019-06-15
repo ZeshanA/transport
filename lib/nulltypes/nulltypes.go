@@ -58,7 +58,7 @@ func (ts *Timestamp) Scan(value interface{}) error {
 			ts.Timestamp, ts.Valid = database.Timestamp{}, false
 			return nil
 		}
-		parsed, err := time.ParseInLocation(database.TimeFormat, v, database.TimeLoc)
+		parsed, err := time.Parse(database.TimeFormat, v)
 		if err != nil {
 			return fmt.Errorf("nulltypes.Timestamp.Scan: unable to parse string: %v\n", value)
 		}
