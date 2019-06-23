@@ -27,6 +27,7 @@ def get_stop_to_stop_prediction():
     mvmt = req['sampleMovement']
     route_id = mvmt['LineRef']
     logging.info(f"Received stop-to-stop prediction request for routeID {route_id}")
+    logging.info(f"Request content: ${req}")
     model = download_model(route_id)
     prediction = stop_to_stop.calculate(model, req)
     return json.dumps({
