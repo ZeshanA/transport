@@ -31,7 +31,7 @@ func Evaluate() {
 	// Create a new BusTime client to handle metadata requests
 	bt := bustime.NewClient(iohelper.GetEnv("MTA_API_KEY"))
 	// Extract the number of journeys to evaluate
-	numJourneys := 50
+	numJourneys := 100
 	var wg sync.WaitGroup
 	wg.Add(numJourneys)
 	log.Printf("Evaluating %d journeys...", numJourneys)
@@ -43,7 +43,6 @@ func Evaluate() {
 }
 
 func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, db *sql.DB, wg sync.WaitGroup) {
-	defer wg.Done()
 	// Fetch the list of stops for the requested route and direction
 	stops := bt.GetStops(params.RouteID)[params.RouteID][params.DirectionID]
 	// Get average time to travel between stops
@@ -57,6 +56,7 @@ func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, 
 	if err != nil {
 		log.Fatalf("error calculating predicted time: %s", err)
 	}
+	predictedTime /= 4
 	log.Printf("Predicted time: %d\n", predictedTime)
 	// Print current time and arrival time
 	log.Printf("Time now is: %s", time.Now().In(database.TimeLoc).Format(database.TimeFormat))
@@ -108,6 +108,7 @@ func performJourneyEvaluation(params request.JourneyParams, bt *bustime.Client, 
 			}
 			if startedApproaching && !waiting && !started {
 				timeTaken <- journeyTime.Value()
+				ticker.Stop()
 			}
 		}
 	}()
@@ -187,10 +188,10 @@ func generateRandomParams(bt *bustime.Client) request.JourneyParams {
 	}
 	// Pick random destination stop
 	stopsAfterSource := bustime.ExtractStops("after", params.FromStop, false, stops)
-	destStop := stops[rand.Intn(math.MaxInt(len(stopsAfterSource)-1, 1))]
-	params.ToStop = destStop.ID
+	destStop := stopsAfterSource[rand.Intn(math.MaxInt(len(stopsAfterSource)-1, 1))]
+	params.ToStop = destStop
 	// Pick random arrival time
-	delay := time.Duration(math.RandInRange(15, 30)) * time.Minute
+	delay := time.Duration(math.RandInRange(60, 300)) * time.Minute
 	params.ArrivalTime = database.Timestamp{Time: time.Now().In(database.TimeLoc).Add(delay)}
 	log.Printf("Selected random parameter set: %s", params.String())
 	return params
@@ -200,7 +201,14 @@ func validRouteID(routeID string) bool {
 	validRoutes := []string{
 		"MTA NYCT_M102", "MTA NYCT_S86", "MTA NYCT_SIM8X", "MTA NYCT_SIM4X", "MTABC_QM36", "MTABC_QM44", "MTABC_QM31",
 		"MTABC_QM40", "MTABC_QM42", "MTABC_QM34", "MTA NYCT_SIM32", "MTA NYCT_S81", "MTA NYCT_SIM35", "MTABC_QM32",
-		"MTA NYCT_SIM9", "MTABC_QM35"}
+		"MTA NYCT_SIM9", "MTABC_QM35", "MTA NYCT_SIM3", "MTA NYCT_SIM33", "MTA NYCT_S42", "MTA NYCT_S84", "MTABC_QM3",
+		"MTA NYCT_SIM31", "MTA NYCT_SIM7", "MTA NYCT_SIM22", "MTA NYCT_SIM5", "MTA NYCT_SIM4", "MTA NYCT_SIM34",
+		"MTA NYCT_SIM30", "MTA NYCT_Q16", "MTA NYCT_SIM2", "MTA NYCT_SIM11", "MTA NYCT_SIM15", "MTA NYCT_S92",
+		"MTA NYCT_SIM26", "MTA NYCT_SIM25", "MTA NYCT_S94", "MTA NYCT_S90", "MTA NYCT_B92", "MTA NYCT_Q28",
+		"MTABC_QM18", "MTA NYCT_B39", "MTA NYCT_BX20", "MTABC_QM25", "MTABC_QM10", "MTA NYCT_B91", "MTA NYCT_S98",
+		"MTABC_Q07", "MTA NYCT_SIM6", "MTA NYCT_S89", "MTA NYCT_S91", "MTA NYCT_SIM1", "MTA NYCT_S96", "MTABC_BXM18",
+		"MTA NYCT_SIM8", "MTABC_QM21", "MTABC_Q52+", "MTA NYCT_SIM3C", "MTA NYCT_X64", "MTA NYCT_SIM10", "MTA NYCT_Q15",
+		"MTABC_QM12"}
 	for _, id := range validRoutes {
 		if id == routeID {
 			return true
